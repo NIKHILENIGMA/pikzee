@@ -1,0 +1,74 @@
+{
+    "project_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "name": "Project Alpha Assets",
+    "assets": [
+        {
+            "id": "1a2b3c4d-5e6f-7890-1234-567890abcdef",
+            "name": "Documents",
+            "type": "folder",
+            "children": [
+                {
+                    "id": "2a3b4c5d-6e7f-8901-2345-67890abcdef0",
+                    "name": "Report_2024.pdf",
+                    "type": "file",
+                    "mime_type": "application/pdf",
+                    "file_size_bytes": 5242880,
+                    "file_url": "https://cdn.example.com/project/docs/report.pdf"
+                },
+                {
+                    "id": "3a4b5c6d-7e8f-9012-3456-7890abcdef01",
+                    "name": "Meeting Notes",
+                    "type": "folder",
+                    "children": [
+                        {
+                            "id": "4a5b6c7d-8e9f-0123-4567-890abcdef02",
+                            "name": "Q3_Summary.docx",
+                            "type": "file",
+                            "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            "file_size_bytes": 102400,
+                            "file_url": "https://cdn.example.com/project/docs/q3.docx"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "5a6b7c8d-9e0f-1234-5678-90abcdef0123",
+            "name": "Images & Videos",
+            "type": "folder",
+            "children": [
+                {
+                    "id": "6a7b8c9d-0e1f-2345-6789-0abcdef01234",
+                    "name": "Hero_Shot.jpg",
+                    "type": "file",
+                    "mime_type": "image/jpeg",
+                    "file_size_bytes": 8388608,
+                    "file_url": "https://cdn.example.com/project/media/hero.jpg",
+                    "is_image": true,
+                    "image_width": 1920,
+                    "image_height": 1080
+                },
+                {
+                    "id": "7a8b9c0d-1e2f-3456-7890-abcdef012345",
+                    "name": "Promo_Clip.mp4",
+                    "type": "file",
+                    "mime_type": "video/mp4",
+                    "file_size_bytes": 52428800,
+                    "file_url": "https://cdn.example.com/project/media/promo.mp4",
+                    "is_video": true,
+                    "video_duration_seconds": 30,
+                    "video_width": 1280,
+                    "video_height": 720
+                }
+            ]
+        },
+        {
+            "id": "8a9b0c1d-2e3f-4567-8901-234567890123",
+            "name": "RootFile.txt",
+            "type": "file",
+            "mime_type": "text/plain",
+            "file_size_bytes": 1024,
+            "file_url": "https://cdn.example.com/project/root.txt"
+        }
+    ]
+}

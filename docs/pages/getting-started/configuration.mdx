@@ -1,0 +1,49 @@
+---
+title: Project-Specific Configuration
+description: Set up your development environment
+category: "Getting Started"
+---
+
+Once the container is running and all dependencies are installed, you need to set up local environment variables and the database.
+
+## 1. Environment Variables
+The Dev Container already provides placeholders for configuration. Copy the example file and fill in your unique values:
+
+```bash
+
+# In the container's terminal:
+cp .env.example .env.local
+
+```
+You must fill in the following keys in your .env.local file:
+
+| Variable | Source | Purpose |
+| --- | --- | --- |
+| CLERK_SECRET_KEY | Your personal Clerk dashboard (ask team lead) | Securely authenticate users. |
+| DATABASE_URL | See next step (local database) | Connection string for the local PostgreSQL database. |
+
+## 2. Local Database Setup
+
+We use Docker Compose inside the Dev Container to run the PostgreSQL database locally.
+
+### First Run:
+
+Open a second terminal window inside the Dev Container (Terminal -> New Terminal).
+
+Start the database service:
+```bash 
+
+docker compose up -d postgres
+```
+
+This launches the database on port `5432` and exposes it to the container environment. The DATABASE_URL is typically set automatically in the container to point to the host: postgres://user:password@postgres:5432/pikzeedb.
+
+**Apply Schema Migrations**:
+Run the following command to initialize the database schema:
+
+Apply Schema Migrations:
+Run the following command to initialize the database schema:
+
+npm run db:migrate
+
+You are now ready to run the application services!

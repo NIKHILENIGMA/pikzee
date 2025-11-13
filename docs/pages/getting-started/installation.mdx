@@ -1,0 +1,50 @@
+---
+title: Installation Guide
+description: Set up your development environment
+category: "Getting Started"
+disablePager: false
+---
+
+This project uses a Dev Container to ensure all team members work with an identical and pre-configured environment. This approach simplifies onboarding significantly.
+
+## 🛠️ Prerequisites (For the Container Environment)
+
+To run the Dev Container for Pikzee, you only need three core tools installed on your local machine.
+
+| Tool | Minimum Version | Purpose |
+| --- | --- | --- |
+| Git | Latest Stable | For cloning the repository. |
+| Docker | v20.10+ | The engine that runs the containerized environment. |
+| VS Code | Latest Stable | The recommended IDE, along with the Dev Containers Extension. |
+
+## Dev Container Setup Steps
+Once you have the prerequisites, follow these steps in order:
+
+### Step 1: Clone the Repository:
+
+
+```bash
+git clone https://github.com/NIKHILENGIMA/Pikezee-Client.git
+
+# Go inside the project
+cd Pikezee-Client
+
+```
+
+### Step 2: Open in VS Code:
+```bash
+code .
+```
+
+### Step 3: Reopen in Container:
+VS Code will automatically detect the .devcontainer/devcontainer.json file. A prompt will appear in the bottom-right corner asking, "Folder contains a Dev Container configuration file. Reopen in Container?"
+- Click "Reopen in Container".
+
+The Dev Container build process will now:
+
+- Build the image defined in .devcontainer/Dockerfile.
+- Install Node.js dependencies with pnpm (run `pnpm install`).
+- Install the VS Code extensions specified for the dev container.
+- Configure and start Nginx and Redis services inside the container.
+- Configure and start a PostgreSQL service inside the container
+- Forward required ports (e.g., 3000 for frontend, 5000 for backend, 5432 for PostgreSQL) via devcontainer.json.

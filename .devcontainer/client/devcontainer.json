@@ -1,0 +1,17 @@
+{
+  "name": "Pikzee Client",
+  "dockerComposeFile": ["../../docker-compose.yml"],
+  "service": "pikzee-client",
+  "workspaceFolder": "/app/client",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "dsznajder.es7-react-js-snippets"
+      ]
+    }
+  }
+}
