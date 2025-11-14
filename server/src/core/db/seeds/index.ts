@@ -8,9 +8,9 @@ export const runAllSeeds = async () => {
 
     try {
         // await seedTiers() // Insert the tiers first
-        // Add calls to other seed functions here as needed, e.g.:
         await seedUsers()
         await seedWorkspaces()
+        // Add calls to other seed functions here as needed, e.g.:
         // await seedProjects()
         // await seedDocs()
 
