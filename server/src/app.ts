@@ -40,7 +40,7 @@ const createApp = (): Application => {
 
     // Routes
     app.use('/api/v1', router)
-    app.get('/health', (req, res) => {
+    app.get('/api/health', (req, res) => {
         res.status(200).json({
             status: 'OK',
             timestamp: new Date().toISOString(),

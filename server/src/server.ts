@@ -6,7 +6,7 @@ const server = () => {
     const app = createApp()
 
     // Start server
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         logger.info(`Server running on port ${PORT} in ${NODE_ENV} mode`)
     })
 }
