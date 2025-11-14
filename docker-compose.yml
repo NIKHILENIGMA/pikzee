@@ -1,46 +1,12 @@
 
 services:
-  pikzee-client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: pikzee-client
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./client/.env.development
-    volumes:
-      - ./client:/app/client
-      - /app/client/node_modules
-    networks:
-      - pikzee-network
-    depends_on:
-      - pikzee-server
-
-  pikzee-server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: pikzee-server
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./server:/app/server
-      - /app/server/node_modules
-    env_file:
-      - ./server/.env
-    networks:
-      - pikzee-network
-    depends_on:
-      - postgres
-
   postgres:
     image: postgres:16-alpine
     container_name: pikzee-postgres
     environment:
-      POSTGRES_USER: pikzee
-      POSTGRES_PASSWORD: pikzee_password
-      POSTGRES_DB: pikzee
+      POSTGRES_USER: nikhilenigma
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: pikzee_db
     ports:
       - "5432:5432"
     volumes:
@@ -57,9 +23,7 @@ services:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - pikzee-network
-    depends_on:
-      - pikzee-client
-      - pikzee-server
+
 
 volumes:
   pgdata:

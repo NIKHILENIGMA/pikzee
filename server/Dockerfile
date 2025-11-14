@@ -8,11 +8,17 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml* ./
+# Change ownership to node user
+RUN chown -R node:node /app
+
+# Switch to node user
+USER node
+
+COPY --chown=node:node package.json pnpm-lock.yaml* ./
 
 RUN pnpm install
 
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 5000
 
