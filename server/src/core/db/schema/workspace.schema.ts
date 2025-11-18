@@ -1,30 +1,29 @@
-import { pgTable, uuid, text, bigint, timestamp } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
-
+import { pgTable, uuid, varchar, timestamp, boolean, bigint, pgEnum, unique, text } from 'drizzle-orm/pg-core'
 import { users } from './users.schema'
-import { unique } from 'drizzle-orm/pg-core'
+import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
-export type Permission = 'FULL_ACCESS' | 'EDIT' | 'COMMENT_ONLY' | 'VIEW_COMMENTS'
-
-export const permissionEnum: Permission[] = ['FULL_ACCESS', 'EDIT', 'COMMENT_ONLY', 'VIEW_COMMENTS'] as const
+// Enums
+export const subscriptionPlanEnum = pgEnum('subscription_plan', ['FREE', 'CREATOR', 'TEAM'])
+export const memberPermissionEnum = pgEnum('member_permission', ['FULL_ACCESS', 'EDIT', 'COMMENT_ONLY', 'VIEW_ONLY'])
+export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED'])
 
 // Workspaces Table
 export const workspaces = pgTable('workspaces', {
     id: uuid('id').primaryKey().defaultRandom(),
-    name: text('name').notNull(),
-    slug: text('slug').notNull().unique(),
-    ownerId: text('owner_id')
+    name: varchar('name', { length: 255 }).notNull(),
+    logoUrl: text('logo_url'),
+    ownerId: uuid('owner_id')
         .notNull()
-        .references(() => users.id),
-    currentStorageBytes: bigint('current_storage_bytes', { mode: 'number' }).notNull().default(0),
-    workspaceLogoUrl: text('workspace_logo_url').default(''),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    subscriptionPlan: subscriptionPlanEnum('subscription_plan').default('FREE').notNull(),
+    storageUsed: bigint('storage_used', { mode: 'number' }).default(0).notNull(),
+    bandwidthUsed: bigint('bandwidth_used', { mode: 'number' }).default(0).notNull(),
+    isDeleted: boolean('is_deleted').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull()
 })
 
-//
 // Workspace Members Table
-//
 export const workspaceMembers = pgTable(
     'workspace_members',
     {
@@ -32,64 +31,42 @@ export const workspaceMembers = pgTable(
         workspaceId: uuid('workspace_id')
             .notNull()
             .references(() => workspaces.id, { onDelete: 'cascade' }),
-        userId: text('user_id')
+        userId: uuid('user_id')
             .notNull()
             .references(() => users.id, { onDelete: 'cascade' }),
-        permission: text('permission').notNull().$type<(typeof permissionEnum)[number]>(),
-        joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
-        updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+        permission: memberPermissionEnum('permission').default('COMMENT_ONLY').notNull(),
+        joinedAt: timestamp('joined_at').defaultNow().notNull(),
+        updatedAt: timestamp('updated_at').defaultNow().notNull()
     },
-    (table) => [unique('unique_workspace_user').on(table.workspaceId, table.userId)]
+    (table) => [
+        {
+            uniqueMember: unique().on(table.workspaceId, table.userId)
+        }
+    ]
 )
 
-//
-// Workspace Invitations Table
-//
-
-export const workspaceInvitations = pgTable('workspace_invitations', {
+// Invitations Table
+export const invitations = pgTable('invitations', {
     id: uuid('id').primaryKey().defaultRandom(),
     workspaceId: uuid('workspace_id')
         .notNull()
         .references(() => workspaces.id, { onDelete: 'cascade' }),
-    email: text('email').notNull(),
-    userId: text('user_id').references(() => users.id),
-    status: text('status').notNull().default('PENDING'), // PENDING, ACCEPTED, EXPIRED
-    permission: text('permission').notNull().$type<(typeof permissionEnum)[number]>(),
-    invitedBy: text('invited_by')
+    inviterUserId: uuid('inviter_user_id')
         .notNull()
-        .references(() => users.id),
-    token: text('token').notNull().unique(),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    inviteeEmail: varchar('invitee_email', { length: 255 }).notNull(),
+    permission: memberPermissionEnum('permission').notNull(),
+    token: varchar('token', { length: 500 }).notNull().unique(),
+    status: invitationStatusEnum('status').default('PENDING').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull()
 })
 
-export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
-    owner: one(users, {
-        fields: [workspaces.ownerId],
-        references: [users.id]
-    }),
-    members: many(workspaceMembers)
-}))
+export type Workspace = InferSelectModel<typeof workspaces>
+export type CreateWorkspace = InferInsertModel<typeof workspaces>
 
-export const workspaceMembersRelations = relations(workspaceMembers, ({ one }) => ({
-    workspace: one(workspaces, {
-        fields: [workspaceMembers.workspaceId],
-        references: [workspaces.id]
-    }),
-    user: one(users, {
-        fields: [workspaceMembers.userId],
-        references: [users.id]
-    })
-}))
+export type WorkspaceMember = InferSelectModel<typeof workspaceMembers>
+export type CreateWorkspaceMember = InferInsertModel<typeof workspaceMembers>
 
-export const workspaceInvitationsRelations = relations(workspaceInvitations, ({ one }) => ({
-    workspace: one(workspaces, {
-        fields: [workspaceInvitations.workspaceId],
-        references: [workspaces.id]
-    }),
-    inviter: one(users, {
-        fields: [workspaceInvitations.invitedBy],
-        references: [users.id]
-    })
-}))
+export type Invitation = InferSelectModel<typeof invitations>
+export type CreateInvitation = InferInsertModel<typeof invitations>

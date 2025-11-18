@@ -25,7 +25,7 @@ const USERS: UserData[] = [
         lastName: 'Smith',
         email: 'bob.smith@example.com',
         password: '$ecur1ty!PwD7P@ss#wOrd'
-    },
+    }
 ]
 
 export const seedUsers = async () => {
