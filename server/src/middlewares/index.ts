@@ -1,3 +1,4 @@
-export * from './checkTier.middleware'
-export * from './errorHandler.middleware'
-export * from './notFound.middleware'
+export * from './error/errorHandler.middleware'
+export * from './error/notFound.middleware'
+
+export * from './clerk/clerk.middleware'
