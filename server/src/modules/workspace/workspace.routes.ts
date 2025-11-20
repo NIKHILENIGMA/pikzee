@@ -1,28 +1,25 @@
 import { Router } from 'express'
-
 import { clerkAuth } from '@/core'
-import { attachUserAndTier } from '@/middlewares'
+import { workspaceController } from './workspace.controller'
 
-import membersRoutes from './members/workspace-memeber.routes'
-import * as controller from './workspace.controller'
-
-const workspaceRouter = Router({
+const router = Router({
     mergeParams: true
 })
 
-// Workspaces
-workspaceRouter
-    .route('/')
-    .post(clerkAuth, attachUserAndTier, controller.createWorkspace) // Create new workspace
-    .get(clerkAuth, controller.getUserWorkspaces) // Get all workspaces for user
+// Get all workspaces for authenticated user
+// Create new workspace (subscription limit check)
+router.route('/').get(clerkAuth, workspaceController.getUserWorkspaces).post(clerkAuth, workspaceController.createWorkspace)
 
-workspaceRouter
+// Get workspace details by ID
+// Update workspace (name, logo)
+// Delete workspace (ensure at least one remains)
+router
     .route('/:workspaceId')
-    .get(clerkAuth, controller.getWorkspaceById) // Get workspace by ID
-    .patch(clerkAuth, controller.updateWorkspace) // Update workspace details
+    .get(clerkAuth, workspaceController.getWorkspaceById)
+    .patch(clerkAuth, workspaceController.updateWorkspace)
+    .delete(clerkAuth, workspaceController.deleteWorkspace)
 
-workspaceRouter.route('/:workspaceId/storage').get(clerkAuth, controller.getWorkspaceStorageUsage) // Get storage usage for workspace
+// Get workspace storage/bandwidth usage
+router.route('/:workspaceId/usage').get(clerkAuth, workspaceController.getWorkspaceUsage)
 
-workspaceRouter.use('/:workspaceId', clerkAuth, membersRoutes) // Workspace members routes
-
-export default workspaceRouter
+export default router
