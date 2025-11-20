@@ -12,7 +12,7 @@ export const workspaces = pgTable('workspaces', {
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 255 }).notNull(),
     logoUrl: text('logo_url'),
-    ownerId: uuid('owner_id')
+    ownerId: text('owner_id')
         .notNull()
         .references(() => users.id, { onDelete: 'cascade' }),
     subscriptionPlan: subscriptionPlanEnum('subscription_plan').default('FREE').notNull(),
@@ -31,10 +31,10 @@ export const workspaceMembers = pgTable(
         workspaceId: uuid('workspace_id')
             .notNull()
             .references(() => workspaces.id, { onDelete: 'cascade' }),
-        userId: uuid('user_id')
+        userId: text('user_id')
             .notNull()
             .references(() => users.id, { onDelete: 'cascade' }),
-        permission: memberPermissionEnum('permission').default('COMMENT_ONLY').notNull(),
+        permission: memberPermissionEnum('permission').default('FULL_ACCESS').notNull(),
         joinedAt: timestamp('joined_at').defaultNow().notNull(),
         updatedAt: timestamp('updated_at').defaultNow().notNull()
     },
@@ -51,12 +51,12 @@ export const invitations = pgTable('invitations', {
     workspaceId: uuid('workspace_id')
         .notNull()
         .references(() => workspaces.id, { onDelete: 'cascade' }),
-    inviterUserId: uuid('inviter_user_id')
+    inviterUserId: text('inviter_user_id')
         .notNull()
         .references(() => users.id, { onDelete: 'cascade' }),
     inviteeEmail: varchar('invitee_email', { length: 255 }).notNull(),
     permission: memberPermissionEnum('permission').notNull(),
-    token: varchar('token', { length: 500 }).notNull().unique(),
+    token: text('token').notNull(),
     status: invitationStatusEnum('status').default('PENDING').notNull(),
     expiresAt: timestamp('expires_at').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull()
