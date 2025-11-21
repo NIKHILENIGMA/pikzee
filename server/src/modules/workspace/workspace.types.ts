@@ -4,7 +4,7 @@ export interface WorkspaceDTO {
     id: string
     name: string
     logoUrl: string | null
-    owner: {
+    owner?: {
         id: string
         firstName: string | null
         lastName: string | null

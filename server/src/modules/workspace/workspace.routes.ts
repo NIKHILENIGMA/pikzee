@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { clerkMiddleware } from '@/middlewares/clerk/clerk.middleware'
 import { workspaceController } from './workspace.controller'
+import membersRoutes from '@/modules/members/memeber.routes'
 
 const router = Router({
     mergeParams: true
@@ -21,5 +22,7 @@ router
 
 // Get workspace storage/bandwidth usage
 router.route('/:workspaceId/usage').get(clerkMiddleware, workspaceController.getWorkspaceUsage)
+
+router.use('/:workspaceId/members', clerkMiddleware, membersRoutes)
 
 export default router

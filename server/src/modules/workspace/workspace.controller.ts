@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 import { workspaceService } from './workspace.service'
 import { ApiResponse, InternalServerError, StandardError, UnauthorizedError } from '@/util'
 import { createWorkspaceSchema, updateWorkspaceSchema, ValidationService, WorkspaceIdSchema } from '@/shared'
-// import { logger } from '@/config'
 
 export class WorkspaceController {
     async getUserWorkspaces(req: Request, res: Response) {
@@ -59,7 +58,7 @@ export class WorkspaceController {
             const newWorkspace = await workspaceService.createWorkspace({
                 name: validatedInput.name,
                 logoUrl: validatedInput.logoUrl || null,
-                ownerId: userId
+                ownerId: userId,
             })
 
             return ApiResponse(req, res, 201, 'Workspace created successfully', newWorkspace)

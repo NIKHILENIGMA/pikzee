@@ -192,16 +192,24 @@ class WorkspaceService {
         }
     }
 
-    async createWorkspace(data: CreateWorkspace, plan?: 'FREE' | 'CREATOR' | 'TEAM'): Promise<WorkspaceDTO> {
+    async createWorkspace(data: CreateWorkspace): Promise<WorkspaceDTO> {
         try {
             const workspace = await db.transaction(async (tx) => {
+                const user = await tx
+                    .select()
+                    .from(users)
+                    .where(eq(users.id, data.ownerId))
+                    .limit(1)
+                if (user.length === 0) {
+                    throw new NotFoundError('User not found', 'workspaceService.createWorkspace')
+                }
                 const [newWorkspace] = await tx
                     .insert(workspaces)
                     .values({
                         name: data.name,
-                        logoUrl: data.logoUrl || null,
+                        logoUrl: data.logoUrl,
                         ownerId: data.ownerId,
-                        subscriptionPlan: plan || 'FREE',
+                        isDeleted: false,
                         createdAt: new Date(),
                         updatedAt: new Date()
                     })
@@ -239,13 +247,6 @@ class WorkspaceService {
                 name: workspace.name,
                 logoUrl: workspace.logoUrl,
                 subscriptionPlan: workspace.subscriptionPlan,
-                owner: {
-                    id: data.ownerId,
-                    firstName: null,
-                    lastName: null,
-                    email: '',
-                    avatarUrl: null
-                },
                 createdAt: workspace.createdAt
             }
         } catch (error) {
