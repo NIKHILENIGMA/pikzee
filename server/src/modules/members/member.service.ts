@@ -220,4 +220,3 @@ class MemberService {
 }
 
 export const memberService = MemberService.getInstance()
-

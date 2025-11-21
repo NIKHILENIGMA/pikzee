@@ -14,5 +14,3 @@ export const updateMemberPermissionSchema = z.object({
 export const workspaceMemberIdSchema = workspaceIdSchema.extend({
     memberId: z.uuid().nonempty()
 })
-
-

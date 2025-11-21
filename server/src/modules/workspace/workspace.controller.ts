@@ -59,7 +59,7 @@ export class WorkspaceController {
             const newWorkspace = await workspaceService.createWorkspace({
                 name: validatedInput.name,
                 logoUrl: validatedInput.logoUrl || null,
-                ownerId: userId,
+                ownerId: userId
             })
 
             return ApiResponse(req, res, 201, 'Workspace created successfully', newWorkspace)

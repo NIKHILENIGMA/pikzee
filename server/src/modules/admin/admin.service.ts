@@ -28,4 +28,3 @@ export class AdminService {
 }
 
 export const adminService = AdminService.getInstance()
-
