@@ -22,7 +22,7 @@ type MemberMap = {
     avatarUrl: string | null
 }
 
-class WorkspaceService {
+export class WorkspaceService {
     private static instance: WorkspaceService
 
     constructor() {}
