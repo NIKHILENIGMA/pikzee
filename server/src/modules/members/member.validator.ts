@@ -1,6 +1,6 @@
 import z from 'zod'
 
-import { WorkspaceIdSchema } from '@/shared'
+import { WorkspaceIdSchema } from '@/modules/workspace'
 
 export const addMemberSchema = z.object({
     inviteeUserId: z.string().min(1, { message: 'User ID is required' }).trim(),

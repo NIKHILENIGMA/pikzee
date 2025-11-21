@@ -1,8 +1,10 @@
 import { Request, Response } from 'express'
 import { memberService } from './member.service'
 import { ApiResponse, InternalServerError, StandardError, UnauthorizedError } from '@/util'
-import { ValidationService, WorkspaceIdSchema } from '@/shared'
+import { ValidationService } from '@/lib'
 import { addMemberSchema, updateMemberPermissionSchema, WorkspaceMemberIdSchema } from './member.validator'
+
+import { WorkspaceIdSchema } from '../workspace'
 
 export class MemberController {
     async listWorkspaceMembers(req: Request, res: Response) {
