@@ -25,7 +25,7 @@ type MemberMap = {
 class WorkspaceService {
     private static instance: WorkspaceService
 
-    private constructor() {}
+    constructor() {}
 
     public static getInstance(): WorkspaceService {
         if (!WorkspaceService.instance) {
