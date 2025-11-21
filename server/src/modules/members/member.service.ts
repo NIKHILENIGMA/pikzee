@@ -2,7 +2,6 @@ import { db, users, workspaceMembers, workspaces } from '@/core'
 import { and, eq } from 'drizzle-orm'
 import { MemberDTO, MemberPermission, UpdateMemberPermissionInput } from './member.types'
 import { DatabaseError, ForbiddenError, NotFoundError, StandardError } from '@/util'
-import { logger } from '@/config'
 
 export class MemberService {
     private static instance: MemberService
@@ -35,8 +34,6 @@ export class MemberService {
             .innerJoin(users, eq(workspaceMembers.userId, users.id))
             .where(eq(workspaceMembers.workspaceId, workspaceId))
 
-        logger.info(`Retrieved ${members.length} members for workspace ID: ${workspaceId}`)
-
         return members.map((member) => ({
             id: member.id,
             userId: member.userId,
@@ -53,9 +50,6 @@ export class MemberService {
     }
 
     async addMemberToWorkspace(workspaceId: string, inviteeUserId: string, data: { userId: string; permission: string }): Promise<MemberDTO> {
-        logger.info(
-            `Adding member to workspace. Workspace ID: ${workspaceId}, Invitee User ID: ${inviteeUserId}, Requested by User ID: ${data.userId}`
-        )
         try {
             const [existingMemberCheck, ownerCheck] = await Promise.all([
                 db
@@ -72,7 +66,7 @@ export class MemberService {
             }
 
             const ownerCheckRecord = ownerCheck[0]
-            logger.info(`Owner Check Record: ${JSON.stringify(ownerCheck[0])}`)
+
             // Check requester is the owner of the workspace
             if (ownerCheck.length === 0) {
                 throw new NotFoundError('Workspace not found.')

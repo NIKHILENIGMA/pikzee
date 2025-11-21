@@ -1,15 +1,15 @@
 import z from 'zod'
 
-export const createWorkspaceSchema = z.object({
+export const CreateWorkspaceSchema = z.object({
     name: z.string().min(3).max(50),
     logoUrl: z.url().optional()
 })
 
-export const updateWorkspaceSchema = z.object({
+export const UpdateWorkspaceSchema = z.object({
     name: z.string().min(3).max(50).optional(),
     logoUrl: z.url().optional()
 })
 
-export const workspaceIdSchema = z.object({
+export const WorkspaceIdSchema = z.object({
     workspaceId: z.uuid().nonempty()
 })

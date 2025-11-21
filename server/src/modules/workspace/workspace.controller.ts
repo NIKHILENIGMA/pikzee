@@ -3,7 +3,7 @@ import { UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
 
 import { WorkspaceService } from './workspace.service'
-import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from './workspace.validator'
+import { CreateWorkspaceSchema, UpdateWorkspaceSchema, WorkspaceIdSchema } from './workspace.validator'
 
 export class WorkspaceController extends BaseController {
     constructor(private workspaceService: WorkspaceService) {
@@ -34,7 +34,7 @@ export class WorkspaceController extends BaseController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
             const workspace = await this.workspaceService.getWorkspaceById(workspaceId, userId)
 
@@ -52,7 +52,7 @@ export class WorkspaceController extends BaseController {
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
-            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
             const usageData = await this.workspaceService.getWorkspaceUsage(workspaceId, userId)
 
@@ -71,7 +71,7 @@ export class WorkspaceController extends BaseController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const validatedInput = ValidationService.validateBody(req.body, createWorkspaceSchema)
+            const validatedInput = ValidationService.validateBody(req.body, CreateWorkspaceSchema)
 
             const newWorkspace = await this.workspaceService.createWorkspace({
                 name: validatedInput.name,
@@ -94,10 +94,9 @@ export class WorkspaceController extends BaseController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
-            const { name, logoUrl } = ValidationService.validateBody(req.body, updateWorkspaceSchema)
-
+            const { name, logoUrl } = ValidationService.validateBody(req.body, UpdateWorkspaceSchema)
             const updatedWorkspace = await this.workspaceService.updateWorkspace(workspaceId, userId, {
                 name,
                 logoUrl

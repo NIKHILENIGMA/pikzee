@@ -4,7 +4,7 @@ import { UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
 import { addMemberSchema, updateMemberPermissionSchema, workspaceMemberIdSchema } from './member.validator'
 
-import { workspaceIdSchema } from '../workspace'
+import { WorkspaceIdSchema } from '../workspace'
 
 export class MemberController extends BaseController {
     constructor(private memberService: MemberService) {
@@ -18,7 +18,7 @@ export class MemberController extends BaseController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
             const members = await this.memberService.getWorkspaceMembers(workspaceId)
 
@@ -36,7 +36,7 @@ export class MemberController extends BaseController {
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
-            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
             const { inviteeUserId, permission } = ValidationService.validateBody(req.body, addMemberSchema)
 
             const newMember = await this.memberService.addMemberToWorkspace(workspaceId, inviteeUserId, { userId, permission })
