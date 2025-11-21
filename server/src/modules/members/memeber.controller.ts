@@ -2,9 +2,9 @@ import { Request, Response } from 'express'
 import { memberService } from './member.service'
 import { ApiResponse, InternalServerError, StandardError, UnauthorizedError } from '@/util'
 import { ValidationService } from '@/lib'
-import { addMemberSchema, updateMemberPermissionSchema, WorkspaceMemberIdSchema } from './member.validator'
+import { addMemberSchema, updateMemberPermissionSchema, workspaceMemberIdSchema } from './member.validator'
 
-import { WorkspaceIdSchema } from '../workspace'
+import { workspaceIdSchema } from '../workspace'
 
 export class MemberController {
     async listWorkspaceMembers(req: Request, res: Response) {
@@ -14,7 +14,7 @@ export class MemberController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
 
             const members = await memberService.getWorkspaceMembers(workspaceId)
 
@@ -34,7 +34,7 @@ export class MemberController {
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
             const { inviteeUserId, permission } = ValidationService.validateBody(req.body, addMemberSchema)
 
             const newMember = await memberService.addMemberToWorkspace(workspaceId, inviteeUserId, { userId, permission })
@@ -56,7 +56,7 @@ export class MemberController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId, memberId } = ValidationService.validateParams(req.params, WorkspaceMemberIdSchema)
+            const { workspaceId, memberId } = ValidationService.validateParams(req.params, workspaceMemberIdSchema)
 
             const { permission } = ValidationService.validateBody(req.body, updateMemberPermissionSchema)
 
@@ -82,7 +82,7 @@ export class MemberController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId, memberId } = ValidationService.validateParams(req.params, WorkspaceMemberIdSchema)
+            const { workspaceId, memberId } = ValidationService.validateParams(req.params, workspaceMemberIdSchema)
 
             await memberService.removeMemberFromWorkspace(workspaceId, memberId, userId)
 

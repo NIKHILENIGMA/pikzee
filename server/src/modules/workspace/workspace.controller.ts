@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
 import { workspaceService } from './workspace.service'
 import { ApiResponse, InternalServerError, StandardError, UnauthorizedError } from '@/util'
-import { createWorkspaceSchema, updateWorkspaceSchema, ValidationService, WorkspaceIdSchema } from '@/shared'
+import { ValidationService } from '@/lib'
+import { createWorkspaceSchema, updateWorkspaceSchema, workspaceIdSchema } from './workspace.validator'
 
 export class WorkspaceController {
     async getUserWorkspaces(req: Request, res: Response) {
@@ -32,7 +33,7 @@ export class WorkspaceController {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
 
             const workspace = await workspaceService.getWorkspaceById(workspaceId, userId)
 
@@ -81,7 +82,7 @@ export class WorkspaceController {
         }
 
         try {
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+            const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
 
             const { name, logoUrl } = ValidationService.validateBody(req.body, updateWorkspaceSchema)
 
@@ -108,7 +109,7 @@ export class WorkspaceController {
         if (!userId) {
             throw new UnauthorizedError('User not authenticated')
         }
-        const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+        const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
 
         try {
             await workspaceService.deleteWorkspace(workspaceId, userId)
@@ -131,7 +132,7 @@ export class WorkspaceController {
         if (!userId) {
             throw new UnauthorizedError('User not authenticated')
         }
-        const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+        const { workspaceId } = ValidationService.validateParams(req.params, workspaceIdSchema)
 
         try {
             const usageData = await workspaceService.getWorkspaceUsage(workspaceId, userId)

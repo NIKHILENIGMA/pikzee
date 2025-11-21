@@ -10,6 +10,6 @@ export const updateWorkspaceSchema = z.object({
     logoUrl: z.url().optional()
 })
 
-export const WorkspaceIdSchema = z.object({
+export const workspaceIdSchema = z.object({
     workspaceId: z.uuid().nonempty()
 })

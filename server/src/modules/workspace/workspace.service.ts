@@ -34,7 +34,7 @@ class WorkspaceService {
         return WorkspaceService.instance
     }
 
-    async getSubscriptionLimits(plan: string): Promise<SubscriptionLimits> {
+    getSubscriptionLimits(plan: string): SubscriptionLimits {
         /**
          * TASK LIST:
          * 1. Check Redis cache for subscription plan limits using key `subscription:${plan}`
@@ -195,11 +195,7 @@ class WorkspaceService {
     async createWorkspace(data: CreateWorkspace): Promise<WorkspaceDTO> {
         try {
             const workspace = await db.transaction(async (tx) => {
-                const user = await tx
-                    .select()
-                    .from(users)
-                    .where(eq(users.id, data.ownerId))
-                    .limit(1)
+                const user = await tx.select().from(users).where(eq(users.id, data.ownerId)).limit(1)
                 if (user.length === 0) {
                     throw new NotFoundError('User not found', 'workspaceService.createWorkspace')
                 }
@@ -354,7 +350,7 @@ class WorkspaceService {
         }
 
         const subscriptionPlan = workspace.subscriptionPlan || 'FREE'
-        const limits = await this.getSubscriptionLimits(subscriptionPlan)
+        const limits = this.getSubscriptionLimits(subscriptionPlan)
 
         return {
             storageUsed: workspace.storageUsed || 0,
@@ -382,7 +378,7 @@ class WorkspaceService {
             const newStorageUsed = Math.max(0, (workspace.storageUsed || 0) + bytesAdded)
 
             // Get subscription limits
-            const limits = await this.getSubscriptionLimits(workspace.subscriptionPlan || 'FREE')
+            const limits = this.getSubscriptionLimits(workspace.subscriptionPlan || 'FREE')
 
             // Check against storage limit
             if (newStorageUsed > limits.storageLimit) {
@@ -422,7 +418,7 @@ class WorkspaceService {
             const newBandwidthUsed = (workspace.bandwidthUsed || 0) + bytesTransferred
 
             // Get subscription limits
-            const limits = await this.getSubscriptionLimits(workspace.subscriptionPlan || 'FREE')
+            const limits = this.getSubscriptionLimits(workspace.subscriptionPlan || 'FREE')
 
             // For free plan, block if exceeds limit
             if (newBandwidthUsed > limits.bandwidthLimit && workspace.subscriptionPlan === 'FREE') {
