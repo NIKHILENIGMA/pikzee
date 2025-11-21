@@ -4,10 +4,10 @@ import { MemberDTO, MemberPermission, UpdateMemberPermissionInput } from './memb
 import { DatabaseError, ForbiddenError, NotFoundError, StandardError } from '@/util'
 import { logger } from '@/config'
 
-class MemberService {
+export class MemberService {
     private static instance: MemberService
 
-    private constructor() {}
+    constructor() {}
 
     public static getInstance(): MemberService {
         if (!MemberService.instance) {

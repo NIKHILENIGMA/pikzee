@@ -1,7 +1,12 @@
 import { Router } from 'express'
-import { memberController } from './memeber.controller'
+import { MemberController } from './memeber.controller'
+import { memberService } from './member.service'
 
 const router = Router({ mergeParams: true })
+
+// Initialize MemberController with memberService
+const memberController = new MemberController(memberService)
+
 
 // - Get all members of workspace
 // - Add member to workspace
