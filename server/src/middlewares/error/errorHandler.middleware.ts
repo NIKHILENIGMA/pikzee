@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
-import { IS_PRODUCTION } from '../config'
-import { StandardError } from '../util'
+import { IS_PRODUCTION } from '@/config'
+import { StandardError } from '@/util'
 
 /**
  * Middleware function to handle errors in the application.

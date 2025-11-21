@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { NotFoundError } from '../util'
+import { NotFoundError } from '@/util'
 
 /**
  * Middleware to handle 404 Not Found errors.
