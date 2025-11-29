@@ -17,3 +17,10 @@ export interface MemberDTO {
 export interface UpdateMemberPermissionInput {
     permission: MemberPermission
 }
+
+export interface InsertMember {
+    userId: string
+    workspaceId: string
+    inviteeUserId: string
+    permission: MemberPermission
+}

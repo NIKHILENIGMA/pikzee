@@ -1,12 +1,14 @@
 import { db, users, workspaceMembers, workspaces } from '@/core'
 import { and, eq } from 'drizzle-orm'
-import { MemberDTO, MemberPermission, UpdateMemberPermissionInput } from './member.types'
-import { DatabaseError, ForbiddenError, NotFoundError, StandardError } from '@/util'
+import { MemberDTO, MemberPermission, UpdateMemberPermissionInput, InsertMember } from './member.types'
+import { DatabaseError, ForbiddenError, StandardError } from '@/util'
 
 export class MemberService {
     private static instance: MemberService
 
-    constructor() {}
+    constructor() {
+        // Private constructor to prevent direct instantiation
+    }
 
     public static getInstance(): MemberService {
         if (!MemberService.instance) {
@@ -49,38 +51,14 @@ export class MemberService {
         }))
     }
 
-    async addMemberToWorkspace(workspaceId: string, inviteeUserId: string, data: { userId: string; permission: string }): Promise<MemberDTO> {
+    async addMemberToWorkspace(data: InsertMember): Promise<MemberDTO> {
         try {
-            const [existingMemberCheck, ownerCheck] = await Promise.all([
-                db
-                    .select({ id: workspaceMembers.id })
-                    .from(workspaceMembers)
-                    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, inviteeUserId)))
-                    .limit(1),
-                db.select({ ownerId: workspaces.ownerId }).from(workspaces).where(eq(workspaces.id, workspaceId))
-            ])
-
-            // Check if the invitee is already a member
-            if (existingMemberCheck.length > 0) {
-                throw new ForbiddenError('User is already a member of the workspace.')
-            }
-
-            const ownerCheckRecord = ownerCheck[0]
-
-            // Check requester is the owner of the workspace
-            if (ownerCheck.length === 0) {
-                throw new NotFoundError('Workspace not found.')
-            }
-            if (ownerCheckRecord.ownerId !== data.userId) {
-                throw new ForbiddenError('Only the workspace owner can add members.')
-            }
-
             const [newMember] = await db
                 .insert(workspaceMembers)
                 .values({
-                    userId: inviteeUserId,
-                    workspaceId: workspaceId,
-                    permission: data.permission as MemberDTO['permission']
+                    userId: data.inviteeUserId,
+                    workspaceId: data.workspaceId,
+                    permission: data.permission
                 })
                 .returning({
                     id: workspaceMembers.id,
@@ -89,6 +67,10 @@ export class MemberService {
                     permission: workspaceMembers.permission,
                     joinedAt: workspaceMembers.joinedAt
                 })
+
+            if (!newMember) {
+                throw new DatabaseError('Failed to insert new member record.', 'MemberService.addMemberToWorkspace')
+            }
 
             return newMember
         } catch (error) {

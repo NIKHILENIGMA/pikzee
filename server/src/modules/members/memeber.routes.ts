@@ -7,7 +7,6 @@ const router = Router({ mergeParams: true })
 // Initialize MemberController with memberService
 const memberController = new MemberController(memberService)
 
-
 // - Get all members of workspace
 // - Add member to workspace
 router.route('/').get(memberController.listWorkspaceMembers).post(memberController.addMember)

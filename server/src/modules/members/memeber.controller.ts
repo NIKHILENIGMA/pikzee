@@ -29,7 +29,7 @@ export class MemberController extends BaseController {
             }
         })
     }
-    
+
     addMember = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async () => {
             const userId: string | undefined = req.user?.id
