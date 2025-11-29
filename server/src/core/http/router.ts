@@ -1,10 +1,10 @@
 import { Router } from 'express'
-// import workspaceRouter from '@/modules/workspace/workspace.routes'
-import { authRouter, workspace, admin } from '@/modules'
+
+import { auth, workspace, admin } from '@/modules'
 
 const router = Router()
 
-router.use('/auth', authRouter)
+router.use('/auth', auth.AuthRouter)
 router.use('/workspaces', workspace.workspaceRouter)
 router.use('/admin', admin.adminRouter)
 
