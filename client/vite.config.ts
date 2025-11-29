@@ -7,7 +7,7 @@ import { defineConfig, loadEnv } from 'vite'
 
 import { envSchema } from './src/shared/config/env'
 
-type ServerConfig = { host: boolean; port: number; open: boolean, allowedHosts: string[] }
+type ServerConfig = { host: boolean; port: number; open: boolean; allowedHosts: string[] }
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {

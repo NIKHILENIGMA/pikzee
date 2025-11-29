@@ -20,7 +20,7 @@ export const useOAuth = () => {
             await signUp.authenticateWithRedirect({
                 strategy: oauthStrategy,
                 redirectUrl: `${window.location.origin}/sso-callback`,
-                redirectUrlComplete: `${window.location.origin}/dashboard/`
+                redirectUrlComplete: `${window.location.origin}/ws/`
             })
         } catch (error) {
             showBoundary(error)
