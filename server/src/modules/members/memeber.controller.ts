@@ -39,7 +39,12 @@ export class MemberController extends BaseController {
             const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
             const { inviteeUserId, permission } = ValidationService.validateBody(req.body, addMemberSchema)
 
-            const newMember = await this.memberService.addMemberToWorkspace(workspaceId, inviteeUserId, { userId, permission })
+            const newMember = await this.memberService.addMemberToWorkspace({
+                workspaceId,
+                inviteeUserId,
+                permission,
+                userId
+            })
 
             return {
                 statusCode: 201,
