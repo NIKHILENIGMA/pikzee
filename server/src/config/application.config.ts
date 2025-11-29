@@ -7,6 +7,7 @@ export const PORT: number = parseInt(process.env.PORT!) || 3000
 export const NODE_ENV: string = process.env.NODE_ENV! || 'development'
 export const IS_PRODUCTION: boolean = NODE_ENV === 'production'
 export const IS_DEVELOPMENT: boolean = NODE_ENV === 'development'
+export const FRONTEND_BASE_URL: string = process.env.FRONTEND_BASE_URL || 'http://localhost:3000'
 
 // Cors Configuration
 export const CORS_ORIGIN: string = process.env.CORS_ORIGIN || 'http://localhost:3000'
@@ -25,3 +26,5 @@ export const REFRESH_TOKEN_EXPIRY: number = parseInt(process.env.REFRESH_TOKEN_E
 
 // Bcrypt Configuration
 export const BCRYPT_SALT_ROUNDS: number = parseInt(process.env.BCRYPT_SALT_ROUNDS!) || 10
+
+export const NOVU_API_KEY: string = process.env.NOVU_API_KEY || 'your_novu_api_key'
