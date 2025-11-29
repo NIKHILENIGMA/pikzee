@@ -2,11 +2,14 @@ import { Request, Response } from 'express'
 import { adminService } from './admin.service'
 import { NotFoundError, UnauthorizedError } from '@/util/StandardError'
 import { ApiResponse } from '@/util/ApiResponse'
+import { BaseController } from '@/lib'
 
-export class AdminController {
-    constructor() {}
+export class AdminController extends BaseController {
+    constructor() {
+        super()
+    }
 
-    async userDetails(req: Request, res: Response) {
+    userDetails = async (req: Request, res: Response) => {
         const userId = req.user?.id
         if (!userId) {
             throw new UnauthorizedError('User not authenticated')
