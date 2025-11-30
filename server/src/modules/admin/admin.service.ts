@@ -1,30 +1,22 @@
-import { db, users } from '@/core'
-import { DatabaseError, StandardError } from '@/util'
-import { eq } from 'drizzle-orm'
+import { User } from '@/core'
+import { UserService } from './user.service'
 
 export class AdminService {
-    private static instance: AdminService
-
-    private constructor() {}
-
-    public static getInstance(): AdminService {
-        if (!AdminService.instance) {
-            AdminService.instance = new AdminService()
-        }
-        return AdminService.instance
-    }
+    constructor(private userService: UserService) {}
 
     async getUserById(userId: string) {
-        try {
-            return await db.select().from(users).where(eq(users.id, userId)).limit(1)
-        } catch (error) {
-            if (error instanceof StandardError) {
-                throw error
-            }
+        return await this.userService.getUserById(userId)
+    }
 
-            throw new DatabaseError('Failed to fetch user by ID', 'adminService.getUserById')
-        }
+    async listAllUsers() {
+        return await this.userService.listAllUsers()
+    }
+
+    async updateUser(userId: string, updateData: Partial<User>) {
+        return await this.userService.updateUser(userId, updateData)
+    }
+
+    async deleteUser(userId: string) {
+        return await this.userService.deleteUser(userId)
     }
 }
-
-export const adminService = AdminService.getInstance()
