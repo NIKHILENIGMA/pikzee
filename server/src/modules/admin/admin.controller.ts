@@ -4,7 +4,7 @@ import { NotFoundError, UnauthorizedError } from '@/util/StandardError'
 import { BaseController, ValidationService } from '@/lib'
 
 import { AdminService } from './admin.service'
-import { GetUserDetailsByIdSchema, UpdateUserDetailsSchema } from './admin.validator'
+import { CreateUserSchema, GetUserDetailsByIdSchema, UpdateUserDetailsSchema } from './admin.validator'
 
 interface ControllerResponse<T> {
     statusCode: number
@@ -47,6 +47,25 @@ export class AdminController extends BaseController {
                 statusCode: 200,
                 message: 'List of all users',
                 data: users
+            }
+        })
+    }
+
+    createUser = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<ControllerResponse<typeof newUser>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) {
+                throw new UnauthorizedError('User not authenticated')
+            }
+
+            const userData = ValidationService.validateBody(req.body, CreateUserSchema)
+
+            const newUser = await this.adminService.createUser(userData)
+
+            return {
+                statusCode: 201,
+                message: 'User created successfully',
+                data: newUser
             }
         })
     }

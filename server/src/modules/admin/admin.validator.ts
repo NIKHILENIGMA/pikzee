@@ -4,6 +4,14 @@ export const GetUserDetailsByIdSchema = z.object({
     id: z.string().min(1, { message: 'User ID is required' })
 })
 
+export const CreateUserSchema = z.object({
+    id: z.string().min(1, { message: 'User ID is required' }),
+    firstName: z.string().min(1, { message: 'First name is required' }),
+    lastName: z.string().min(1, { message: 'Last name is required' }),
+    email: z.email({ message: 'Invalid email address' }),
+    avatarUrl: z.url({ message: 'Invalid URL' }).optional()
+})
+
 export const UpdateUserDetailsSchema = z.object({
     firstName: z.string().min(1, { message: 'First name is required' }).optional(),
     lastName: z.string().min(1, { message: 'Last name is required' }).optional(),

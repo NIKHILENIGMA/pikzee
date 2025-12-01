@@ -30,6 +30,11 @@ export class UserService {
         return await db.select().from(users)
     }
 
+    async createUser(userData: CreateUser): Promise<User> {
+        const [newUser] = await db.insert(users).values(userData).returning()
+        return newUser
+    }
+
     async updateUser(userId: string, updateData: Partial<CreateUser>): Promise<User | null> {
         const [updatedUser] = await db.update(users).set(updateData).where(eq(users.id, userId)).returning()
         return updatedUser || null
