@@ -7,7 +7,8 @@ import { FRONTEND_BASE_URL } from '@/config'
 import { NotificationService, notificationService } from '@/core/notification/notification.service'
 import { WORKFLOWS, WORKFLOWS_KEYS } from '@/core/notification/workflows'
 import { NotificationChannel } from '@/types/notification/notification.types'
-import { memberService, MemberService } from '../members/member.service'
+import { MemberService } from '../members/member.service'
+import { IInvitationRepository } from './invitation.repository'
 
 interface CreateInvitationPayload {
     workspaceName: string
@@ -20,43 +21,12 @@ interface CreateInvitationPayload {
 const [INVITATION_PENDING, INVITATION_ACCEPTED, INVITATION_EXPIRED, INVITATION_CANCELLED] = invitationStatusEnum.enumValues
 
 export class InvitationService {
-    private static instance: InvitationService
-
-    private constructor(
+    constructor(
         private notificationService: NotificationService,
-        private memberService: MemberService
-    ) {
-        this.notificationService = notificationService
-        this.memberService = memberService
-    }
+        private memberService: MemberService,
+        private readonly invitationRepository: IInvitationRepository
+    ) {}
 
-    public static getInstance(): InvitationService {
-        if (!InvitationService.instance) {
-            InvitationService.instance = new InvitationService(notificationService, memberService)
-        }
-        return InvitationService.instance
-    }
-
-    /**
-     * TASK LIST:
-     * 1. Verify inviter has FULL_ACCESS or is workspace owner
-     * 2. Get workspace details and subscription plan
-     * 3. Get subscription limits for member count
-     * 4. Count current workspace members
-     * 5. If memberCount >= maxMembers, throw SubscriptionLimitError
-     * 6. Check if invitee email already exists as workspace member
-     * 7. If already member, throw ValidationError
-     * 8. Check for existing pending invitation to same email for this workspace
-     * 9. If exists and not expired, throw ValidationError ('Invitation already sent')
-     * 10. Generate unique secure token for invitation
-     * 11. Set expiration date (e.g., 7 days from now)
-     * 12. Insert invitation record into database
-     * 13. Check if invitee email exists in users table
-     * 14. If user exists, send 'existing user' email with direct login link
-     * 15. If user doesn't exist, send 'new user' email with signup link
-     * 16. Use Novu to trigger email via SendGrid with workspace name, inviter name, token
-     * 17. Return created InvitationDTO
-     */
     async sendInvitation(workspaceId: string, inviterUserId: string, data: SendInvitationInput): Promise<void> {
         const [workspaceResult, inviterFullAccessCheck, inviteeExistsResult, inviterDetailsResult] = await Promise.all([
             // Query 1: Get Workspace (lightweight SELECT)
@@ -211,41 +181,21 @@ export class InvitationService {
         return pendingInvitations
     }
 
-    /**
-     * TASK LIST:
-     * 1. Find invitation by token
-     * 2. If not found, throw NotFoundError ('Invalid invitation token')
-     * 3. Check if invitation is already accepted/cancelled
-     * 4. If not pending, throw ValidationError
-     * 5. Check if invitation is expired (expiresAt < now)
-     * 6. If expired, update status to 'expired' and throw ValidationError
-     * 7. Verify invitee email matches authenticated user's email
-     * 8. If mismatch, throw ForbiddenError
-     * 9. Check if user is already member of workspace
-     * 10. If already member, throw ValidationError
-     * 11. Begin database transaction
-     * 12. Insert new workspaceMember record with invitation permission
-     * 13. Update invitation status to 'accepted'
-     * 14. Commit transaction
-     * 15. Return workspace details and member data
-     * 16. Rollback on error
-     */
     async acceptInvitation(token: string, userId: string) {
         const invitation = await this.verifyHashedToken(token)
 
+        // Validate invitation existence and status
         if (!invitation) {
             throw new NotFoundError('Invalid invitation token')
         }
-
         if (invitation.status !== INVITATION_PENDING) {
             throw new BadRequestError('Invitation is no longer valid')
         }
-
-        if (invitation.expiresAt < new Date()) {
-            // Update status to 'expired'
-            await db.update(invitations).set({ status: INVITATION_EXPIRED }).where(eq(invitations.id, invitation.id))
+        if (!invitation.expiresAt || new Date(invitation.expiresAt).getTime() <= new Date().getTime()) {
             throw new UnauthorizedError('Invitation has expired')
         }
+
+        await db.update(invitations).set({ status: INVITATION_EXPIRED }).where(eq(invitations.id, invitation.id))
 
         const newMember = await this.memberService.addMemberToWorkspace({
             userId,
@@ -263,16 +213,6 @@ export class InvitationService {
         }
     }
 
-    /**
-     * TASK LIST:
-     * 1. Get invitation by ID
-     * 2. Verify user is workspace owner or invitation creator
-     * 3. If not authorized, throw ForbiddenError
-     * 4. Check invitation status is 'pending'
-     * 5. If not pending, throw ValidationError ('Cannot cancel non-pending invitation')
-     * 6. Update invitation status to 'cancelled'
-     * 7. Return success message
-     */
     async cancelInvitation(invitationId: string, userId: string): Promise<{ message: string }> {
         const invitation = await this.getInvitationById(invitationId)
 
@@ -342,19 +282,9 @@ export class InvitationService {
     }
 
     private async createInvitation(data: CreateInvitation): Promise<Invitation> {
-        const invitation = await db.insert(invitations).values(data).returning({
-            id: invitations.id,
-            workspaceId: invitations.workspaceId,
-            inviterUserId: invitations.inviterUserId,
-            inviteeEmail: invitations.inviteeEmail,
-            permission: invitations.permission,
-            token: invitations.token,
-            status: invitations.status,
-            expiresAt: invitations.expiresAt,
-            createdAt: invitations.createdAt
-        })
+        const invitation = await this.invitationRepository.create(data)
 
-        return invitation[0]
+        return invitation
     }
 
     private invitationLink(token: string, type: 'SIGNUP' | 'LOGIN'): string {
@@ -366,5 +296,3 @@ export class InvitationService {
         }
     }
 }
-
-export const invitationService = InvitationService.getInstance()
