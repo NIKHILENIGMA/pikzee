@@ -11,16 +11,28 @@ export const FRONTEND_BASE_URL: string = process.env.FRONTEND_BASE_URL || 'http:
 
 // Cors Configuration
 export const CORS_ORIGIN: string = process.env.CORS_ORIGIN || 'http://localhost:3000'
-export const CORS_METHODS: string[] = process.env.CORS_METHODS?.split(',') || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-export const CORS_HEADERS: string[] = process.env.CORS_HEADERS?.split(',') || ['Content-Type', 'Authorization']
+export const CORS_METHODS: string[] = process.env.CORS_METHODS?.split(',') || [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'OPTIONS'
+]
+export const CORS_HEADERS: string[] = process.env.CORS_HEADERS?.split(',') || [
+    'Content-Type',
+    'Authorization'
+]
 export const CORS_CREDENTIALS: boolean = process.env.CORS_CREDENTIALS === 'true'
 
 // Database Configuration
-export const DATABASE_URL: string = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/mydatabase'
+export const DATABASE_URL: string =
+    process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/mydatabase'
 
 // JWT Configuration
-export const ACCESS_TOKEN_SECRET: string = process.env.ACCESS_TOKEN_SECRET! || 'your_access_token_secret'
-export const REFRESH_TOKEN_SECRET: string = process.env.REFRESH_TOKEN_SECRET! || 'your_refresh_token_secret'
+export const ACCESS_TOKEN_SECRET: string =
+    process.env.ACCESS_TOKEN_SECRET! || 'your_access_token_secret'
+export const REFRESH_TOKEN_SECRET: string =
+    process.env.REFRESH_TOKEN_SECRET! || 'your_refresh_token_secret'
 export const ACCESS_TOKEN_EXPIRY: number = parseInt(process.env.ACCESS_TOKEN_EXPIRY!) || 3600
 export const REFRESH_TOKEN_EXPIRY: number = parseInt(process.env.REFRESH_TOKEN_EXPIRY!) || 604800
 

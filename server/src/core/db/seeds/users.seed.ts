@@ -46,7 +46,9 @@ export const seedUsers = async () => {
                     .catch((error) => {
                         // Handle duplicate user gracefully
                         if (error.errors?.[0]?.code === 'form_identifier_exists') {
-                            logger.warn(`⚠️ User ${user.email} already exists in Clerk, skipping...`)
+                            logger.warn(
+                                `⚠️ User ${user.email} already exists in Clerk, skipping...`
+                            )
                             return null
                         }
                         throw error

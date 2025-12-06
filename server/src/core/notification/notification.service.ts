@@ -2,7 +2,10 @@ import { Novu, SDKOptions } from '@novu/api'
 
 import { logger, NOVU_API_KEY } from '@/config'
 import { InternalServerError } from '@/util'
-import { CreateNotificationSubscriber, NotificationTrigger } from '@/types/notification/notification.types'
+import {
+    CreateNotificationSubscriber,
+    NotificationTrigger
+} from '@/types/notification/notification.types'
 
 export class NotificationService {
     private novu: Novu | null = null
@@ -16,7 +19,10 @@ export class NotificationService {
         const apiKey: string = NOVU_API_KEY
 
         if (!apiKey || apiKey.trim() === '') {
-            throw new InternalServerError('Novu API key is not configured properly.', 'NOVU_API_KEY_MISSING')
+            throw new InternalServerError(
+                'Novu API key is not configured properly.',
+                'NOVU_API_KEY_MISSING'
+            )
         }
 
         const sdkOptions: SDKOptions = {
@@ -60,7 +66,10 @@ export class NotificationService {
 
             logger.error(`Failed to create subscriber: ${message}`)
 
-            throw new InternalServerError('Failed to create subscriber in notification service.', 'NOVU_CREATE_SUBSCRIBER_FAILED')
+            throw new InternalServerError(
+                'Failed to create subscriber in notification service.',
+                'NOVU_CREATE_SUBSCRIBER_FAILED'
+            )
         }
     }
 
@@ -78,7 +87,10 @@ export class NotificationService {
             }
             logger.error(`Failed to delete subscriber: ${message}`)
 
-            throw new InternalServerError('Failed to delete subscriber from notification service.', 'NOVU_DELETE_SUBSCRIBER_FAILED')
+            throw new InternalServerError(
+                'Failed to delete subscriber from notification service.',
+                'NOVU_DELETE_SUBSCRIBER_FAILED'
+            )
         }
     }
 
@@ -96,7 +108,10 @@ export class NotificationService {
         } catch (error) {
             logger.error(`Failed to trigger notification: ${(error as Error)?.message}`)
 
-            throw new InternalServerError('Failed to trigger notification.', 'NOVU_TRIGGER_NOTIFICATION_FAILED')
+            throw new InternalServerError(
+                'Failed to trigger notification.',
+                'NOVU_TRIGGER_NOTIFICATION_FAILED'
+            )
         }
     }
 }

@@ -60,7 +60,9 @@ export class ValidationService {
      * }
      * ```
      */
-    private static formatZodErrors(errors: ZodError): Array<{ field: string; message: string; code: string }> {
+    private static formatZodErrors(
+        errors: ZodError
+    ): Array<{ field: string; message: string; code: string }> {
         return errors.issues.map((issue) => ({
             field: issue.path.join('.'), // Join path segments with dot notation
             message: issue.message, // Use the message from Zod issue

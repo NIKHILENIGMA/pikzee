@@ -29,7 +29,12 @@ import { StandardError } from '@/util'
  * @throws Will not throw an error itself but ensures the error is properly handled and logged.
  */
 
-export const errorHandler = (err: Error | StandardError, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (
+    err: Error | StandardError,
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     // Error Response Object
     const errorResponse = {
         success: false,

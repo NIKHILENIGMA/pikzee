@@ -1,11 +1,31 @@
-import { pgTable, uuid, varchar, timestamp, boolean, bigint, pgEnum, unique, text } from 'drizzle-orm/pg-core'
+import {
+    pgTable,
+    uuid,
+    varchar,
+    timestamp,
+    boolean,
+    bigint,
+    pgEnum,
+    unique,
+    text
+} from 'drizzle-orm/pg-core'
 import { users } from './users.schema'
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
 // Enums
 export const subscriptionPlanEnum = pgEnum('subscription_plan', ['FREE', 'CREATOR', 'TEAM'])
-export const memberPermissionEnum = pgEnum('member_permission', ['FULL_ACCESS', 'EDIT', 'COMMENT_ONLY', 'VIEW_ONLY'])
-export const invitationStatusEnum = pgEnum('invitation_status', ['PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED'])
+export const memberPermissionEnum = pgEnum('member_permission', [
+    'FULL_ACCESS',
+    'EDIT',
+    'COMMENT_ONLY',
+    'VIEW_ONLY'
+])
+export const invitationStatusEnum = pgEnum('invitation_status', [
+    'PENDING',
+    'ACCEPTED',
+    'EXPIRED',
+    'CANCELLED'
+])
 
 // Workspaces Table
 export const workspaces = pgTable('workspaces', {

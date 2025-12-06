@@ -9,7 +9,8 @@ export const seedWorkspaces = async () => {
     try {
         const existingUsers = await db.select().from(users)
 
-        if (!existingUsers || existingUsers.length === 0) throw new Error('No users found. Please seed users first.')
+        if (!existingUsers || existingUsers.length === 0)
+            throw new Error('No users found. Please seed users first.')
 
         // Create workspaces for each user
         // for (const user of existingUsers) {
