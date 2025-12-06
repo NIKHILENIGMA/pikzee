@@ -12,7 +12,10 @@ const userService = new UserService()
 const adminService = new AdminService(userService)
 const adminController = new AdminController(adminService)
 
-router.route('/users').get(clerkMiddleware, adminController.listUsers).post(clerkMiddleware, adminController.createUser)
+router
+    .route('/users')
+    .get(clerkMiddleware, adminController.listUsers)
+    .post(clerkMiddleware, adminController.createUser)
 
 router
     .route('/users/:id')
