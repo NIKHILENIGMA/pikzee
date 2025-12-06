@@ -1,198 +1,165 @@
-import { db, users, workspaceMembers, workspaces } from '@/core'
-import { and, eq } from 'drizzle-orm'
-import { MemberDTO, MemberPermission, UpdateMemberPermissionInput, InsertMember } from './member.types'
-import { DatabaseError, ForbiddenError, StandardError } from '@/util'
+import { CreateWorkspaceMember, WorkspaceMember } from '@/core'
+import { DatabaseError, ForbiddenError } from '@/util'
 
-export class MemberService {
-    private static instance: MemberService
+import { MemberDTO, UpdateMemberPermissionInput } from './member.types'
+import { IMemberRepository } from './member.repository'
 
-    constructor() {
-        // Private constructor to prevent direct instantiation
-    }
+type MemberMap = {
+    id: string
+    userId: string
+    permission: 'FULL_ACCESS' | 'VIEW_ONLY' | 'COMMENT_ONLY' | 'EDIT'
+    firstName: string | null
+    lastName: string | null
+    email: string
+    avatarUrl: string | null
+}
 
-    public static getInstance(): MemberService {
-        if (!MemberService.instance) {
-            MemberService.instance = new MemberService()
-        }
-        return MemberService.instance
-    }
+export interface IMemberService {
+    getWorkspaceMembers(workspaceId: string): Promise<MemberDTO[]>
+    getMemberByWorkspaceId(workspaceId: string): Promise<WorkspaceMember[]>
+    getMemberWithDetails(workspaceId: string): Promise<MemberMap[]>
+    insertMemberToWorkspace(data: CreateWorkspaceMember): Promise<MemberDTO>
+    updateMemberPermission(
+        workspaceId: string,
+        memberId: string,
+        requesterId: string,
+        data: UpdateMemberPermissionInput
+    ): Promise<MemberDTO>
+    removeMemberFromWorkspace(
+        workspaceId: string,
+        memberId: string,
+        requesterId: string
+    ): Promise<{ message: string }>
+}
+
+export class MemberService implements IMemberService {
+    constructor(private readonly memberRepository: IMemberRepository) {}
 
     async getWorkspaceMembers(workspaceId: string): Promise<MemberDTO[]> {
-        const members = await db
-            .select({
-                id: workspaceMembers.id,
-                userId: workspaceMembers.userId,
-                workspaceId: workspaceMembers.workspaceId,
-                permission: workspaceMembers.permission,
-                joinedAt: workspaceMembers.joinedAt,
+        const members = await this.memberRepository.getWorkspaceMembers(workspaceId)
 
-                // User info
-                firstName: users.firstName,
-                lastName: users.lastName,
-                email: users.email,
-                avatarUrl: users.avatarUrl
-            })
-            .from(workspaceMembers)
-            .innerJoin(users, eq(workspaceMembers.userId, users.id))
-            .where(eq(workspaceMembers.workspaceId, workspaceId))
-
-        return members.map((member) => ({
-            id: member.id,
-            userId: member.userId,
-            workspaceId: member.workspaceId,
-            permission: member.permission,
-            joinedAt: member.joinedAt,
-            user: {
-                id: member.userId,
-                name: member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : member.firstName || member.lastName,
-                email: member.email,
-                avatarUrl: member.avatarUrl
-            }
-        }))
+        return members
     }
 
-    async addMemberToWorkspace(data: InsertMember): Promise<MemberDTO> {
-        try {
-            const [newMember] = await db
-                .insert(workspaceMembers)
-                .values({
-                    userId: data.inviteeUserId,
-                    workspaceId: data.workspaceId,
-                    permission: data.permission
-                })
-                .returning({
-                    id: workspaceMembers.id,
-                    userId: workspaceMembers.userId,
-                    workspaceId: workspaceMembers.workspaceId,
-                    permission: workspaceMembers.permission,
-                    joinedAt: workspaceMembers.joinedAt
-                })
+    async getMemberByWorkspaceId(workspaceId: string): Promise<WorkspaceMember[]> {
+        const members = await this.memberRepository.getMemberByWorkspaceId(workspaceId)
 
-            if (!newMember) {
-                throw new DatabaseError('Failed to insert new member record.', 'MemberService.addMemberToWorkspace')
-            }
-
-            return newMember
-        } catch (error) {
-            if (error instanceof StandardError) {
-                throw error
-            }
-
-            throw new DatabaseError(`Failed to add member to workspace: ${(error as Error).message}`, 'MemberService.addMemberToWorkspace')
+        if (!members) {
+            throw new DatabaseError(
+                'Failed to retrieve members.',
+                'MemberService.getMemberByWorkspaceId'
+            )
         }
+
+        return members
     }
 
-    async updateMemberPermission(workspaceId: string, memberId: string, requesterId: string, data: UpdateMemberPermissionInput): Promise<MemberDTO> {
-        const [requesterCheck, targetDetails] = await Promise.all([
-            db
-                .select({ permission: workspaceMembers.permission })
-                .from(workspaceMembers)
-                .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, requesterId)))
-                .limit(1),
-            db
-                .select({
-                    ownerId: workspaces.ownerId,
+    async getMemberWithDetails(workspaceId: string): Promise<MemberMap[]> {
+        const members = await this.memberRepository.getMemberWithDetails(workspaceId)
+        if (!members) {
+            throw new DatabaseError(
+                'Failed to retrieve members with details.',
+                'MemberService.getMemberWithDetails'
+            )
+        }
+        return members
+    }
 
-                    targetUserId: workspaceMembers.userId,
-                    targetId: workspaceMembers.id,
-                    targetWorkspaceId: workspaceMembers.workspaceId // To verify membership
-                })
-                .from(workspaceMembers)
-                .innerJoin(workspaces, eq(workspaces.id, workspaceId))
-                .where(eq(workspaceMembers.id, memberId))
-                .limit(1)
+    async insertMemberToWorkspace(data: CreateWorkspaceMember): Promise<MemberDTO> {
+        const newMember = await this.memberRepository.addMemberByWorkspaceId(data)
+
+        if (!newMember) {
+            throw new DatabaseError(
+                'Failed to insert new member record.',
+                'MemberService.insertMemberToWorkspace'
+            )
+        }
+
+        return newMember
+    }
+
+    async updateMemberPermission(
+        workspaceId: string,
+        memberId: string,
+        requesterId: string,
+        data: UpdateMemberPermissionInput
+    ): Promise<MemberDTO> {
+        const [requesterPermissionResult, targetMemberAndWorkspaceDetails] = await Promise.all([
+            this.memberRepository.getPermissionByWorkspaceAndUser(workspaceId, requesterId),
+            this.memberRepository.getMemberDetailsWithOwner(workspaceId, memberId)
         ])
 
-        const requesterMember = requesterCheck[0] // Requester's membership details
-        const targetMember = targetDetails[0] // Target member's details
-
-        if (!requesterMember || requesterMember.permission !== 'FULL_ACCESS') {
+        // 1. Verify requester is a member with FULL_ACCESS
+        if (!requesterPermissionResult || requesterPermissionResult.permission !== 'FULL_ACCESS') {
             throw new ForbiddenError('Not a member of the workspace or insufficient permissions.')
         }
 
-        if (!targetMember || targetMember.targetWorkspaceId !== workspaceId) {
-            throw new ForbiddenError('Target member does not belong to the specified workspace.')
+        // 2. Verify target member belongs to the workspace
+        if (
+            !targetMemberAndWorkspaceDetails ||
+            targetMemberAndWorkspaceDetails.workspace.id !== workspaceId
+        ) {
+            throw new ForbiddenError('Member does not belong to the specified workspace.')
         }
 
         // 2. Prevent changing owner's permission
-        if (targetMember.targetUserId === targetMember.ownerId) {
+        if (
+            targetMemberAndWorkspaceDetails.member.userId ===
+            targetMemberAndWorkspaceDetails.workspace.ownerId
+        ) {
             throw new ForbiddenError('Cannot change permission of the workspace owner.')
         }
 
-        const [updatedMember] = await db
-            .update(workspaceMembers)
-            .set({ permission: data.permission, updatedAt: new Date() })
-            .where(eq(workspaceMembers.id, memberId))
-            .returning()
+        const updatedMember = await this.memberRepository.changeMemberPermission(
+            memberId,
+            data.permission
+        )
+
+        if (!updatedMember) {
+            throw new DatabaseError(
+                'Failed to update member permission.',
+                'MemberService.updateMemberPermission'
+            )
+        }
 
         return updatedMember
     }
 
     async removeMemberFromWorkspace(workspaceId: string, memberId: string, requesterId: string) {
-        const [requesterCheck, targetDetails] = await Promise.all([
-            db
-                .select({ permission: workspaceMembers.permission })
-                .from(workspaceMembers)
-                .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, requesterId)))
-                .limit(1),
-            db
-                .select({
-                    targetUserId: workspaceMembers.userId,
-                    targetId: workspaceMembers.id,
-                    ownerId: workspaces.ownerId,
-                    targetWorkspaceId: workspaceMembers.workspaceId // To verify membership
-                })
-                .from(workspaceMembers)
-                .innerJoin(workspaces, eq(workspaces.id, workspaceId))
-                .where(eq(workspaceMembers.id, memberId))
-                .limit(1)
+        const [requesterPermissionResult, targetMemberAndWorkspaceDetails] = await Promise.all([
+            this.memberRepository.getPermissionByWorkspaceAndUser(workspaceId, requesterId),
+            this.memberRepository.getMemberDetailsWithOwner(workspaceId, memberId)
         ])
 
-        const requesterMember = requesterCheck[0] // Requester's membership details
-        const targetMember = targetDetails[0] // Target member's details
-
         // 1. Verify requester is a member
-        if (!requesterMember || requesterMember.permission !== 'FULL_ACCESS') {
+        if (!requesterPermissionResult || requesterPermissionResult.permission !== 'FULL_ACCESS') {
             throw new ForbiddenError('Not a member of the workspace or insufficient permissions.')
         }
 
-        if (!targetMember || targetMember.targetWorkspaceId !== workspaceId) {
+        if (
+            !targetMemberAndWorkspaceDetails ||
+            targetMemberAndWorkspaceDetails.workspace.id !== workspaceId
+        ) {
             throw new ForbiddenError('Target member does not belong to the specified workspace.')
         }
 
         // 2. Prevent removing owner
-        if (targetMember.targetUserId === targetMember.ownerId) {
+        if (
+            targetMemberAndWorkspaceDetails.member.userId ===
+            targetMemberAndWorkspaceDetails.workspace.ownerId
+        ) {
             throw new ForbiddenError('Cannot remove workspace owner.')
         }
 
-        await db.delete(workspaceMembers).where(eq(workspaceMembers.id, memberId))
+        const removedMember = await this.memberRepository.removeMemberById(memberId)
+
+        if (!removedMember) {
+            throw new DatabaseError(
+                'Failed to remove member from workspace.',
+                'MemberService.removeMemberFromWorkspace'
+            )
+        }
 
         return { message: 'Member removed successfully.' }
     }
-
-    async checkMemberPermission(workspaceId: string, userId: string): Promise<{ permission: MemberPermission }> {
-        const memberRecord = await db
-            .select({ permission: workspaceMembers.permission })
-            .from(workspaceMembers)
-            .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
-            .limit(1)
-
-        if (memberRecord.length === 0) {
-            throw new ForbiddenError('Not a member of the workspace.')
-        }
-
-        return memberRecord[0]
-    }
-
-    async isMemberOfWorkspace(workspaceId: string, userId: string): Promise<boolean> {
-        const memberRecord = await db
-            .select()
-            .from(workspaceMembers)
-            .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
-            .limit(1)
-
-        return memberRecord.length > 0
-    }
 }
-
-export const memberService = MemberService.getInstance()
