@@ -14,7 +14,13 @@ import { IS_PRODUCTION } from '../config'
  * @returns void
  */
 
-export const ApiResponse = (req: Request, res: Response, responseStatusCode: number, responseMessage: string, data: unknown = null): void => {
+export const ApiResponse = (
+    req: Request,
+    res: Response,
+    responseStatusCode: number,
+    responseMessage: string,
+    data: unknown = null
+): void => {
     const response: THttpResponse = {
         success: true,
         statusCode: responseStatusCode,
