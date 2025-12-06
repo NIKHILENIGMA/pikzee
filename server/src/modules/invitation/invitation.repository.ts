@@ -23,13 +23,20 @@ export class InvitationRepository implements IInvitationRepository {
     }
 
     async update(id: string, data: Partial<Invitation>): Promise<Invitation> {
-        const [updatedInvitation] = await this.db.update(invitations).set(data).where(eq(invitations.id, id)).returning()
+        const [updatedInvitation] = await this.db
+            .update(invitations)
+            .set(data)
+            .where(eq(invitations.id, id))
+            .returning()
 
         return updatedInvitation
     }
 
     async delete(id: string): Promise<Invitation> {
-        const [deletedInvitation] = await this.db.delete(invitations).where(eq(invitations.id, id)).returning()
+        const [deletedInvitation] = await this.db
+            .delete(invitations)
+            .where(eq(invitations.id, id))
+            .returning()
 
         return deletedInvitation
     }
@@ -43,7 +50,10 @@ export class InvitationRepository implements IInvitationRepository {
     }
 
     async getByToken(token: string): Promise<Invitation | null> {
-        const [invitation] = await this.db.select().from(invitations).where(eq(invitations.token, token))
+        const [invitation] = await this.db
+            .select()
+            .from(invitations)
+            .where(eq(invitations.token, token))
 
         if (!invitation) return null
 
@@ -51,7 +61,10 @@ export class InvitationRepository implements IInvitationRepository {
     }
 
     async getByEmail(email: string): Promise<Invitation | null> {
-        const [invitation] = await this.db.select().from(invitations).where(eq(invitations.inviteeEmail, email))
+        const [invitation] = await this.db
+            .select()
+            .from(invitations)
+            .where(eq(invitations.inviteeEmail, email))
 
         if (!invitation) return null
 

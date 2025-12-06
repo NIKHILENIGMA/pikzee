@@ -28,9 +28,15 @@ export class InvitationController extends BaseController {
 
             const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
-            const { email, permission } = ValidationService.validateBody(req.body, SendInvitationSchema)
+            const { email, permission } = ValidationService.validateBody(
+                req.body,
+                SendInvitationSchema
+            )
 
-            const invitation = await this.invitationService.sendInvitation(workspaceId, userId, { email, permission })
+            const invitation = await this.invitationService.sendInvitation(workspaceId, userId, {
+                email,
+                permission
+            })
 
             return {
                 statusCode: 201,
@@ -57,7 +63,10 @@ export class InvitationController extends BaseController {
 
             const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
-            const pendingInvitations = await this.invitationService.getPendingInvitations(workspaceId, userId)
+            const pendingInvitations = await this.invitationService.getPendingInvitations(
+                workspaceId,
+                userId
+            )
 
             return {
                 statusCode: 200,

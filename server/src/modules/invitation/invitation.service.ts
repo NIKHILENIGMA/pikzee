@@ -1,5 +1,14 @@
 import crypto from 'node:crypto'
-import { CreateInvitation, db, Invitation, invitations, invitationStatusEnum, users, workspaceMembers, workspaces } from '@/core'
+import {
+    CreateInvitation,
+    db,
+    Invitation,
+    invitations,
+    invitationStatusEnum,
+    users,
+    workspaceMembers,
+    workspaces
+} from '@/core'
 import { SendInvitationInput, InvitationType } from './invitation.types'
 import { and, desc, eq, gt, lt } from 'drizzle-orm'
 import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from '@/util'
@@ -18,39 +27,62 @@ interface CreateInvitationPayload {
     message?: string
 }
 
-const [INVITATION_PENDING, INVITATION_ACCEPTED, INVITATION_EXPIRED, INVITATION_CANCELLED] = invitationStatusEnum.enumValues
+const [INVITATION_PENDING, INVITATION_ACCEPTED, INVITATION_EXPIRED, INVITATION_CANCELLED] =
+    invitationStatusEnum.enumValues
 
-export class InvitationService {
+export interface IInvitationService {
+    sendInvitation(
+        workspaceId: string,
+        inviterUserId: string,
+        data: SendInvitationInput
+    ): Promise<void>
+    getInvitationById(invitationId: string): Promise<Invitation | null>
+    getPendingInvitations(workspaceId: string, userId: string): Promise<any>
+    acceptInvitation(token: string, userId: string): Promise<{ workspaceId: string; member: any }>
+    cancelInvitation(invitationId: string, userId: string): Promise<{ message: string }>
+    cleanupExpiredInvitations(): Promise<{ expiredCount: number }>
+}
+
+export class InvitationService implements IInvitationService {
     constructor(
         private notificationService: NotificationService,
         private memberService: MemberService,
         private readonly invitationRepository: IInvitationRepository
     ) {}
 
-    async sendInvitation(workspaceId: string, inviterUserId: string, data: SendInvitationInput): Promise<void> {
-        const [workspaceResult, inviterFullAccessCheck, inviteeExistsResult, inviterDetailsResult] = await Promise.all([
-            // Query 1: Get Workspace (lightweight SELECT)
-            db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1),
+    async sendInvitation(
+        workspaceId: string,
+        inviterUserId: string,
+        data: SendInvitationInput
+    ): Promise<void> {
+        const [workspaceResult, inviterFullAccessCheck, inviteeExistsResult, inviterDetailsResult] =
+            await Promise.all([
+                // Query 1: Get Workspace (lightweight SELECT)
+                db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1),
 
-            // Query 2: Check if inviter has FULL_ACCESS (lightweight lookup)
-            db
-                .select({ id: workspaceMembers.id })
-                .from(workspaceMembers)
-                .where(
-                    and(
-                        eq(workspaceMembers.workspaceId, workspaceId),
-                        eq(workspaceMembers.userId, inviterUserId),
-                        eq(workspaceMembers.permission, 'FULL_ACCESS')
+                // Query 2: Check if inviter has FULL_ACCESS (lightweight lookup)
+                db
+                    .select({ id: workspaceMembers.id })
+                    .from(workspaceMembers)
+                    .where(
+                        and(
+                            eq(workspaceMembers.workspaceId, workspaceId),
+                            eq(workspaceMembers.userId, inviterUserId),
+                            eq(workspaceMembers.permission, 'FULL_ACCESS')
+                        )
                     )
-                )
-                .limit(1),
+                    .limit(1),
 
-            // Query 3: Check if invitee user exists (by email)
-            db.select().from(users).where(eq(users.email, data.email)).limit(1),
+                // Query 3: Check if invitee user exists (by email)
+                db.select().from(users).where(eq(users.email, data.email)).limit(1),
 
-            // Query 4: Get inviter details (for notification payload)
-            db.select({ firstName: users.firstName, id: users.id }).from(users).where(eq(users.id, inviterUserId)).limit(1)
-        ])
+                // Query 4: Get inviter details (for notification payload)
+                db
+                    .select({ firstName: users.firstName, id: users.id })
+                    .from(users)
+                    .where(eq(users.id, inviterUserId))
+                    .limit(1)
+            ])
 
         const workspace = workspaceResult[0]
         const inviteeDetails = inviteeExistsResult[0]
@@ -79,7 +111,12 @@ export class InvitationService {
             const isInviteeAlreadyMember = await db
                 .select({ id: workspaceMembers.id })
                 .from(workspaceMembers)
-                .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, inviteeDetails.id)))
+                .where(
+                    and(
+                        eq(workspaceMembers.workspaceId, workspaceId),
+                        eq(workspaceMembers.userId, inviteeDetails.id)
+                    )
+                )
                 .limit(1)
 
             if (isInviteeAlreadyMember.length > 0) {
@@ -90,7 +127,8 @@ export class InvitationService {
         // INVITATION CREATION
         const { inviteToken, hashedToken } = this.generateInviteAndHashedTokens()
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours expiration
-        const customizedMessage = data.customMessage || 'You have been invited to join the workspace.'
+        const customizedMessage =
+            data.customMessage || 'You have been invited to join the workspace.'
 
         await this.createInvitation({
             workspaceId,
@@ -141,7 +179,11 @@ export class InvitationService {
     }
 
     async getInvitationById(invitationId: string): Promise<Invitation | null> {
-        const invitation = await db.select().from(invitations).where(eq(invitations.id, invitationId)).limit(1)
+        const invitation = await db
+            .select()
+            .from(invitations)
+            .where(eq(invitations.id, invitationId))
+            .limit(1)
 
         return invitation.length > 0 ? invitation[0] : null
     }
@@ -150,7 +192,12 @@ export class InvitationService {
         const [membership] = await db
             .select()
             .from(workspaceMembers)
-            .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
+            .where(
+                and(
+                    eq(workspaceMembers.workspaceId, workspaceId),
+                    eq(workspaceMembers.userId, userId)
+                )
+            )
 
         if (!membership) {
             throw new BadRequestError('User is not a member of the workspace')
@@ -174,7 +221,11 @@ export class InvitationService {
             .innerJoin(users, eq(invitations.inviterUserId, users.id))
             .innerJoin(workspaces, eq(invitations.workspaceId, workspaces.id))
             .where(
-                and(eq(invitations.workspaceId, workspaceId), eq(invitations.status, InvitationType.PENDING), gt(invitations.expiresAt, new Date()))
+                and(
+                    eq(invitations.workspaceId, workspaceId),
+                    eq(invitations.status, InvitationType.PENDING),
+                    gt(invitations.expiresAt, new Date())
+                )
             )
             .orderBy(desc(invitations.createdAt))
 
@@ -191,21 +242,30 @@ export class InvitationService {
         if (invitation.status !== INVITATION_PENDING) {
             throw new BadRequestError('Invitation is no longer valid')
         }
-        if (!invitation.expiresAt || new Date(invitation.expiresAt).getTime() <= new Date().getTime()) {
+        if (
+            !invitation.expiresAt ||
+            new Date(invitation.expiresAt).getTime() <= new Date().getTime()
+        ) {
             throw new UnauthorizedError('Invitation has expired')
         }
 
-        await db.update(invitations).set({ status: INVITATION_EXPIRED }).where(eq(invitations.id, invitation.id))
+        await db
+            .update(invitations)
+            .set({ status: INVITATION_EXPIRED })
+            .where(eq(invitations.id, invitation.id))
 
-        const newMember = await this.memberService.addMemberToWorkspace({
+        const newMember = await this.memberService.insertMemberToWorkspace({
             userId,
             workspaceId: invitation.workspaceId,
-            inviteeUserId: invitation.inviterUserId,
+            // inviteeUserId: invitation.inviterUserId,
             permission: invitation.permission
         })
 
         // Update invitation status to 'ACCEPTED'
-        await db.update(invitations).set({ status: INVITATION_ACCEPTED }).where(eq(invitations.id, invitation.id))
+        await db
+            .update(invitations)
+            .set({ status: INVITATION_ACCEPTED })
+            .where(eq(invitations.id, invitation.id))
 
         return {
             workspaceId: invitation.workspaceId,
@@ -241,7 +301,10 @@ export class InvitationService {
             throw new BadRequestError('Cannot cancel a non-pending invitation')
         }
 
-        await db.update(invitations).set({ status: INVITATION_CANCELLED }).where(eq(invitations.id, invitationId))
+        await db
+            .update(invitations)
+            .set({ status: INVITATION_CANCELLED })
+            .where(eq(invitations.id, invitationId))
 
         return { message: 'Invitation cancelled successfully' }
     }
@@ -251,7 +314,12 @@ export class InvitationService {
         const result = await db
             .update(invitations)
             .set({ status: InvitationType.EXPIRED })
-            .where(and(eq(invitations.status, InvitationType.PENDING), lt(invitations.expiresAt, new Date())))
+            .where(
+                and(
+                    eq(invitations.status, InvitationType.PENDING),
+                    lt(invitations.expiresAt, new Date())
+                )
+            )
             .returning({ id: invitations.id })
 
         return { expiredCount: result.length }
@@ -275,7 +343,13 @@ export class InvitationService {
         const invitation = await db
             .select()
             .from(invitations)
-            .where(and(eq(invitations.token, hashedToken), eq(invitations.status, InvitationType.PENDING), gt(invitations.expiresAt, new Date())))
+            .where(
+                and(
+                    eq(invitations.token, hashedToken),
+                    eq(invitations.status, InvitationType.PENDING),
+                    gt(invitations.expiresAt, new Date())
+                )
+            )
             .limit(1)
 
         return invitation.length > 0 ? invitation[0] : null // null if not found
