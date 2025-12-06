@@ -6,7 +6,11 @@ import { CLERK_WEBHOOK_SIGNING_SECRET } from '@/config'
 import { InternalServerError } from '@/util'
 import { SVIX_HEADER_KEYS } from '@/constants/auth.constants'
 
-export class WebhookService {
+export interface IWebhookService {
+    verifyClerkWebhook(req: Request): WebhookEvent
+}
+
+export class WebhookService implements IWebhookService {
     private wh: Webhook
     constructor() {
         this.wh = new Webhook(CLERK_WEBHOOK_SIGNING_SECRET)
@@ -14,7 +18,9 @@ export class WebhookService {
 
     public verifyClerkWebhook(req: Request): WebhookEvent {
         if (!Buffer.isBuffer(req.body)) {
-            throw new InternalServerError('Webhook body must be raw Buffer. Ensure express.raw() middleware is applied.')
+            throw new InternalServerError(
+                'Webhook body must be raw Buffer. Ensure express.raw() middleware is applied.'
+            )
         }
 
         const headers = {
