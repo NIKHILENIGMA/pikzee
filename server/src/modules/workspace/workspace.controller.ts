@@ -1,112 +1,167 @@
 import { NextFunction, Request, Response } from 'express'
 import { UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
+import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
-import { WorkspaceService } from './workspace.service'
-import { CreateWorkspaceSchema, UpdateWorkspaceSchema, WorkspaceIdSchema } from './workspace.validator'
+import {
+    CreateWorkspaceSchema,
+    UpdateWorkspaceSchema,
+    WorkspaceIdSchema
+} from './workspace.validator'
+import { IWorkspaceService } from './workspace.service'
+import { CreateWorkspaceRequest, WorkspaceDTO } from './workspace.types'
 
 export class WorkspaceController extends BaseController {
-    constructor(private workspaceService: WorkspaceService) {
+    constructor(private readonly workspaceService: IWorkspaceService) {
         super()
     }
 
-    getUserWorkspaces = async (req: Request, res: Response, next: NextFunction) => {
+    // List all workspaces for a user
+    list = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async () => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const workspaces = await this.workspaceService.getUserWorkspaces(userId)
+            const workspaces = await this.workspaceService.listAll(userId)
 
-            return {
-                statusCode: 200,
-                message: 'List of user workspaces',
+            return this.createResponse<WorkspaceDTO[]>({
+                statusCode: STATUS_CODE.OK,
+                message: 'User workspaces fetched successfully',
                 data: workspaces
-            }
-        })
-    }
-
-    getWorkspaceById = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
-            }
-
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
-
-            const workspace = await this.workspaceService.getWorkspaceById(workspaceId, userId)
-
-            return {
-                statusCode: 200,
-                message: 'Workspace details',
-                data: workspace
-            }
-        })
-    }
-
-    getWorkspaceUsage = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
-            }
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
-
-            const usageData = await this.workspaceService.getWorkspaceUsage(workspaceId, userId)
-
-            return {
-                statusCode: 200,
-                message: 'Workspace usage data',
-                data: usageData
-            }
-        })
-    }
-
-    createWorkspace = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
-            }
-
-            const validatedInput = ValidationService.validateBody(req.body, CreateWorkspaceSchema)
-
-            const newWorkspace = await this.workspaceService.createWorkspace({
-                name: validatedInput.name,
-                logoUrl: validatedInput.logoUrl || null,
-                ownerId: userId
             })
-
-            return {
-                statusCode: 201,
-                message: 'Workspace created successfully',
-                data: newWorkspace
-            }
         })
     }
 
-    updateWorkspace = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
+    // Get workspace by ID
+    getById = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<WorkspaceDTO>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+
+                // Validate path params
+                const { workspaceId } = ValidationService.validateParams(
+                    req.params,
+                    WorkspaceIdSchema
+                )
+
+                const workspace = await this.workspaceService.getById(workspaceId, userId)
+
+                return this.createResponse<WorkspaceDTO>({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Workspace details fetched successfully',
+                    data: workspace
+                })
             }
+        )
+    }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+    // Create new workspace
+    create = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<WorkspaceDTO>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
 
-            const { name, logoUrl } = ValidationService.validateBody(req.body, UpdateWorkspaceSchema)
-            const updatedWorkspace = await this.workspaceService.updateWorkspace(workspaceId, userId, {
-                name,
-                logoUrl
-            })
+                // Validate request body against schema
+                const body = ValidationService.validateBody<CreateWorkspaceRequest>(
+                    req.body,
+                    CreateWorkspaceSchema
+                )
 
-            return {
-                statusCode: 200,
-                message: 'Workspace updated successfully',
-                data: updatedWorkspace
+                // Create the workspace
+                const newWorkspace = await this.workspaceService.create({
+                    ...body,
+                    ownerId: userId
+                })
+
+                // Return standardized response
+                return this.createResponse<WorkspaceDTO>({
+                    statusCode: STATUS_CODE.CREATED,
+                    message: 'Workspace created successfully',
+                    data: newWorkspace
+                })
             }
-        })
+        )
+    }
+
+    // Update workspace
+    update = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<WorkspaceDTO>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+
+                // Validate path params
+                const { workspaceId } = ValidationService.validateParams(
+                    req.params,
+                    WorkspaceIdSchema
+                )
+                // Validate request body
+                const body = ValidationService.validateBody(req.body, UpdateWorkspaceSchema)
+
+                // Update the workspace
+                const updatedWorkspace = await this.workspaceService.update(workspaceId, {
+                    ...body,
+                    ownerId: userId
+                })
+
+                // Return standardized response
+                return this.createResponse<WorkspaceDTO>({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Workspace updated successfully',
+                    data: updatedWorkspace
+                })
+            }
+        )
+    }
+
+    // Delete workspace
+    delete = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<{ workspaceId: string }>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+                // Validate path params
+                const { workspaceId } = ValidationService.validateParams(
+                    req.params,
+                    WorkspaceIdSchema
+                )
+                // Soft delete the workspace
+                await this.workspaceService.softDelete({
+                    workspaceId,
+                    userId
+                })
+
+                // Return standardized response
+                return this.createResponse<{ workspaceId: string }>({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Workspace deleted successfully',
+                    data: { workspaceId }
+                })
+            }
+        )
     }
 }
