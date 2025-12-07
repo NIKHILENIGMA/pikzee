@@ -1,16 +1,26 @@
-import { CreateUser, User } from '@/core'
-import { UserService } from './user.service'
 import { clerkClient } from '@clerk/express'
 
-export class AdminService {
-    constructor(private userService: UserService) {}
+import { CreateUser, User } from '@/core'
+
+import { IUserService } from '../user'
+
+export interface IAdminService {
+    getUserById(userId: string): Promise<User | null>
+    listAllUsers(): Promise<User[]>
+    createUser(userData: CreateUser): Promise<User>
+    updateUser(userId: string, updateData: Partial<User>): Promise<User | null>
+    deleteUser(userId: string): Promise<void>
+}
+
+export class AdminService implements IAdminService {
+    constructor(private userService: IUserService) {}
 
     async getUserById(userId: string) {
         return await this.userService.getUserById(userId)
     }
 
     async listAllUsers() {
-        return await this.userService.listAllUsers()
+        return await this.userService.listAll()
     }
 
     async createUser(userData: CreateUser) {
@@ -34,7 +44,7 @@ export class AdminService {
         return await this.userService.updateUser(userId, updateData)
     }
 
-    async deleteUser(userId: string) {
-        return await this.userService.deleteUser(userId)
+    async deleteUser(userId: string): Promise<void> {
+        await this.userService.deleteUser(userId)
     }
 }

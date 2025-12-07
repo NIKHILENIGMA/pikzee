@@ -1,20 +1,17 @@
 import { NextFunction, Request, Response } from 'express'
 
-import { NotFoundError, UnauthorizedError } from '@/util/StandardError'
+import { NotFoundError, UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
+import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
-import { AdminService } from './admin.service'
 import {
     CreateUserSchema,
     GetUserDetailsByIdSchema,
     UpdateUserDetailsSchema
 } from './admin.validator'
+import { AdminService } from './admin.service'
 
-interface ControllerResponse<T> {
-    statusCode: number
-    message: string
-    data: T
-}
+
 
 export class AdminController extends BaseController {
     constructor(private adminService: AdminService) {
@@ -26,7 +23,7 @@ export class AdminController extends BaseController {
             req,
             res,
             next,
-            async (): Promise<ControllerResponse<typeof user>> => {
+            async (): Promise<SuccessResponse<typeof user>> => {
                 const userId = req.user?.id
                 if (!userId) {
                     throw new UnauthorizedError('User not authenticated')
@@ -42,11 +39,11 @@ export class AdminController extends BaseController {
                     throw new NotFoundError('User not found', 'adminController.userDetails')
                 }
 
-                return {
-                    statusCode: 200,
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
                     message: 'User details fetched successfully',
                     data: user
-                }
+                })
             }
         )
     }
@@ -56,14 +53,14 @@ export class AdminController extends BaseController {
             req,
             res,
             next,
-            async (): Promise<ControllerResponse<typeof users>> => {
+            async (): Promise<SuccessResponse<typeof users>> => {
                 const users = await this.adminService.listAllUsers()
 
-                return {
-                    statusCode: 200,
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
                     message: 'List of all users',
                     data: users
-                }
+                })
             }
         )
     }
@@ -73,7 +70,7 @@ export class AdminController extends BaseController {
             req,
             res,
             next,
-            async (): Promise<ControllerResponse<typeof newUser>> => {
+            async (): Promise<SuccessResponse<typeof newUser>> => {
                 const userId: string | undefined = req.user?.id
                 if (!userId) {
                     throw new UnauthorizedError('User not authenticated')
@@ -83,11 +80,11 @@ export class AdminController extends BaseController {
 
                 const newUser = await this.adminService.createUser(userData)
 
-                return {
-                    statusCode: 201,
+                return this.createResponse({
+                    statusCode: STATUS_CODE.CREATED,
                     message: 'User created successfully',
                     data: newUser
-                }
+                })
             }
         )
     }
@@ -97,7 +94,7 @@ export class AdminController extends BaseController {
             req,
             res,
             next,
-            async (): Promise<ControllerResponse<typeof updatedUser>> => {
+            async (): Promise<SuccessResponse<typeof updatedUser>> => {
                 const userId = req.user?.id
                 if (!userId) {
                     throw new UnauthorizedError('User not authenticated')
@@ -115,11 +112,11 @@ export class AdminController extends BaseController {
                     throw new NotFoundError('User not found', 'adminController.updateUserDetails')
                 }
 
-                return {
-                    statusCode: 200,
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
                     message: 'User details updated successfully',
                     data: updatedUser
-                }
+                })
             }
         )
     }
@@ -129,7 +126,7 @@ export class AdminController extends BaseController {
             req,
             res,
             next,
-            async (): Promise<ControllerResponse<typeof deletedUser>> => {
+            async (): Promise<SuccessResponse<null>> => {
                 const userId = req.user?.id
                 if (!userId) {
                     throw new UnauthorizedError('User not authenticated')
@@ -140,16 +137,13 @@ export class AdminController extends BaseController {
                     GetUserDetailsByIdSchema
                 )
 
-                const deletedUser = await this.adminService.deleteUser(id)
-                if (!deletedUser) {
-                    throw new NotFoundError('User not found', 'adminController.deleteUserAccount')
-                }
+                await this.adminService.deleteUser(id)
 
-                return {
-                    statusCode: 200,
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
                     message: 'User deleted successfully',
-                    data: deletedUser
-                }
+                    data: null
+                })
             }
         )
     }
