@@ -2,7 +2,7 @@ import { CreateWorkspace } from '@/core'
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/util'
 
 import { IUserService } from '../user'
-import { IMemberService } from '../members/member.service'
+import { MemberDTO, IMemberService } from '../members'
 
 import { IWorkspaceRepository } from './workspace.repository'
 import {
@@ -11,16 +11,6 @@ import {
     UpdateWorkspaceDTO,
     SoftDeleteDTO
 } from './workspace.types'
-
-type MemberMap = {
-    id: string
-    userId: string
-    permission: 'FULL_ACCESS' | 'VIEW_ONLY' | 'COMMENT_ONLY' | 'EDIT'
-    firstName: string | null
-    lastName: string | null
-    email: string
-    avatarUrl: string | null
-}
 
 export interface IWorkspaceService {
     create(data: CreateWorkspaceDTO): Promise<WorkspaceDTO>
@@ -58,22 +48,22 @@ export class WorkspaceService implements IWorkspaceService {
     }
 
     async getById(workspaceId: string, userId: string): Promise<WorkspaceDTO> {
-        const [workspaceDetails, workspaceMemberDetails] = await Promise.all([
+        const [workspace, members] = await Promise.all([
             // Fetch workspace details
             this.workspaceRepository.getById(workspaceId),
             // Fetch workspace members
-            this.memberServicer.getMemberWithDetails(workspaceId)
+            this.memberServicer.listAll()
         ])
 
         // Validate workspace existence
-        if (!workspaceDetails) {
+        if (!workspace) {
             // Workspace not found or is deleted
             throw new NotFoundError('Workspace not found', 'workspaceService.getWorkspaceById')
         }
 
         // Map members for easy access
-        const memberMap = new Map<string, MemberMap>( //todo: optimize type
-            workspaceMemberDetails.map((wm) => [wm.userId, wm])
+        const memberMap = new Map<string, MemberDTO>( //todo: optimize type
+            members.filter((wm) => wm.user?.id !== undefined).map((wm) => [wm.user!.id, wm])
         )
 
         // Verify caller is a member
@@ -86,7 +76,7 @@ export class WorkspaceService implements IWorkspaceService {
         }
 
         // Get owner details
-        const owner = memberMap.get(workspaceDetails.ownerId)
+        const owner = memberMap.get(workspace.ownerId)
         if (!owner) {
             throw new DatabaseError(
                 'Workspace owner not found among members',
@@ -96,17 +86,17 @@ export class WorkspaceService implements IWorkspaceService {
 
         // todo: fetch projects list when implemented
         return {
-            id: workspaceDetails.id,
-            name: workspaceDetails.name,
-            logoUrl: workspaceDetails.logoUrl,
-            ownerId: workspaceDetails.ownerId,
-            createdAt: workspaceDetails.createdAt,
-            members: workspaceMemberDetails.map((wm) => ({
+            id: workspace.id,
+            name: workspace.name,
+            logoUrl: workspace.logoUrl,
+            ownerId: workspace.ownerId,
+            createdAt: workspace.createdAt,
+            members: members.map((wm) => ({
                 id: wm.id,
-                firstName: wm.firstName || '',
-                lastName: wm.lastName || '',
-                email: wm.email,
-                avatarUrl: wm.avatarUrl || null,
+                firstName: wm.user?.firstName || '',
+                lastName: wm.user?.lastName || '',
+                email: wm.user?.email || '',
+                avatarUrl: wm.user?.avatarUrl || null,
                 permission: wm.permission
             })),
             projects: []
@@ -141,6 +131,7 @@ export class WorkspaceService implements IWorkspaceService {
         }
     }
 
+    // Create workspace and assign owner permission to creator
     async createWorkspaceWithOwnerPermission(data: CreateWorkspace): Promise<WorkspaceDTO> {
         // Create workspace
         const user = await this.userService.getUserById(data.ownerId)

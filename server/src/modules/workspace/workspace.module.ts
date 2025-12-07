@@ -2,7 +2,7 @@ import { db } from '@/core/db/connection'
 
 import { WorkspaceController } from './workspace.controller'
 import { WorkspaceRepository } from './workspace.repository'
-import { WorkspaceService } from './workspace.service'
+import { WorkspaceService, IWorkspaceService } from './workspace.service'
 
 // Import dependent services
 import { userService } from '../user'
@@ -17,4 +17,4 @@ const workspaceService = new WorkspaceService(workspaceRepository, memberService
 const workspaceController = new WorkspaceController(workspaceService)
 
 // Export the instances for use in other parts of the application
-export { workspaceService, workspaceController }
+export { workspaceService, IWorkspaceService, workspaceController }

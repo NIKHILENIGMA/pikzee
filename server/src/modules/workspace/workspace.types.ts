@@ -1,7 +1,11 @@
-import { memberPermissionEnum, subscriptionPlanEnum, workspaces } from '@/core'
 import { InferEnum, InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import z from 'zod'
+
+import { subscriptionPlanEnum, workspaces } from '@/core'
+
 import { CreateWorkspaceSchema, UpdateWorkspaceSchema } from './workspace.validator'
+
+import { MemberPermission } from '../members'
 
 // --------------------------------------------
 // Drizzle Model types (Repository Layer Types)
@@ -12,7 +16,7 @@ export type SoftDeleteRecord = {
     workspaceId: string
     ownerId: string
 }
-export type MemberPermission = InferEnum<typeof memberPermissionEnum>
+
 export type WorkspaceSubscriptionPlan = InferEnum<typeof subscriptionPlanEnum>
 
 // --------------------------------------------
@@ -52,6 +56,12 @@ export interface UpdateWorkspaceDTO {
     logoUrl?: string | null
     ownerId?: string
     subscriptionPlan?: WorkspaceSubscriptionPlan
+}
+
+export interface UpdateMemberPermissionDTO {
+    memberId: string
+    workspaceId: string
+    permission: MemberPermission
 }
 
 export interface SoftDeleteDTO {
