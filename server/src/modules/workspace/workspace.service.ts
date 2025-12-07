@@ -52,7 +52,7 @@ export class WorkspaceService implements IWorkspaceService {
             // Fetch workspace details
             this.workspaceRepository.getById(workspaceId),
             // Fetch workspace members
-            this.memberServicer.listAll()
+            this.memberServicer.listAll(workspaceId)
         ])
 
         // Validate workspace existence
