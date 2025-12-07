@@ -18,7 +18,7 @@ export interface IMemberRepository {
     updatePermission(data: UpdateMemberPermissionDTO): Promise<MemberRecord[]>
     delete(data: DeleteMemberRecord): Promise<MemberRecord>
     getById(memberId: string): Promise<MemberRecord | null>
-    listAll(): Promise<MemberRecord[]>
+    listAll(workspaceId: string): Promise<MemberRecord[]>
     getMemberDetails(memberId: string): Promise<MemberDetailRecord | null>
 }
 
@@ -101,8 +101,11 @@ export class MemberRepository implements IMemberRepository {
         return member ? member : null
     }
 
-    async listAll(): Promise<MemberRecord[]> {
-        return await this.db.select().from(workspaceMembers)
+    async listAll(workspaceId: string): Promise<MemberRecord[]> {
+        return await this.db
+            .select()
+            .from(workspaceMembers)
+            .where(eq(workspaceMembers.workspaceId, workspaceId))
     }
 
     async getMemberDetails(memberId: string): Promise<MemberDetailRecord | null> {

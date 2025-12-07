@@ -2,109 +2,115 @@ import { NextFunction, Request, Response } from 'express'
 import { MemberService } from './member.service'
 import { UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
-import {
-    addMemberSchema,
-    updateMemberPermissionSchema,
-    workspaceMemberIdSchema
-} from './member.validator'
 
 import { WorkspaceIdSchema } from '../workspace'
-import { STATUS_CODE } from '@/types/api/success.types'
+import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
+import { AddMemberSchema, UpdateMemberPermissionSchema, WorkspaceMemberIdSchema } from './member.validator'
+import { CreateWorkspaceMemberRequest, MemberDTO } from './member.types'
 
 export class MemberController extends BaseController {
     constructor(private memberService: MemberService) {
         super()
     }
 
-    listWorkspaceMembers = async (req: Request, res: Response, next: NextFunction) => {
+    list = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async () => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
+            // Validate request params
+            const params = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
-
-            const members = await this.memberService.getWorkspaceMembers(workspaceId)
-
-            return {
-                statusCode: 200,
-                message: 'Fetched workspace members successfully',
+            // List all members of workspace
+            const members = await this.memberService.listAll(params.workspaceId)
+            
+            // Return success response
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Listed workspace members successfully',
                 data: members
-            }
+            })
         })
     }
 
-    addMember = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
+    create = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<MemberDTO>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
-            const { permission } = ValidationService.validateBody(req.body, addMemberSchema)
+            const params = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+            const body = ValidationService.validateBody<CreateWorkspaceMemberRequest>(
+                req.body,
+                AddMemberSchema
+            )
 
-            const newMember = await this.memberService.insertMemberToWorkspace({
-                workspaceId,
-                // inviteeUserId,
-                permission,
-                userId
+            const newMember = await this.memberService.create({
+                workspaceId: params.workspaceId,
+                userId: body.inviteeUserId,
+                permission: body.permission
             })
 
-            return {
-                statusCode: 201,
+            return this.createResponse({
+                statusCode: STATUS_CODE.CREATED,
                 message: 'Added member to workspace successfully',
                 data: newMember
-            }
+            })
         })
     }
 
-    updateMemberPermission = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
+    updatePermission = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<MemberDTO>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId, memberId } = ValidationService.validateParams(
+            // Validate request params and body
+            const params = ValidationService.validateParams(
                 req.params,
-                workspaceMemberIdSchema
+                WorkspaceMemberIdSchema
             )
-
-            const { permission } = ValidationService.validateBody(
+            // Validate request body
+            const body = ValidationService.validateBody(
                 req.body,
-                updateMemberPermissionSchema
+                UpdateMemberPermissionSchema
             )
 
-            const updatedMember = await this.memberService.updateMemberPermission(
-                workspaceId,
-                memberId,
-                userId,
-                { permission }
-            )
+            // Update member permission
+            const updatedMember = await this.memberService.updatePermission({
+                memberId: params.memberId,
+                workspaceId: params.workspaceId,
+                permission: body.permission
+            })
 
-            return {
-                statusCode: 200,
+            // Return success response 
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
                 message: 'Updated member permission successfully',
                 data: updatedMember
-            }
+            })
         })
     }
 
-    removeMember = async (req: Request, res: Response, next: NextFunction) => {
+    kick = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async () => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId, memberId } = ValidationService.validateParams(
+            // Validate request params
+            const params = ValidationService.validateParams(
                 req.params,
-                workspaceMemberIdSchema
+                WorkspaceMemberIdSchema
             )
+            
+            // Remove member from workspace
+            await this.memberService.kickMember(params.workspaceId, params.memberId)
 
-            await this.memberService.removeMemberFromWorkspace(workspaceId, memberId, userId)
-
+            // Return success response
             return this.createResponse({
                 statusCode: STATUS_CODE.OK,
                 message: 'Removed member from workspace successfully',

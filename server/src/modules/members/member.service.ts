@@ -15,7 +15,7 @@ export interface IMemberService {
     delete(workspaceId: string, memberId: string): Promise<MemberDTO>
     kickMember(workspaceId: string, memberId: string): Promise<MemberDTO>
     getById(memberId: string): Promise<MemberDTO>
-    listAll(): Promise<MemberDTO[]>
+    listAll(workspaceId: string): Promise<MemberDTO[]>
 }
 
 export class MemberService implements IMemberService {
@@ -89,8 +89,8 @@ export class MemberService implements IMemberService {
         return member
     }
 
-    async listAll(): Promise<MemberDTO[]> {
-        const members = await this.memberRepository.listAll()
+    async listAll(workspaceId: string): Promise<MemberDTO[]> {
+        const members = await this.memberRepository.listAll(workspaceId)
         return members
     }
 }
