@@ -5,7 +5,11 @@ import { BaseController, ValidationService } from '@/lib'
 
 import { WorkspaceIdSchema } from '../workspace'
 import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
-import { AddMemberSchema, UpdateMemberPermissionSchema, WorkspaceMemberIdSchema } from './member.validator'
+import {
+    AddMemberSchema,
+    UpdateMemberPermissionSchema,
+    WorkspaceMemberIdSchema
+} from './member.validator'
 import { CreateWorkspaceMemberRequest, MemberDTO } from './member.types'
 
 export class MemberController extends BaseController {
@@ -24,7 +28,7 @@ export class MemberController extends BaseController {
 
             // List all members of workspace
             const members = await this.memberService.listAll(params.workspaceId)
-            
+
             // Return success response
             return this.createResponse({
                 statusCode: STATUS_CODE.OK,
@@ -68,15 +72,9 @@ export class MemberController extends BaseController {
             }
 
             // Validate request params and body
-            const params = ValidationService.validateParams(
-                req.params,
-                WorkspaceMemberIdSchema
-            )
+            const params = ValidationService.validateParams(req.params, WorkspaceMemberIdSchema)
             // Validate request body
-            const body = ValidationService.validateBody(
-                req.body,
-                UpdateMemberPermissionSchema
-            )
+            const body = ValidationService.validateBody(req.body, UpdateMemberPermissionSchema)
 
             // Update member permission
             const updatedMember = await this.memberService.updatePermission({
@@ -85,7 +83,7 @@ export class MemberController extends BaseController {
                 permission: body.permission
             })
 
-            // Return success response 
+            // Return success response
             return this.createResponse({
                 statusCode: STATUS_CODE.OK,
                 message: 'Updated member permission successfully',
@@ -102,11 +100,8 @@ export class MemberController extends BaseController {
             }
 
             // Validate request params
-            const params = ValidationService.validateParams(
-                req.params,
-                WorkspaceMemberIdSchema
-            )
-            
+            const params = ValidationService.validateParams(req.params, WorkspaceMemberIdSchema)
+
             // Remove member from workspace
             await this.memberService.kickMember(params.workspaceId, params.memberId)
 
