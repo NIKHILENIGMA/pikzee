@@ -120,7 +120,7 @@ export class MemberRepository implements IMemberRepository {
                 // Flatten user details
                 firstName: users.firstName || null,
                 lastName: users.lastName || null,
-                email: users.email!,
+                email: users.email,
                 avatarUrl: users.avatarUrl || null
             })
             .from(workspaceMembers)
