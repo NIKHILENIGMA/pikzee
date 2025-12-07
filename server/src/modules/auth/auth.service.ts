@@ -71,7 +71,7 @@ export class AuthService {
         })
 
         // Create a default workspace for the new user
-        await this.workspaceService.create({
+        await this.workspaceService.createWorkspaceWithOwnerPermission({
             name: `${newUser.firstName}'s Workspace`,
             ownerId: newUser.id
         })
