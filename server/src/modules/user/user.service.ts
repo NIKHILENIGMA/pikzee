@@ -63,5 +63,4 @@ export class UserService implements IUserService {
     async listAll(): Promise<User[]> {
         return this.userRepository.listAll()
     }
-
 }

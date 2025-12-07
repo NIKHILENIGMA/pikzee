@@ -2,25 +2,26 @@ import { Router } from 'express'
 
 import { clerkMiddleware } from '@/middlewares'
 
-import { AdminController } from './admin.controller'
-import { AdminService } from './admin.service'
-import { UserService } from './user.service'
+import { adminController } from './admin.module'
 
+// Initialize the router
 const router = Router()
 
-const userService = new UserService()
-const adminService = new AdminService(userService)
-const adminController = new AdminController(adminService)
-
+// Define routes and associate them with controller methods
+// GET /admin/users - List all users
+// POST /admin/users - Create a new user
 router
     .route('/users')
     .get(clerkMiddleware, adminController.listUsers)
-    .post(clerkMiddleware, adminController.createUser)
+    .post(clerkMiddleware, adminController.create)
 
+// GET /admin/users/:id - Get user details by ID
+// PATCH /admin/users/:id - Update user details by ID
+// DELETE /admin/users/:id - Delete user by ID
 router
     .route('/users/:id')
-    .get(clerkMiddleware, adminController.findUserById)
-    .patch(clerkMiddleware, adminController.updateUserDetails)
-    .delete(clerkMiddleware, adminController.deleteUserAccount)
+    .get(clerkMiddleware, adminController.findById)
+    .patch(clerkMiddleware, adminController.update)
+    .delete(clerkMiddleware, adminController.delete)
 
 export default router

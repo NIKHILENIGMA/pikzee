@@ -11,14 +11,12 @@ import {
 } from './admin.validator'
 import { AdminService } from './admin.service'
 
-
-
 export class AdminController extends BaseController {
     constructor(private adminService: AdminService) {
         super()
     }
 
-    findUserById = async (req: Request, res: Response, next: NextFunction) => {
+    findById = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(
             req,
             res,
@@ -65,7 +63,7 @@ export class AdminController extends BaseController {
         )
     }
 
-    createUser = async (req: Request, res: Response, next: NextFunction) => {
+    create = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(
             req,
             res,
@@ -89,7 +87,7 @@ export class AdminController extends BaseController {
         )
     }
 
-    updateUserDetails = async (req: Request, res: Response, next: NextFunction) => {
+    update = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(
             req,
             res,
@@ -121,30 +119,22 @@ export class AdminController extends BaseController {
         )
     }
 
-    deleteUserAccount = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(
-            req,
-            res,
-            next,
-            async (): Promise<SuccessResponse<null>> => {
-                const userId = req.user?.id
-                if (!userId) {
-                    throw new UnauthorizedError('User not authenticated')
-                }
-
-                const { id } = ValidationService.validateParams(
-                    req.params,
-                    GetUserDetailsByIdSchema
-                )
-
-                await this.adminService.deleteUser(id)
-
-                return this.createResponse({
-                    statusCode: STATUS_CODE.OK,
-                    message: 'User deleted successfully',
-                    data: null
-                })
+    delete = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId = req.user?.id
+            if (!userId) {
+                throw new UnauthorizedError('User not authenticated')
             }
-        )
+
+            const { id } = ValidationService.validateParams(req.params, GetUserDetailsByIdSchema)
+
+            await this.adminService.deleteUser(id)
+
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'User deleted successfully',
+                data: null
+            })
+        })
     }
 }
