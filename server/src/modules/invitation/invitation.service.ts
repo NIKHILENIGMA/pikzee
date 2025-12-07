@@ -254,10 +254,9 @@ export class InvitationService implements IInvitationService {
             .set({ status: INVITATION_EXPIRED })
             .where(eq(invitations.id, invitation.id))
 
-        const newMember = await this.memberService.insertMemberToWorkspace({
+        const newMember = await this.memberService.create({
             userId,
             workspaceId: invitation.workspaceId,
-            // inviteeUserId: invitation.inviterUserId,
             permission: invitation.permission
         })
 
