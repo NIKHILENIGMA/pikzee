@@ -9,6 +9,7 @@ export interface IUserService {
     deleteUser(userId: string): Promise<User>
     getUserById(userId: string): Promise<User | null>
     getUserByEmail(email: string): Promise<User | null>
+    listAll(): Promise<User[]>
 }
 
 export class UserService implements IUserService {
@@ -58,4 +59,9 @@ export class UserService implements IUserService {
     async getUserByEmail(email: string): Promise<User | null> {
         return this.userRepository.getByEmail(email)
     }
+
+    async listAll(): Promise<User[]> {
+        return this.userRepository.listAll()
+    }
+
 }

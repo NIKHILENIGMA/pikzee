@@ -9,6 +9,7 @@ export interface IUserRepository {
     delete(userId: string): Promise<User>
     getById(userId: string): Promise<User | null>
     getByEmail(email: string): Promise<User | null>
+    listAll(): Promise<User[]>
 }
 
 export class UserRepository implements IUserRepository {
@@ -73,5 +74,10 @@ export class UserRepository implements IUserRepository {
         }
 
         return user
+    }
+
+    async listAll(): Promise<User[]> {
+        const allUsers = await this.db.select().from(users)
+        return allUsers
     }
 }
