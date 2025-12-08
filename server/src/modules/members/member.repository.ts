@@ -9,43 +9,30 @@ import {
     DeleteMemberRecord,
     MemberDetailRecord,
     MemberRecord,
-    UpdateMemberPermissionDTO
+    UpdatePermissionRecord
 } from './member.types'
 
 export interface IMemberRepository {
     create(data: CreateMemberRecord): Promise<MemberRecord>
     update(memberId: string, data: Partial<CreateMemberRecord>): Promise<MemberRecord[]>
-    updatePermission(data: UpdateMemberPermissionDTO): Promise<MemberRecord[]>
+    updatePermission(data: UpdatePermissionRecord): Promise<MemberRecord[]>
     delete(data: DeleteMemberRecord): Promise<MemberRecord>
     getById(memberId: string): Promise<MemberRecord | null>
     listAll(workspaceId: string): Promise<MemberRecord[]>
     getMemberDetails(memberId: string): Promise<MemberDetailRecord | null>
 }
 
-// interface MemberWithWorkspaceOwner {
-//     workspace: {
-//         id: string
-//         name: string
-//         ownerId: string
-//     }
-//     member: {
-//         id: string
-//         userId: string
-//         workspaceId: string
-//         permission: 'FULL_ACCESS' | 'EDIT' | 'COMMENT_ONLY' | 'VIEW_ONLY'
-//         joinedAt: Date
-//     }
-// }
-
 export class MemberRepository implements IMemberRepository {
     constructor(private readonly db: DatabaseConnection) {}
 
+    // Create a new workspace member
     async create(data: CreateMemberRecord): Promise<MemberRecord> {
         const [member] = await this.db.insert(workspaceMembers).values(data).returning()
 
         return member
     }
 
+    // Update workspace member details
     async update(memberId: string, data: Partial<CreateMemberRecord>): Promise<MemberRecord[]> {
         const updatedMember = await this.db
             .update(workspaceMembers)
@@ -59,7 +46,8 @@ export class MemberRepository implements IMemberRepository {
         return updatedMember
     }
 
-    async updatePermission(data: UpdateMemberPermissionDTO): Promise<MemberRecord[]> {
+    // Update workspace member permission
+    async updatePermission(data: UpdatePermissionRecord): Promise<MemberRecord[]> {
         const updatedMember = await this.db
             .update(workspaceMembers)
             .set({
@@ -69,7 +57,8 @@ export class MemberRepository implements IMemberRepository {
             .where(
                 and(
                     eq(workspaceMembers.id, data.memberId),
-                    eq(workspaceMembers.workspaceId, data.workspaceId)
+                    eq(workspaceMembers.workspaceId, data.workspaceId),
+                    eq(workspaceMembers.permission, 'FULL_ACCESS')
                 )
             )
             .returning()
@@ -77,6 +66,7 @@ export class MemberRepository implements IMemberRepository {
         return updatedMember
     }
 
+    // Delete a workspace member
     async delete(data: DeleteMemberRecord): Promise<MemberRecord> {
         const [deletedMember] = await this.db
             .delete(workspaceMembers)
@@ -91,6 +81,7 @@ export class MemberRepository implements IMemberRepository {
         return deletedMember
     }
 
+    // Get a workspace member by ID
     async getById(memberId: string): Promise<MemberRecord | null> {
         const [member] = await this.db
             .select()
@@ -101,6 +92,7 @@ export class MemberRepository implements IMemberRepository {
         return member ? member : null
     }
 
+    // List all members of a workspace
     async listAll(workspaceId: string): Promise<MemberRecord[]> {
         return await this.db
             .select()
@@ -108,6 +100,7 @@ export class MemberRepository implements IMemberRepository {
             .where(eq(workspaceMembers.workspaceId, workspaceId))
     }
 
+    // Get detailed information of a workspace member
     async getMemberDetails(memberId: string): Promise<MemberDetailRecord | null> {
         const [member] = await this.db
             .select({
@@ -117,7 +110,7 @@ export class MemberRepository implements IMemberRepository {
                 workspaceId: workspaceMembers.workspaceId,
                 joinedAt: workspaceMembers.joinedAt,
                 updatedAt: workspaceMembers.updatedAt,
-                // Flatten user details
+                // User details
                 firstName: users.firstName || null,
                 lastName: users.lastName || null,
                 email: users.email,

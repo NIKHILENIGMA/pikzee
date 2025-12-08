@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
-import { MemberService } from './member.service'
+
 import { UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
+import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
 import { WorkspaceIdSchema } from '../workspace'
-import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
+
+import { IMemberService } from './member.module'
 import {
     AddMemberSchema,
     UpdateMemberPermissionSchema,
@@ -13,29 +15,34 @@ import {
 import { CreateWorkspaceMemberRequest, MemberDTO } from './member.types'
 
 export class MemberController extends BaseController {
-    constructor(private memberService: MemberService) {
+    constructor(private memberService: IMemberService) {
         super()
     }
 
     list = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<MemberDTO[]>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+                // Validate request params
+                const params = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+
+                // List all members of workspace
+                const members = await this.memberService.listAll(params.workspaceId)
+
+                // Return success response
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Listed workspace members successfully',
+                    data: members
+                })
             }
-            // Validate request params
-            const params = ValidationService.validateParams(req.params, WorkspaceIdSchema)
-
-            // List all members of workspace
-            const members = await this.memberService.listAll(params.workspaceId)
-
-            // Return success response
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Listed workspace members successfully',
-                data: members
-            })
-        })
+        )
     }
 
     create = async (req: Request, res: Response, next: NextFunction) => {
@@ -93,7 +100,7 @@ export class MemberController extends BaseController {
     }
 
     kick = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')

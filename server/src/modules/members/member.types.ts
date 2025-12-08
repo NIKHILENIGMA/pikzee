@@ -10,6 +10,11 @@ import { AddMemberSchema, UpdateMemberPermissionSchema } from './member.validato
 // --------------------------------------------
 export type MemberRecord = InferSelectModel<typeof workspaceMembers>
 export type CreateMemberRecord = InferInsertModel<typeof workspaceMembers>
+export type UpdatePermissionRecord = {
+    memberId: string
+    workspaceId: string
+    permission: MemberPermission
+}
 export type MemberPermission = InferEnum<typeof memberPermissionEnum>
 export type DeleteMemberRecord = {
     workspaceId: string
