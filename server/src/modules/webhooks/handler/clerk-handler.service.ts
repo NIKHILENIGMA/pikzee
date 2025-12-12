@@ -84,6 +84,7 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent> {
             ownerId: createdUser.id
         })
 
+        // todo: Handle invitation acceptance if invitation token is present in metadata
         // if (data.unsafe_metadata) {
         //     // If invitation token is present in metadata, handle invitation acceptance
         //     const invitationToken = data.unsafe_metadata['invitationToken']
