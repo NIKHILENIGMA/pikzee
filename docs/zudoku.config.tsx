@@ -545,6 +545,24 @@ const config: ZudokuConfig = {
           ]
         },
         {
+          type: "link",
+          icon: "anchor",
+          label: "Webhooks",
+          to: "/internal/webhooks",
+        },
+        {
+          type: "link",
+          icon: "briefcase",
+          label: "Workspace",
+          to: "/internal/workspace",
+        },
+        {
+          type: "link",
+          icon: "users",
+          label: "Member",
+          to: "/internal/member",
+        },
+        {
           type: "custom-page",
           icon: "users",
           label: "Team Onboarding",

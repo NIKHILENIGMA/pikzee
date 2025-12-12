@@ -1,0 +1,60 @@
+
+# Webhooks Implementation
+
+This document provides an overview of the webhooks implementation in the Pikzee backend.
+
+## Architecture
+
+The webhooks module is designed to be extensible, allowing for the easy addition of new webhook providers. The core of the architecture revolves around the following components:
+
+- **WebhookService:** The central service responsible for processing all incoming webhooks. It orchestrates the validation and handling of webhooks.
+- **WebhookController:** The Express controller that receives incoming webhook requests and passes them to the `WebhookService`.
+- **WebhookValidator:** A service responsible for validating the signatures of incoming webhooks to ensure their authenticity.
+- **IWebhookHandler:** An interface that defines the contract for all webhook handlers. Each provider (e.g., Clerk, Razorpay) has its own implementation of this interface.
+
+## Flow of a Webhook
+
+1.  An external service (e.g., Clerk) sends a webhook to the `/webhooks/register` endpoint.
+2.  The `WebhookController` receives the request.
+3.  The controller calls the `WebhookService.processWebhook()` method, passing the request details.
+4.  The `WebhookService` identifies the provider (e.g., Clerk) and retrieves the corresponding handler (e.g., `ClerkWebhookHandler`).
+5.  The `WebhookService` calls the `WebhookValidator.validateSignature()` method to verify the webhook's signature.
+6.  The `WebhookService` calls the handler's `parse()` method to parse the request body.
+7.  The `WebhookService` calls the handler's `handle()` method, which contains the business logic for the specific webhook event.
+
+## Visual Flow
+
+![Webhook Sequence Diagram](/webhook-sequence-diagram.png)
+
+## How to Add a New Webhook Provider
+
+1.  **Add Provider to Enum:** Add the new provider to the `WebhookProvider` enum in `server/src/modules/webhooks/webhook.types.ts`.
+2.  **Create a Handler:** Create a new handler class that implements the `IWebhookHandler` interface. This class should be placed in the `server/src/modules/webhooks/handler/` directory.
+3.  **Implement Handler Logic:** Implement the `parse()` and `handle()` methods in your new handler. The `handle()` method will contain the business logic for the webhook.
+4.  **Add Validation Logic:** Add a new validation case in `server/src/modules/webhooks/webhook-validator.ts` for the new provider.
+5.  **Register the Handler:** In `server/src/modules/webhooks/webhook.module.ts`, instantiate your new handler and add it to the `handlers` map.
+
+## File Structure
+
+```
+server/src/modules/webhooks/
+├── handler/
+│   ├── clerk-handler.service.ts
+│   └── razor-handler.service.ts
+├── index.ts
+├── webhook-validator.ts
+├── webhook.controller.ts
+├── webhook.module.ts
+├── webhook.service.ts
+├── webhook.types.ts
+└── webhooks.routes.ts
+```
+
+-   `handler/`: Contains the specific implementation for each webhook provider.
+-   `index.ts`: Exports the necessary modules for the webhooks feature.
+-   `webhook-validator.ts`: Contains the logic for validating incoming webhooks.
+-   `webhook.controller.ts`: The controller that handles incoming webhook requests.
+-   `webhook.module.ts`: Orchestrates the different parts of the webhook module.
+-   `webhook.service.ts`: The service that processes the webhooks.
+-   `webhook.types.ts`: Contains the types and interfaces for the webhooks module.
+-   `webhooks.routes.ts`: Defines the routes for the webhooks.

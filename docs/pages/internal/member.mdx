@@ -1,0 +1,45 @@
+
+# Member Implementation
+
+This document provides an overview of the member implementation in the Pikzee backend.
+
+## Architecture
+
+The member module is designed to manage members within a workspace, including adding, updating permissions for, and removing members. The core of the architecture revolves around the following components:
+
+- **MemberController:** The Express controller that handles incoming member-related requests.
+- **MemberService:** The service that contains the core business logic for managing members.
+- **MemberRepository:** The repository responsible for all database interactions related to members.
+
+## Flow of a Member Operation
+
+1.  A request is sent to a member endpoint (e.g., `/workspaces/{workspaceId}/members`).
+2.  The `MemberController` receives the request.
+3.  The controller calls the appropriate `MemberService` method, passing the request details.
+4.  The `MemberService` orchestrates the business logic.
+5.  The `MemberService` calls the `MemberRepository` to interact with the database.
+6.  The `MemberRepository` uses `drizzle-orm` to execute the database query.
+7.  The result is returned up the chain to the controller, which sends the response.
+
+## File Structure
+
+```
+server/src/modules/members/
+├── index.ts
+├── member.controller.ts
+├── member.module.ts
+├── member.repository.ts
+├── member.routes.ts
+├── member.service.ts
+├── member.types.ts
+└── member.validator.ts
+```
+
+-   `index.ts`: Exports the necessary modules for the member feature.
+-   `member.controller.ts`: The controller that handles incoming member requests.
+-   `member.module.ts`: Orchestrates the different parts of the member module.
+-   `member.repository.ts`: The repository responsible for all database interactions related to members.
+-   `member.routes.ts`: Defines the routes for the member module.
+-   `member.service.ts`: The service that contains the core business logic for managing members.
+-   `member.types.ts`: Contains the types and interfaces for the member module.
+-   `member.validator.ts`: Contains the validation schemas for the member module.

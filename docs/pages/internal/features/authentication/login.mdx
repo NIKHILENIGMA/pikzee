@@ -18,7 +18,7 @@ category: "Features"
 
 Login via Clerk
 
-- Frontend: Integrate Clerk React SDK and render Clerk's <SignIn/> (or useSignIn/useUser hooks) inside ClerkProvider (CLERK_FRONTEND_API). After successful sign-in Clerk manages the session and exposes the authenticated user via useUser.
+- Frontend: Integrate Clerk React SDK and render Clerk's `<SignIn/>` (or useSignIn/useUser hooks) inside ClerkProvider (CLERK_FRONTEND_API). After successful sign-in Clerk manages the session and exposes the authenticated user via useUser.
 
 - Backend: Protect APIs by verifying Clerk sessions with @clerk/nextjs or @clerk/clerk-sdk-node (requireAuth / withAuth / verifyToken). Use clerkUserId from the verified session to upsert a local user record on first login.
 
