@@ -19,6 +19,7 @@ export interface IWorkspaceService {
     softDelete(data: SoftDeleteDTO): Promise<string>
     getById(workspaceId: string, userId: string): Promise<WorkspaceDTO>
     listAll(userId: string): Promise<WorkspaceDTO[]>
+    isOwner(workspaceId: string, userId: string): Promise<WorkspaceDTO | null>
 }
 
 export class WorkspaceService implements IWorkspaceService {
@@ -101,6 +102,14 @@ export class WorkspaceService implements IWorkspaceService {
             })),
             projects: []
         }
+    }
+
+    async isOwner(workspaceId: string, userId: string): Promise<WorkspaceDTO | null> {
+        const workspace = await this.workspaceRepository.getById(workspaceId)
+        if (!workspace) {
+            throw new NotFoundError('Workspace not found', 'workspaceService.isOwner')
+        }
+        return workspace.ownerId === userId ? workspace : null
     }
 
     // ------------------------------------------
