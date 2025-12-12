@@ -1,8 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 
 import { DatabaseConnection } from '@/core/db/service/database.service'
-import { workspaceMembers } from '@/core/db/schema/workspace.schema'
-import { users } from '@/core/db/schema/users.schema'
+import { workspaceMembers, users } from '@/core'
 
 import {
     CreateMemberRecord,
@@ -20,6 +19,7 @@ export interface IMemberRepository {
     getById(memberId: string): Promise<MemberRecord | null>
     listAll(workspaceId: string): Promise<MemberRecord[]>
     getMemberDetails(memberId: string): Promise<MemberDetailRecord | null>
+    getByWorkspaceIdAndEmail(workspaceId: string, email: string): Promise<MemberRecord | null>
 }
 
 export class MemberRepository implements IMemberRepository {
@@ -122,5 +122,19 @@ export class MemberRepository implements IMemberRepository {
             .limit(1)
 
         return member || null
+    }
+
+    async getByWorkspaceIdAndEmail(
+        workspaceId: string,
+        email: string
+    ): Promise<MemberRecord | null> {
+        const [member] = await this.db
+            .select()
+            .from(workspaceMembers)
+            .innerJoin(users, eq(users.id, workspaceMembers.userId))
+            .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(users.email, email)))
+            .limit(1)
+
+        return member ? member.workspace_members : null
     }
 }

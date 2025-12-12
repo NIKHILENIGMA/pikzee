@@ -16,11 +16,15 @@ export interface IMemberService {
     kickMember(workspaceId: string, memberId: string): Promise<MemberDTO>
     getById(memberId: string): Promise<MemberDTO>
     listAll(workspaceId: string): Promise<MemberDTO[]>
+    isMemberOfWorkspace(workspaceId: string, email: string): Promise<boolean>
 }
 
 export class MemberService implements IMemberService {
     constructor(private readonly memberRepository: IMemberRepository) {}
 
+    // --------------------------------------------
+    // Mutation Methods
+    // --------------------------------------------
     async create(data: CreateMemberDTO): Promise<MemberDTO> {
         const newMember = await this.memberRepository.create(data)
 
@@ -92,5 +96,10 @@ export class MemberService implements IMemberService {
     async listAll(workspaceId: string): Promise<MemberDTO[]> {
         const members = await this.memberRepository.listAll(workspaceId)
         return members
+    }
+
+    async isMemberOfWorkspace(workspaceId: string, email: string): Promise<boolean> {
+        const member = await this.memberRepository.getByWorkspaceIdAndEmail(workspaceId, email)
+        return member ? true : false
     }
 }
