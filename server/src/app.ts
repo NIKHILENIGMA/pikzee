@@ -11,7 +11,7 @@ import { CORS_METHODS, CORS_ORIGIN, IS_PRODUCTION } from '@/config'
 import router from '@/core'
 import { errorHandler, notFound } from '@/middlewares'
 import { BASE_API_PATH } from './constants/app.constants'
-import { WebhookRoutes } from '@/core'
+import { webhooks } from '@/modules'
 
 const createApp = (): Application => {
     const app = express()
@@ -27,7 +27,7 @@ const createApp = (): Application => {
     app.use(helmet()) // Security headers
     app.use(compression()) // Compress responses
     app.use(cookieParser()) // Parse cookies
-    app.use(BASE_API_PATH, WebhookRoutes) // Auth webhooks
+    app.use(BASE_API_PATH, webhooks.WebhookRoutes) // Auth webhooks
     app.use(clerkMiddleware()) // Clerk authentication
     app.use(express.json({ limit: '10mb' })) // Limit JSON body size to 10mb
     app.use(express.urlencoded({ extended: true, limit: '5mb' })) // Limit URL-encoded body size to 5mb
