@@ -2,12 +2,15 @@ import { Novu, SDKOptions } from '@novu/api'
 
 import { logger, NOVU_API_KEY } from '@/config'
 import { InternalServerError } from '@/util'
-import {
-    CreateNotificationSubscriber,
-    NotificationTrigger
-} from '@/types/notification/notification.types'
+import { CreateNotificationSubscriber, NotificationTrigger } from './notification.types'
 
-export class NotificationService {
+export interface INotificationService {
+    createSubscriber(data: CreateNotificationSubscriber): Promise<void>
+    deleteSubscriber(subscriberId: string): Promise<void>
+    trigger<T>(triggerOptions: NotificationTrigger<T>): Promise<void>
+}
+
+export class NotificationService implements INotificationService {
     private novu: Novu | null = null
     private isEnabled: boolean = false
 
@@ -45,6 +48,37 @@ export class NotificationService {
         }
         return true
     }
+
+    /**
+     * Creates a new notification subscriber in the Novu notification service.
+     *
+     * Registers a subscriber with their basic profile information. If the subscriber
+     * already exists, the operation silently returns without error. This method only
+     * executes if the notification service is active.
+     *
+     * @async
+     * @param data - The subscriber information to create
+     * @param data.subscriberId - Unique identifier for the subscriber (e.g., user ID)
+     * @param data.firstName - First name of the subscriber
+     * @param data.lastName - Last name of the subscriber
+     * @param data.email - Email address for notification delivery
+     * @param data.avatar - Avatar URL or image identifier for the subscriber's profile
+     *
+     * @returns {Promise<void>} Resolves when subscriber is successfully created or already exists
+     *
+     * @throws {InternalServerError} When subscriber creation fails due to service errors
+     *
+     * @example
+     * ```typescript
+     * await notificationService.createSubscriber({
+     *   subscriberId: 'user-12345',
+     *   firstName: 'Jane',
+     *   lastName: 'Smith',
+     *   email: 'jane.smith@company.com',
+     *   avatar: 'https://cdn.example.com/avatars/user-12345.png'
+     * });
+     * ```
+     */
 
     async createSubscriber(data: CreateNotificationSubscriber): Promise<void> {
         if (!this.isActive()) return
@@ -115,5 +149,3 @@ export class NotificationService {
         }
     }
 }
-
-export const notificationService = new NotificationService()

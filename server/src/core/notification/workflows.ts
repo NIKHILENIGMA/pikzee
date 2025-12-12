@@ -1,4 +1,4 @@
-import { NotificationChannel, WorkflowConfig } from '@/types/notification/notification.types'
+import { NotificationChannel, type WorkflowConfig } from './notification.types'
 
 export enum WORKFLOWS_KEYS {
     WELCOME_EMAIL = 'WELCOME_EMAIL',
