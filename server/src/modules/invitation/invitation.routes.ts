@@ -6,6 +6,8 @@ import { invitationController } from './invitation.module'
 const router = Router()
 
 // Define routes for invitations
-router.route('/accept').post(clerkMiddleware, invitationController.acceptInvitation)
+router.route('/send/:workspaceId').post(clerkMiddleware, invitationController.send)
+
+router.route('/accept').post(clerkMiddleware, invitationController.accept)
 
 export default router

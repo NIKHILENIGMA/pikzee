@@ -1,3 +1,2 @@
 export { default as AuthRouter } from './auth.routes'
-export * from './auth.controller'
-export * from './auth.service'
+// export * from './auth.module'

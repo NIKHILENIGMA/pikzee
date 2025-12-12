@@ -1,12 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 import { UnauthorizedError } from '@/util'
 import { BaseController, ValidationService } from '@/lib'
-import { InvitationService } from './invitation.service'
+import { IInvitationService } from './invitation.service'
 import { WorkspaceIdSchema } from '../workspace'
 import { AcceptInvitationSchema, SendInvitationSchema } from './invitation.validator'
+import { STATUS_CODE } from '@/types/api/success.types'
+import { SendInvitationRequest } from './invitation.types'
 
 export class InvitationController extends BaseController {
-    constructor(private invitationService: InvitationService) {
+    constructor(private invitationService: IInvitationService) {
         super()
     }
     /**
@@ -19,30 +21,39 @@ export class InvitationController extends BaseController {
      * 6. Handle ValidationError (already member/pending) with 400
      * 7. Handle email sending errors appropriately
      */
-    sendInvitation = async (req: Request, res: Response, next: NextFunction) => {
+    send = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async () => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+            // Validate workspaceId from params
+            const params = ValidationService.validateParams<{ workspaceId: string }>(
+                req.params,
+                WorkspaceIdSchema
+            )
 
-            const { email, permission } = ValidationService.validateBody(
+            // Validate request body
+            const body = ValidationService.validateBody<SendInvitationRequest>(
                 req.body,
                 SendInvitationSchema
             )
 
-            const invitation = await this.invitationService.sendInvitation(workspaceId, userId, {
-                email,
-                permission
+            // Call the invitation service to send the invitation
+            const invitation = await this.invitationService.invite({
+                workspaceId: params.workspaceId,
+                userId: userId,
+                email: body.email,
+                customMessage: body.message,
+                permission: body.permission
             })
 
-            return {
-                statusCode: 201,
+            return this.createResponse({
+                statusCode: STATUS_CODE.CREATED,
                 message: 'Invitation sent successfully',
                 data: invitation
-            }
+            })
         })
     }
 
@@ -54,27 +65,30 @@ export class InvitationController extends BaseController {
      * 4. Return 200 with array of pending invitations
      * 5. Handle ForbiddenError with 403
      */
-    getPendingInvitations = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
-            }
+    // pendingInvites = async (req: Request, res: Response, next: NextFunction) => {
+    //     return this.handleRequest(req, res, next, async () => {
+    //         const userId: string | undefined = req.user?.id
+    //         if (!userId) {
+    //             throw new UnauthorizedError('User not authenticated')
+    //         }
 
-            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+    //         // Validate workspaceId from params
+    //         const params = ValidationService.validateParams(req.params, WorkspaceIdSchema)
 
-            const pendingInvitations = await this.invitationService.getPendingInvitations(
-                workspaceId,
-                userId
-            )
+    //         // Call the invitation service to get pending invitations
+    //         // const pendingInvitations = await this.invitationService.(
+    //         //     params.workspaceId,
+    //         //     userId
+    //         // )
 
-            return {
-                statusCode: 200,
-                message: 'Pending invitations retrieved successfully',
-                data: pendingInvitations
-            }
-        })
-    }
+    //         // Standard response
+    //         return this.createResponse({
+    //             statusCode: STATUS_CODE.OK,
+    //             message: 'Pending invitations retrieved successfully',
+    //             data: params
+    //         })
+    //     })
+    // }
     /**
      * TASK LIST:
      * 1. Extract userId from req.auth
@@ -85,24 +99,32 @@ export class InvitationController extends BaseController {
      * 6. Handle ValidationError (expired/already accepted) with 400
      * 7. Handle ForbiddenError (email mismatch) with 403
      */
-    acceptInvitation = async (req: Request, res: Response, next: NextFunction) => {
+    accept = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async () => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated')
             }
 
-            const { token } = ValidationService.validateBody(req.body, AcceptInvitationSchema)
+            // Validate request body
+            const body = ValidationService.validateBody(req.body, AcceptInvitationSchema)
 
-            const result = await this.invitationService.acceptInvitation(token, userId)
+            // Call the invitation service to accept the invitation
+            const result = await this.invitationService.accept({
+                token: body.token,
+                actingUserId: userId
+            })
 
-            return {
-                statusCode: 200,
+            // Standard response
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
                 message: 'Invitation accepted successfully',
                 data: result
-            }
+            })
         })
     }
+
+    // reject
 
     // cancelInvitation = async (req: Request, res: Response, next: NextFunction) => {
     //     return this.handleRequest(req, res, next, async () => {

@@ -1,13 +1,23 @@
+import { InferEnum, InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { MemberPermission } from '../members/member.types'
+import { invitations, invitationStatusEnum } from '@/core'
+import z from 'zod'
+import { AcceptInvitationSchema, SendInvitationSchema } from './invitation.validator'
 
-export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED'
-
-export enum InvitationType {
-    PENDING = 'PENDING',
-    ACCEPTED = 'ACCEPTED',
-    EXPIRED = 'EXPIRED',
-    CANCELLED = 'CANCELLED'
+// --------------------------------------------
+// Drizzle Model types (Repository Layer Types)
+// --------------------------------------------
+export type InvitationRecord = InferSelectModel<typeof invitations>
+export type CreateInvitationRecord = InferInsertModel<typeof invitations>
+export type GetPendingInvitationRecord = {
+    workspaceId: string
+    inviteeEmail: string
 }
+export type InvitationStatus = InferEnum<typeof invitationStatusEnum>
+
+// --------------------------------------------
+// DTO types (Service Layer Types)
+// --------------------------------------------
 
 export interface InvitationDTO {
     id: string
@@ -28,13 +38,15 @@ export interface InvitationDTO {
     }
 }
 
-export interface SendInvitationInput {
+export interface SendInvitationDTO {
+    workspaceId: string
+    userId: string
     email: string
     permission: MemberPermission
     customMessage?: string
 }
 
-export interface AcceptInvitationInput {
+export interface AcceptInvitationDTO {
     token: string
 }
 
@@ -42,3 +54,17 @@ export enum InvitationType {
     SIGNUP = 'SIGNUP',
     LOGIN = 'LOGIN'
 }
+
+export interface CreateInvitationPayloadDTO {
+    workspaceName: string
+    invitedBy: string
+    invitationLink: string
+    useExist: boolean
+    message?: string
+}
+
+// --------------------------------------------
+// Controller Layer Types
+// --------------------------------------------
+export type SendInvitationRequest = z.infer<typeof SendInvitationSchema>
+export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationSchema>
