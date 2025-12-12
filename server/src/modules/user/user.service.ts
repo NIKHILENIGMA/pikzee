@@ -1,7 +1,7 @@
 import { type CreateUser, type User } from '@/core'
+import { ConflictError, DatabaseError } from '@/util/StandardError'
+
 import { IUserRepository } from './user.repository'
-import { ConflictError, InternalServerError } from '@/util/StandardError'
-import { clerkClient } from '@clerk/express'
 
 export interface IUserService {
     createUser(data: CreateUser): Promise<User>
@@ -21,27 +21,20 @@ export class UserService implements IUserService {
             throw new ConflictError('Email already in use', 'email')
         }
 
-        // Create user in Clerk authentication service
-        const clerkUser = await clerkClient.users.createUser({
-            emailAddress: [data.email],
-            firstName: data.firstName!,
-            lastName: data.lastName || ''
-        })
-
-        if (!clerkUser) {
-            throw new InternalServerError(
-                'Failed to create user in authentication service',
-                'AUTH_SERVICE_USER_CREATION_FAILED'
-            )
+        const payload: CreateUser = {
+            id: data.id,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            avatarUrl: data.avatarUrl || null
         }
 
-        // Create user in local database with Clerk-generated ID
-        const newUser = {
-            ...data,
-            id: clerkUser.id // Use Clerk-generated user ID
+        const user = await this.userRepository.create(payload)
+        if (!user) {
+            throw new DatabaseError('Failed to create user', 'USER_CREATION_FAILED')
         }
 
-        return this.userRepository.create(newUser)
+        return user
     }
 
     async updateUser(userId: string, data: Partial<User>): Promise<User> {

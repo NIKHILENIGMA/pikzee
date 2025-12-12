@@ -18,10 +18,6 @@ export class UserRepository implements IUserRepository {
     async create(data: CreateUser): Promise<User> {
         const [user] = await this.db.insert(users).values(data).returning()
 
-        if (!user) {
-            throw new DatabaseError('Failed to create user', 'USER_CREATION_FAILED')
-        }
-
         return user
     }
 
