@@ -1,4 +1,4 @@
 export * as workspace from '@/modules/workspace'
-export * as authentication from '@/modules/auth'
+export * as user from '@/modules/user'
 export * as admin from '@/modules/admin'
 export * as webhooks from '@/modules/webhooks'

@@ -15,23 +15,21 @@ export const RazorpayWebhookEventSchema = z.object({
 export class RazorpayWebhookHandler implements IWebhookHandler<RazorpayWebhookEvent> {
     parse(raw: Buffer | string): RazorpayWebhookEvent {
         const parsedBody: unknown = JSON.parse(raw.toString())
-        return RazorpayWebhookEventSchema.parse(parsedBody)
+        return RazorpayWebhookEventSchema.parse(parsedBody) as RazorpayWebhookEvent
     }
 
     async handle(body: RazorpayWebhookEvent): Promise<void> {
         const { event, payload } = body
 
-        switch (
-            event as RazorpayEvent // Explicitly cast to RazorpayEvent
-        ) {
-            case RazorpayEvent.CREATED:
+        switch (event) {
+            case RazorpayEvent.PAYMENT_CAPTURED:
                 return await this.handlePaymentCaptured(payload.payment.entity)
-            case RazorpayEvent.FAILED:
+            case RazorpayEvent.PAYMENT_FAILED:
                 return await this.handlePaymentFailed(payload.payment.entity)
             case RazorpayEvent.ORDER_PAID:
                 return await this.handleOrderPaid(payload.payment.entity)
             default:
-                logger.warn(`Unhandled Razorpay Webhook Event Type: ${event}`)
+                logger.warn(`Unhandled Razorpay Webhook Event Type: ${String(event)}`)
                 throw new NotFoundError('Unhandled Razorpay event type', 'UNHANDLED_EVENT_TYPE')
         }
     }

@@ -1,23 +1,26 @@
+import z from 'zod'
+import { ClerkUserJSONSchema } from './webhook.validator'
+
 export enum WebhookProvider {
     CLERK = 'CLERK',
     RAZORPAY = 'RAZORPAY'
 }
 
-export interface WebhookRequest {
-    provider: WebhookProvider
+export interface WebhookRequest<P extends WebhookProvider = WebhookProvider> {
+    provider: P
     headers: Record<string, string>
     body: Buffer | string
 }
 
-export interface WebhookResponse {
+export interface WebhookResponse<T = unknown> {
     success: boolean
     message: string
-    data?: unknown
+    data?: T
 }
 
-export interface IWebhookHandler<T> {
-    parse(raw: Buffer | string): T
-    handle(payload: T): Promise<void>
+export interface IWebhookHandler<TEvent, TResult = void> {
+    parse(raw: Buffer | string): TEvent
+    handle(payload: TEvent): Promise<TResult>
 }
 
 export interface IWebhookValidator {
@@ -28,27 +31,72 @@ export interface IWebhookValidator {
     ): boolean
 }
 
-export type WebhookHandler = Record<WebhookProvider, IWebhookHandler<unknown>>
+// Map providers to their event types
+export type WebhookEventMap = {
+    [WebhookProvider.CLERK]: ClerkWebhookEvent
+    [WebhookProvider.RAZORPAY]: RazorpayWebhookEvent
+}
 
+export type WebhookResultMap = {
+    [WebhookProvider.CLERK]: void
+    [WebhookProvider.RAZORPAY]: void
+}
+
+export type WebhookHandlerRegistry = {
+    [P in WebhookProvider]: IWebhookHandler<WebhookEventMap[P], WebhookResultMap[P]>
+}
+
+// --------------------------------------------
 // Clerk Webhook Types
-export enum ClerkEvent {
+// --------------------------------------------
+export enum ClerkEventType {
     USER_CREATED = 'user.created',
     USER_UPDATED = 'user.updated',
     USER_DELETED = 'user.deleted'
 }
 
-// Razorpay Webhook Types
-export interface RazorpayWebhookEvent {
-    event: string
-    payload: {
-        payment: {
-            entity: unknown
-        }
-    }
+export interface ClerkUserJSON {
+    id: string
+    email_addresses: Array<{
+        id: string
+        email_address: string
+    }>
+    primary_email_address_id: string
+    first_name: string | null
+    last_name: string | null
+    image_url: string | null
 }
 
+export interface ClerkWebhookEvent {
+    type: ClerkEventType
+    data: ClerkUserJSON
+}
+
+export type ClerkUser = z.infer<typeof ClerkUserJSONSchema>
+
+// --------------------------------------------
+// Razorpay Webhook Types
+// --------------------------------------------
 export enum RazorpayEvent {
-    CREATED = 'payment.captured',
-    FAILED = 'payment.failed',
+    PAYMENT_CAPTURED = 'payment.captured',
+    PAYMENT_FAILED = 'payment.failed',
     ORDER_PAID = 'order.paid'
+}
+
+export interface RazorpayPayment {
+    id: string
+    amount: number
+    currency: string
+    status: string
+    order_id: string
+    method: string
+}
+
+export interface RazorpayWebhookEvent {
+    event: RazorpayEvent
+    payload: {
+        payment: {
+            entity: RazorpayPayment
+        }
+    }
 }

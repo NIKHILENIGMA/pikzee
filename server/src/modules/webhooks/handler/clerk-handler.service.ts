@@ -1,32 +1,12 @@
 import { logger } from '@/config'
-import { IUserService } from '@/modules/user/user.module'
+import { IUserService } from '@/modules/user'
 import { IWorkspaceService } from '@/modules/workspace'
 import { InternalServerError, NotFoundError } from '@/util'
-import { ClerkEvent, IWebhookHandler } from '../webhook.types'
-import { z } from 'zod'
 
-const ClerkUserJSONSchema = z.object({
-    id: z.string(),
-    email_addresses: z.array(
-        z.object({
-            id: z.string(),
-            email_address: z.string().email()
-        })
-    ),
-    primary_email_address_id: z.string(),
-    first_name: z.string().nullable(),
-    last_name: z.string().nullable(),
-    image_url: z.url().nullable()
-})
+import { ClerkEventType, ClerkUser, ClerkWebhookEvent, IWebhookHandler } from '../webhook.types'
+import { ClerkWebhookEventSchema } from '../webhook.validator'
 
-export const ClerkWebhookEventSchema = z.object({
-    type: z.enum(ClerkEvent),
-    data: ClerkUserJSONSchema
-})
-
-export type ClerkWebhookEvent = z.infer<typeof ClerkWebhookEventSchema>
-
-export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent> {
+export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, void> {
     constructor(
         private readonly userService: IUserService,
         private readonly workspaceService: IWorkspaceService
@@ -44,14 +24,14 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent> {
         const { type, data } = body
 
         switch (type) {
-            case ClerkEvent.USER_CREATED:
+            case ClerkEventType.USER_CREATED:
                 // Handle user created event
                 return await this.handleUserCreated(data)
 
-            case ClerkEvent.USER_UPDATED:
+            case ClerkEventType.USER_UPDATED:
                 // Handle user updated event
                 return await this.handleUserUpdated(data)
-            case ClerkEvent.USER_DELETED:
+            case ClerkEventType.USER_DELETED:
                 // Handle user deleted event
                 return await this.handleUserDeleted(data)
             default:
@@ -60,7 +40,7 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent> {
         }
     }
 
-    private async handleUserCreated(data: z.infer<typeof ClerkUserJSONSchema>) {
+    private async handleUserCreated(data: ClerkUser) {
         // Find the primary email address
         const primaryEmail = data.email_addresses.find(
             (e: { id: string }) => e.id === data.primary_email_address_id
@@ -106,13 +86,13 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent> {
         // }
     }
 
-    private async handleUserUpdated(data: z.infer<typeof ClerkUserJSONSchema>) {
+    private async handleUserUpdated(data: ClerkUser) {
         // Implement user updated handling logic
         await Promise.resolve()
         logger.info(`Handling Clerk user.updated event: ${JSON.stringify(data)}`)
     }
 
-    private async handleUserDeleted(data: z.infer<typeof ClerkUserJSONSchema>) {
+    private async handleUserDeleted(data: ClerkUser) {
         // Implement user deleted handling logic
         await Promise.resolve()
         logger.info(`Handling Clerk user.deleted event: ${JSON.stringify(data)}`)
