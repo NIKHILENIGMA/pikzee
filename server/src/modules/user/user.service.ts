@@ -50,7 +50,11 @@ export class UserService implements IUserService {
     }
 
     async getUserByEmail(email: string): Promise<User | null> {
-        return this.userRepository.getByEmail(email)
+        const user = await this.userRepository.getByEmail(email)
+
+        if (!user) return null
+
+        return user
     }
 
     async listAll(): Promise<User[]> {
