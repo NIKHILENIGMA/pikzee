@@ -74,7 +74,6 @@ export class NotificationService implements INotificationService {
                 locale: 'en_US',
                 timezone: 'America/New_York'
             })
-
         } catch (error) {
             logger.error(`Failed to ensure subscriber: ${(error as Error)?.message}`)
             throw new InternalServerError(
@@ -108,7 +107,6 @@ export class NotificationService implements INotificationService {
                 subscriberId: id
             }
         })
-
     }
 
     async sendInAppInvitation(param: SendInvitationDTO): Promise<void> {
