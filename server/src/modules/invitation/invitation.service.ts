@@ -1,22 +1,18 @@
 import crypto from 'node:crypto'
 
-import { FRONTEND_BASE_URL } from '@/config'
+import { FRONTEND_BASE_URL, INVITATION_TOKEN_SECRET, logger } from '@/config'
 import {
     invitationStatusEnum,
     type Invitation,
-    type User,
     INotificationService,
-    WORKFLOWS,
-    WORKFLOWS_KEYS,
-    NotificationChannel
 } from '@/core'
 import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from '@/util'
 
 import { IMemberService } from '../members'
-import { IWorkspaceService, WorkspaceDTO } from '../workspace'
+import { IWorkspaceService } from '../workspace'
 import { IUserService } from '../user'
 
-import { CreateInvitationPayloadDTO, InvitationType, SendInvitationDTO } from './invitation.types'
+import { SendInvitationDTO } from './invitation.types'
 import { IInvitationRepository } from './invitation.repository'
 
 // Extract enum value for easier access
@@ -57,45 +53,49 @@ export class InvitationService implements IInvitationService {
     ) {}
 
     async invite(data: SendInvitationDTO): Promise<void> {
+        // Extract the data
+        const { workspaceId, userId, email, permission, customMessage } = data
+
+        // Perform necessary checks concurrently
+        const [isPendingInvitation, isOwner, alreadyMember, invitee] = await Promise.all([
+            this.invitationRepository.getPendingByEmail({
+                workspaceId: workspaceId,
+                inviteeEmail: email
+            }),
+            this.workspaceService.isOwner(workspaceId, userId),
+            this.memberService.isMemberOfWorkspace(workspaceId, email),
+            this.userService.getUserByEmail(email)
+        ])
         // Check for existing pending invitation
-        const isPendingInvitation: Invitation | null =
-            await this.invitationRepository.getPendingByEmail({
-                workspaceId: data.workspaceId,
-                inviteeEmail: data.email
-            })
-        if (!isPendingInvitation) {
+        if (isPendingInvitation) {
             throw new BadRequestError('An invitation is already pending for this email')
         }
 
         // check inviter is owner of workspace
-        const isOwner: WorkspaceDTO | null = await this.workspaceService.isOwner(
-            data.workspaceId,
-            data.userId
-        )
         if (!isOwner) {
             throw new ForbiddenError('Only workspace owners can send invitations')
         }
 
         // check invitee not already a workspace member
-        const alreadyMember: boolean = await this.memberService.isMemberOfWorkspace(
-            data.workspaceId,
-            data.email
-        )
         if (alreadyMember) {
             throw new BadRequestError('User is already a member of the workspace')
         }
 
-        // Create invite and hashed tokens
+        if (invitee && invitee.id === userId) {
+            throw new BadRequestError('You cannot invite yourself to the workspace')
+        }
+
+        // Generate invitation token and expiration date
         const inviteToken: string = this.generateInvitationToken()
         const hashedToken: string = this.hashInvitationToken(inviteToken)
         const expiresAt: Date = this.nowPlusDays(2) // 48 hours expiration
 
         // Create invitation record in the database
         await this.invitationRepository.create({
-            workspaceId: data.workspaceId,
-            inviterUserId: data.userId,
-            inviteeEmail: data.email,
-            permission: data.permission,
+            workspaceId: workspaceId,
+            inviterUserId: userId,
+            inviteeEmail: email,
+            permission: permission,
             status: INVITATION_PENDING,
             token: hashedToken,
             expiresAt: expiresAt, // 48 hours expiration
@@ -103,51 +103,26 @@ export class InvitationService implements IInvitationService {
         })
 
         // Check if invitee is existing user
-        const invitee: User | null = await this.userService.getUserByEmail(data.email)
+        const isExistingUser: boolean = !!invitee
 
-        // Prepare notification payload
-        const payload: CreateInvitationPayloadDTO = {
-            invitedBy: isOwner.name || 'A team member',
-            workspaceName: isOwner.name,
-            message: data.customMessage,
-            invitationLink: '', // to be set later
-            useExist: false // to be set later
-        }
-
-        // Generate invitation link
-        if (invitee) {
-            // Existing user: Send login link and In-App notification
-            const loginLink: string = this.invitationLink(inviteToken, InvitationType.LOGIN)
-
-            // Trigger notification for existing user invite
-            await this.notificationService.trigger<CreateInvitationPayloadDTO>({
-                subscriberId: invitee.id,
-                workflowId: WORKFLOWS[WORKFLOWS_KEYS.INVITE_USER].id,
-                type: NotificationChannel.IN_APP,
-                payload: {
-                    ...payload,
-                    invitationLink: loginLink,
-                    useExist: true,
-                    message: data.customMessage || 'You have been invited to join the workspace.'
-                }
-            })
-        } else {
-            // New user: Send sign-up link and Email notification
-            const signupLink: string = this.invitationLink(inviteToken, InvitationType.SIGNUP)
-
-            // Trigger notification for new user invite
-            await this.notificationService.trigger<CreateInvitationPayloadDTO>({
-                subscriberId: data.email, // Using email as subscriberId for new users
-                workflowId: WORKFLOWS[WORKFLOWS_KEYS.INVITE_USER].id,
-                type: NotificationChannel.EMAIL,
-                payload: {
-                    ...payload,
-                    invitationLink: signupLink,
-                    useExist: false, // This will prevent in-app notification workflow from triggering
-                    message: data.customMessage || 'You have been invited to join the workspace.'
-                }
+        if (isExistingUser) {
+            await this.notificationService.sendInAppInvitation({
+                subscriber: {
+                    id: invitee!.id,
+                    email: invitee!.email,
+                    firstName: invitee!.firstName || '',
+                    lastName: invitee!.lastName || '',
+                    avatar: invitee!.avatarUrl || undefined
+                },
+                inviterName: isOwner.name,
+                workspaceName: isOwner.name,
+                accpetLink: this.invitationLink(inviteToken, 'LOGIN'),
+                rejectLink: '',
+                customMessage: customMessage || ''
             })
         }
+
+        logger.info(`Invitation sent to ${email} for workspace ${workspaceId}`)
     }
 
     async accept(data: {
@@ -195,7 +170,8 @@ export class InvitationService implements IInvitationService {
     }
 
     private hashInvitationToken(token: string): string {
-        return crypto.createHash('sha256').update(token).digest('hex')
+        const secret = INVITATION_TOKEN_SECRET
+        return crypto.createHmac('sha256', secret).update(token).digest('hex')
     }
 
     /**

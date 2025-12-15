@@ -87,6 +87,7 @@ export class InvitationRepository implements IInvitationRepository {
                     eq(invitations.status, 'PENDING')
                 )
             )
+            .limit(1)
         if (!invitation) return null
 
         return invitation

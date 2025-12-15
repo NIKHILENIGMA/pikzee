@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const SendInvitationSchema = z.object({
+    workspaceId: z.uuid({ message: 'Invalid workspace ID' }),
     email: z.email({ message: 'Invalid email address' }),
     permission: z.enum(['FULL_ACCESS', 'EDIT', 'COMMENT_ONLY', 'VIEW_ONLY']),
     message: z.string().max(500, { message: 'Message cannot exceed 500 characters' }).optional()

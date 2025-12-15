@@ -59,7 +59,7 @@ export interface CreateInvitationPayloadDTO {
     workspaceName: string
     invitedBy: string
     invitationLink: string
-    useExist: boolean
+    userExist: boolean
     message?: string
 }
 

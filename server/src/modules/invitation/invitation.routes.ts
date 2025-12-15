@@ -1,12 +1,12 @@
-import { clerkMiddleware } from '@clerk/express'
 import { Router } from 'express'
+import { clerkMiddleware } from '@/middlewares/clerk/clerk.middleware'
 
 import { invitationController } from './invitation.module'
 
 const router = Router()
 
 // Define routes for invitations
-router.route('/send/:workspaceId').post(clerkMiddleware, invitationController.send)
+router.route('/send-invite').post(clerkMiddleware, invitationController.invite)
 
 router.route('/accept').post(clerkMiddleware, invitationController.accept)
 
