@@ -48,6 +48,17 @@ export interface SendInvitationDTO {
 
 export interface AcceptInvitationDTO {
     token: string
+    userId: string
+}
+
+export interface RejectInvitationDTO {
+    token: string
+    userId: string
+}
+
+export interface CancelInvitationDTO {
+    token: string
+    userId: string
 }
 
 export enum InvitationType {

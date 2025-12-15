@@ -1,15 +1,23 @@
 import { and, eq, gt } from 'drizzle-orm'
 
-import { type CreateInvitation, type Invitation, invitations } from '@/core'
+import { type CreateInvitation, type Invitation, invitations, workspaceMembers } from '@/core'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import { GetPendingInvitationRecord } from './invitation.types'
+import { MemberPermission } from '../members'
 
-export type MarkAcceptRecord = { invitationId: string; inviteeUserId: string; token: string }
+export type MarkAcceptRecord = {
+    invitationId: string
+    inviteeUserId: string
+    workspaceId: string
+    token: string
+    permission: MemberPermission
+}
 
 export interface IInvitationRepository {
     create(data: CreateInvitation): Promise<Invitation>
     update(id: string, data: Partial<Invitation>): Promise<Invitation>
     delete(id: string): Promise<Invitation>
+    addMemberAndMarkAccept(data: MarkAcceptRecord): Promise<void>
     getById(id: string): Promise<Invitation | null>
     getByToken(token: string): Promise<Invitation | null>
     getPendingByEmail(data: GetPendingInvitationRecord): Promise<Invitation | null>
@@ -52,6 +60,29 @@ export class InvitationRepository implements IInvitationRepository {
             .returning()
 
         return deletedInvitation
+    }
+
+    async addMemberAndMarkAccept(data: MarkAcceptRecord): Promise<void> {
+        const { invitationId, workspaceId, inviteeUserId, token, permission } = data
+
+        await this.db.transaction(async (tx) => {
+            // Add member to workspace
+            await tx.insert(workspaceMembers).values({
+                userId: inviteeUserId,
+                workspaceId: workspaceId,
+                permission: permission,
+                joinedAt: new Date(),
+                updatedAt: new Date()
+            })
+
+            // Mark invitation as accepted
+            await tx
+                .update(invitations)
+                .set({
+                    status: 'ACCEPTED'
+                })
+                .where(and(eq(invitations.id, invitationId), eq(invitations.token, token)))
+        })
     }
 
     // --------------------------------------------

@@ -8,35 +8,23 @@ import { IMemberService } from '../members'
 import { IWorkspaceService } from '../workspace'
 import { IUserService } from '../user'
 
-import { SendInvitationDTO } from './invitation.types'
+import {
+    AcceptInvitationDTO,
+    CancelInvitationDTO,
+    RejectInvitationDTO,
+    SendInvitationDTO
+} from './invitation.types'
 import { IInvitationRepository } from './invitation.repository'
 
 // Extract enum value for easier access
-const [INVITATION_PENDING] = invitationStatusEnum.enumValues
+const [PENDING] = invitationStatusEnum.enumValues
 
 export interface IInvitationService {
     invite(data: SendInvitationDTO): Promise<void>
-    accept(data: {
-        token?: string
-        invitationId?: string
-        actingUserId?: string
-    }): Promise<{ workspaceId: string; member: unknown }>
-    reject({
-        token,
-        invitationId,
-        actingUserId
-    }: {
-        token?: string
-        invitationId?: string
-        actingUserId?: string
-    }): Promise<{ message: string }>
-    cancel({
-        invitationId,
-        actingUserId
-    }: {
-        invitationId: string
-        actingUserId: string
-    }): Promise<{ message: string }>
+    accept(data: AcceptInvitationDTO): Promise<{ message: string }>
+    reject(data: RejectInvitationDTO): Promise<{ message: string }>
+    cancel(data: CancelInvitationDTO): Promise<{ message: string }>
+    list(workspaceId: string, limit?: number, offset?: number): Promise<Invitation[]>
 }
 
 export class InvitationService implements IInvitationService {
@@ -92,7 +80,7 @@ export class InvitationService implements IInvitationService {
             inviterUserId: userId,
             inviteeEmail: email,
             permission: permission,
-            status: INVITATION_PENDING,
+            status: PENDING,
             token: hashedToken,
             expiresAt: expiresAt, // 48 hours expiration
             createdAt: new Date()
@@ -121,44 +109,74 @@ export class InvitationService implements IInvitationService {
         logger.info(`Invitation sent to ${email} for workspace ${workspaceId}`)
     }
 
-    async accept(data: {
-        token?: string
-        invitationId?: string
-        actingUserId?: string
-    }): Promise<{ workspaceId: string; member: unknown }> {
-        if (data.token) {
-            const invitation: Invitation | null = await this.verifyHashedToken(data.token)
-            if (!invitation) {
-                throw new UnauthorizedError('Invalid or expired invitation token')
-            }
+    async accept(data: AcceptInvitationDTO): Promise<{ message: string }> {
+        const invitation: Invitation | null = await this.verifyHashedToken(data.token)
+        if (!invitation) {
+            throw new UnauthorizedError('Invalid or expired invitation token')
         }
-        return { workspaceId: '', member: null }
+
+        // Perform invitation checks
+        this.invitationCheck(invitation)
+
+        // Add member to workspace and mark invitation as accepted
+        await this.invitationRepository.addMemberAndMarkAccept({
+            invitationId: invitation.id,
+            inviteeUserId: data.userId,
+            workspaceId: invitation.workspaceId,
+            token: invitation.token,
+            permission: invitation.permission
+        })
+
+        return { message: 'Invitation accepted successfully' }
     }
 
-    async reject(data: {
-        token?: string
-        invitationId?: string
-        actingUserId?: string
-    }): Promise<{ message: string }> {
-        if (data.token) {
-            const invitation: Invitation | null = await this.verifyHashedToken(data.token)
-            if (!invitation) {
-                throw new UnauthorizedError('Invalid or expired invitation token')
-            }
+    async reject(data: RejectInvitationDTO): Promise<{ message: string }> {
+        const invitation: Invitation | null = await this.verifyHashedToken(data.token)
+        if (!invitation) {
+            throw new UnauthorizedError('Invalid or expired invitation token')
         }
+
+        // Perform invitation checks
+        this.invitationCheck(invitation)
+
+        // Mark invitation as rejected
+        await this.invitationRepository.update(invitation.id, {
+            status: 'EXPIRED'
+        })
+
         return { message: 'Invitation rejected successfully' }
     }
 
-    async cancel(data: {
-        invitationId: string
-        actingUserId: string
-    }): Promise<{ message: string }> {
-        const invitation = await this.invitationRepository.getById(data.invitationId)
+    async cancel(data: CancelInvitationDTO): Promise<{ message: string }> {
+        const invitation = await this.verifyHashedToken(data.token)
         if (!invitation) {
             throw new NotFoundError('Invitation not found')
         }
 
+        // Perform invitation checks
+        this.invitationCheck(invitation)
+
+        // Only inviter can cancel the invitation
+        if (invitation.inviterUserId !== data.userId) {
+            throw new ForbiddenError('You are not authorized to cancel this invitation')
+        }
+
+        // Mark invitation as cancelled
+        await this.invitationRepository.update(invitation.id, {
+            status: 'CANCELLED'
+        })
+
         return { message: 'Invitation cancelled successfully' }
+    }
+
+    async list(workspaceId: string, limit = 20, offset = 0): Promise<Invitation[]> {
+        const invitations = await this.invitationRepository.listPendingByWorkspace(
+            workspaceId,
+            limit,
+            offset
+        )
+
+        return invitations
     }
 
     private generateInvitationToken(): string {
@@ -182,14 +200,47 @@ export class InvitationService implements IInvitationService {
         return d
     }
 
+    /**
+     * Verify hashed token and return invitation if valid
+     *
+     * @param token  Invitation token
+     * @returns  Invitation | null
+     */
+
     private async verifyHashedToken(token: string): Promise<Invitation | null> {
-        const hashedToken = crypto.createHash('sha256').update(token).digest('hex')
+        const hashedToken = this.hashInvitationToken(token)
 
         // Find invitation by hashed token
         const invitation: Invitation | null =
             await this.invitationRepository.isInvitationTokenValid(hashedToken)
 
-        return invitation // null if not found
+        if (!invitation) {
+            return null // null if not found
+        }
+
+        return invitation
+    }
+
+    /**
+     * Invitation checks
+     *
+     * @param invitation Invitation object
+     * @returns  boolean
+     */
+    private invitationCheck(invitation: Invitation) {
+        if (invitation.status !== PENDING) {
+            throw new BadRequestError('Invitation is not in a pending state')
+        }
+
+        if (invitation.expiresAt <= new Date()) {
+            throw new BadRequestError('Invitation has expired')
+        }
+
+        if (!invitation.workspaceId) {
+            throw new BadRequestError('Invalid invitation: Missing workspace information')
+        }
+
+        return true
     }
 
     private invitationLink(token: string, type: 'SIGNUP' | 'LOGIN'): string {

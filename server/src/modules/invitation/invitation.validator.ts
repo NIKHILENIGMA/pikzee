@@ -16,7 +16,11 @@ export const RejectInvitationSchema = z.object({
 })
 
 export const CancelInvitationSchema = z.object({
-    params: z.object({
-        invitationId: z.uuid({ message: 'Invalid invitation ID' })
-    })
+    token: z.string().min(1, { message: 'Invitation token is required' })
+})
+
+export const ListPendingInvitationSchema = z.object({
+    workspaceId: z.uuid({ message: 'Invalid workspace ID' }),
+    limit: z.number().min(1).max(100).optional(),
+    offset: z.number().min(0).optional()
 })
