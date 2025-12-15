@@ -29,14 +29,9 @@ export const DATABASE_URL: string =
     process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/mydatabase'
 
 // JWT Configuration
-export const ACCESS_TOKEN_SECRET: string =
-    process.env.ACCESS_TOKEN_SECRET! || 'your_access_token_secret'
-export const REFRESH_TOKEN_SECRET: string =
-    process.env.REFRESH_TOKEN_SECRET! || 'your_refresh_token_secret'
-export const ACCESS_TOKEN_EXPIRY: number = parseInt(process.env.ACCESS_TOKEN_EXPIRY!) || 3600
-export const REFRESH_TOKEN_EXPIRY: number = parseInt(process.env.REFRESH_TOKEN_EXPIRY!) || 604800
+export const INVITATION_TOKEN_SECRET: string =
+    process.env.INVITATION_TOKEN_SECRET || 'your_invitation_token_secret'
 
-// Bcrypt Configuration
-export const BCRYPT_SALT_ROUNDS: number = parseInt(process.env.BCRYPT_SALT_ROUNDS!) || 10
+export const NOVU_API_KEY: string = process.env.NOVU_SECRET_KEY || 'your_novu_api_key'
 
-export const NOVU_API_KEY: string = process.env.NOVU_API_KEY || 'your_novu_api_key'
+export const RESEND_API_KEY: string = String(process.env.RESEND_API_KEY) || 'your_resend_api_key'
