@@ -5,11 +5,13 @@ import { InternalServerError, NotFoundError } from '@/util'
 
 import { ClerkEventType, ClerkUser, ClerkWebhookEvent, IWebhookHandler } from '../webhook.types'
 import { ClerkWebhookEventSchema } from '../webhook.validator'
+import { INotificationService } from '@/core'
 
 export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, void> {
     constructor(
         private readonly userService: IUserService,
-        private readonly workspaceService: IWorkspaceService
+        private readonly workspaceService: IWorkspaceService,
+        private readonly notificationService: INotificationService
     ) {}
 
     parse(raw: Buffer | string): ClerkWebhookEvent {
@@ -84,6 +86,14 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, v
         //         }
         //     }
         // }
+
+        await this.notificationService.sendWelcomEmail({
+            id: createdUser.id,
+            email: createdUser.email,
+            firstName: createdUser.firstName!,
+            lastName: createdUser.lastName!,
+            avatar: createdUser.avatarUrl || undefined
+        })
     }
 
     private async handleUserUpdated(data: ClerkUser) {
