@@ -99,7 +99,7 @@ export class NotificationService implements INotificationService {
             email: email,
             firstName: firstName,
             lastName: lastName,
-            avatar: avatar,
+            avatar: avatar
         })
 
         // Trigger welcome email workflow
