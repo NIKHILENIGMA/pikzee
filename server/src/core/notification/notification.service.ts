@@ -2,12 +2,18 @@ import { Novu, SDKOptions } from '@novu/api'
 
 import { logger, NOVU_API_KEY } from '@/config'
 import { InternalServerError } from '@/util'
-import { CreateNotificationSubscriber, NotificationTrigger } from './notification.types'
+
+import {
+    CreateSubscriberDTO,
+    SendInvitationDTO,
+    SendWelcomeEmailDTO,
+    WORKFLOW_ID
+} from './notification.types'
 
 export interface INotificationService {
-    createSubscriber(data: CreateNotificationSubscriber): Promise<void>
-    deleteSubscriber(subscriberId: string): Promise<void>
-    trigger<T>(triggerOptions: NotificationTrigger<T>): Promise<void>
+    sendWelcomEmail(payload: SendWelcomeEmailDTO): Promise<void>
+    sendInvitationEmail(param: SendInvitationDTO): Promise<void>
+    sendInAppInvitation(param: SendInvitationDTO): Promise<void>
 }
 
 export class NotificationService implements INotificationService {
@@ -49,103 +55,114 @@ export class NotificationService implements INotificationService {
         return true
     }
 
-    /**
-     * Creates a new notification subscriber in the Novu notification service.
-     *
-     * Registers a subscriber with their basic profile information. If the subscriber
-     * already exists, the operation silently returns without error. This method only
-     * executes if the notification service is active.
-     *
-     * @async
-     * @param data - The subscriber information to create
-     * @param data.subscriberId - Unique identifier for the subscriber (e.g., user ID)
-     * @param data.firstName - First name of the subscriber
-     * @param data.lastName - Last name of the subscriber
-     * @param data.email - Email address for notification delivery
-     * @param data.avatar - Avatar URL or image identifier for the subscriber's profile
-     *
-     * @returns {Promise<void>} Resolves when subscriber is successfully created or already exists
-     *
-     * @throws {InternalServerError} When subscriber creation fails due to service errors
-     *
-     * @example
-     * ```typescript
-     * await notificationService.createSubscriber({
-     *   subscriberId: 'user-12345',
-     *   firstName: 'Jane',
-     *   lastName: 'Smith',
-     *   email: 'jane.smith@company.com',
-     *   avatar: 'https://cdn.example.com/avatars/user-12345.png'
-     * });
-     * ```
-     */
-
-    async createSubscriber(data: CreateNotificationSubscriber): Promise<void> {
-        if (!this.isActive()) return
-
-        try {
-            // Create subscriber in Novu
-            await this.novu!.subscribers.create({
-                subscriberId: data.subscriberId,
-                firstName: data.firstName,
-                lastName: data.lastName,
-                email: data.email,
-                avatar: data.avatar
-            })
-        } catch (error) {
-            const message = (error as Error)?.message || ''
-            if (message.includes('already exists')) {
-                return
-            }
-
-            logger.error(`Failed to create subscriber: ${message}`)
-
-            throw new InternalServerError(
-                'Failed to create subscriber in notification service.',
-                'NOVU_CREATE_SUBSCRIBER_FAILED'
-            )
-        }
-    }
-
-    async deleteSubscriber(subscriberId: string): Promise<void> {
+    private async createSubscriber(params: CreateSubscriberDTO): Promise<void> {
         if (!this.isActive()) {
             return
         }
 
         try {
-            await this.novu!.subscribers.delete(subscriberId)
-        } catch (error) {
-            const message = (error as Error)?.message || ''
-            if (message.includes('not found')) {
-                return
-            }
-            logger.error(`Failed to delete subscriber: ${message}`)
+            // Extract subscriber details
+            const { subscriberId, email, firstName, lastName, avatar } = params
 
+            // Check if subscriber exists
+            const subscriber = await this.novu!.subscribers.create({
+                subscriberId: subscriberId,
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                avatar: avatar,
+                locale: 'en_US',
+                timezone: 'America/New_York'
+            })
+
+            logger.info(`Subscriber ensured: ${JSON.parse(JSON.stringify(subscriber))}`)
+        } catch (error) {
+            logger.error(`Failed to ensure subscriber: ${(error as Error)?.message}`)
             throw new InternalServerError(
-                'Failed to delete subscriber from notification service.',
-                'NOVU_DELETE_SUBSCRIBER_FAILED'
+                'Failed to ensure subscriber in notification service.',
+                'NOVU_ENSURE_SUBSCRIBER_FAILED'
             )
         }
     }
 
-    async trigger<T>(triggerOptions: NotificationTrigger<T>): Promise<void> {
+    async sendWelcomEmail(payload: SendWelcomeEmailDTO): Promise<void> {
         if (!this.isActive()) {
             return
         }
 
-        try {
-            await this.novu!.trigger({
-                workflowId: triggerOptions.workflowId,
-                to: { subscriberId: triggerOptions.subscriberId },
-                payload: triggerOptions.payload as Record<string, unknown>
-            })
-        } catch (error) {
-            logger.error(`Failed to trigger notification: ${(error as Error)?.message}`)
+        // Extract user details from payload
+        const { id, email, firstName, lastName, avatar } = payload
 
-            throw new InternalServerError(
-                'Failed to trigger notification.',
-                'NOVU_TRIGGER_NOTIFICATION_FAILED'
-            )
+        // Ensure subscriber exists
+        await this.createSubscriber({
+            subscriberId: id,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            avatar: avatar,
+        })
+
+        // Trigger welcome email workflow
+        const triggered = await this.novu!.trigger({
+            workflowId: WORKFLOW_ID.WELCOME_EMAIL,
+            to: {
+                subscriberId: id
+            }
+        })
+
+        logger.info(`Welcome email triggered: ${triggered.result}`)
+    }
+
+    async sendInAppInvitation(param: SendInvitationDTO): Promise<void> {
+        if (!this.isActive()) {
+            return
         }
+
+        // Trigger invitation in-app notification
+        await this.novu!.trigger({
+            workflowId: WORKFLOW_ID.INVITE_USER,
+            to: {
+                subscriberId: param.subscriber.id
+            },
+            payload: {
+                inviterName: param.inviterName,
+                workspaceName: param.workspaceName,
+                accpetLink: param.accpetLink,
+                rejectLink: param.rejectLink,
+                customMessage: param.customMessage
+            }
+        })
+    }
+
+    async sendInvitationEmail(param: SendInvitationDTO): Promise<void> {
+        if (!this.isActive()) {
+            return
+        }
+
+        // Extract invitation details from payload
+        const { subscriber, inviterName, workspaceName, accpetLink, customMessage } = param
+
+        // Create or ensure subscriber exists
+        await this.createSubscriber({
+            subscriberId: subscriber.id,
+            email: subscriber.email,
+            firstName: subscriber.firstName,
+            lastName: subscriber.lastName,
+            avatar: subscriber.avatar
+        })
+
+        // Trigger invitation in-app notification
+        await this.novu!.trigger({
+            workflowId: WORKFLOW_ID.INVITE_USER,
+            to: {
+                subscriberId: subscriber.id
+            },
+            payload: {
+                inviterName: inviterName,
+                workspaceName: workspaceName,
+                invitationLink: accpetLink,
+                customMessage: customMessage
+            }
+        })
     }
 }
