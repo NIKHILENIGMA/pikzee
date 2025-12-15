@@ -65,7 +65,7 @@ export class NotificationService implements INotificationService {
             const { subscriberId, email, firstName, lastName, avatar } = params
 
             // Check if subscriber exists
-            const subscriber = await this.novu!.subscribers.create({
+            await this.novu!.subscribers.create({
                 subscriberId: subscriberId,
                 firstName: firstName,
                 lastName: lastName,
@@ -75,7 +75,6 @@ export class NotificationService implements INotificationService {
                 timezone: 'America/New_York'
             })
 
-            logger.info(`Subscriber ensured: ${JSON.parse(JSON.stringify(subscriber))}`)
         } catch (error) {
             logger.error(`Failed to ensure subscriber: ${(error as Error)?.message}`)
             throw new InternalServerError(
@@ -103,14 +102,13 @@ export class NotificationService implements INotificationService {
         })
 
         // Trigger welcome email workflow
-        const triggered = await this.novu!.trigger({
+        await this.novu!.trigger({
             workflowId: WORKFLOW_ID.WELCOME_EMAIL,
             to: {
                 subscriberId: id
             }
         })
 
-        logger.info(`Welcome email triggered: ${triggered.result}`)
     }
 
     async sendInAppInvitation(param: SendInvitationDTO): Promise<void> {
