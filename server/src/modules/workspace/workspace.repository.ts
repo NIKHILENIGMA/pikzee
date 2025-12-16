@@ -124,19 +124,17 @@ export class WorkspaceRepository implements IWorkspaceRepository {
                 subscriptionPlan: workspaces.subscriptionPlan,
                 storageUsed: workspaces.storageUsed,
                 bandwidthUsed: workspaces.bandwidthUsed,
-                isDeleted: workspaces.isDeleted,
                 createdAt: workspaces.createdAt,
-                updatedAt: workspaces.updatedAt
+                updatedAt: workspaces.updatedAt,
+                isDeleted: workspaces.isDeleted,
+                memberId: workspaceMembers.id,
+
+                permission: workspaceMembers.permission,
+                joinedAt: workspaceMembers.joinedAt
             })
-            .from(workspaces)
-            .innerJoin(
-                workspaceMembers,
-                and(
-                    eq(workspaceMembers.workspaceId, workspaces.id),
-                    eq(workspaceMembers.userId, userId)
-                )
-            )
-            .where(eq(workspaces.isDeleted, false))
+            .from(workspaceMembers)
+            .innerJoin(workspaces, eq(workspaces.id, workspaceMembers.workspaceId))
+            .where(and(eq(workspaceMembers.userId, userId), eq(workspaces.isDeleted, false)))
             .orderBy(desc(workspaces.createdAt))
 
         return listWorkspace

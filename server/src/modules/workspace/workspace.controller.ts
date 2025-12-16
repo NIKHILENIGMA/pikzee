@@ -18,20 +18,25 @@ export class WorkspaceController extends BaseController {
 
     // List all workspaces for a user
     list = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async () => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<WorkspaceDTO[]>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+
+                const workspaces = await this.workspaceService.listAll(userId)
+
+                return this.createResponse<WorkspaceDTO[]>({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'User workspaces fetched successfully',
+                    data: workspaces
+                })
             }
-
-            const workspaces = await this.workspaceService.listAll(userId)
-
-            return this.createResponse<WorkspaceDTO[]>({
-                statusCode: STATUS_CODE.OK,
-                message: 'User workspaces fetched successfully',
-                data: workspaces
-            })
-        })
+        )
     }
 
     // Get workspace by ID

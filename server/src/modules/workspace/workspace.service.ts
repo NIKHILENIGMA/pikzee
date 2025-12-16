@@ -45,7 +45,15 @@ export class WorkspaceService implements IWorkspaceService {
     // QUERY METHODS
     // ------------------------------------------
     async listAll(userId: string): Promise<WorkspaceDTO[]> {
-        return await this.workspaceRepository.listAll(userId)
+        const workspaces = await this.workspaceRepository.listAll(userId)
+
+        return workspaces.map((ws) => ({
+            id: ws.id,
+            name: ws.name,
+            logoUrl: ws.logoUrl || null,
+            ownerId: ws.ownerId,
+            createdAt: ws.createdAt,
+        }))
     }
 
     async getById(workspaceId: string, userId: string): Promise<WorkspaceDTO> {
