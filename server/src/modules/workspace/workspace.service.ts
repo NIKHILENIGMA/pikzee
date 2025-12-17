@@ -20,6 +20,7 @@ export interface IWorkspaceService {
     getById(workspaceId: string, userId: string): Promise<WorkspaceDTO>
     listAll(userId: string): Promise<WorkspaceDTO[]>
     isOwner(workspaceId: string, userId: string): Promise<WorkspaceDTO | null>
+    getActiveWorkspace(userId: string): Promise<WorkspaceDTO>
 }
 
 export class WorkspaceService implements IWorkspaceService {
@@ -52,8 +53,19 @@ export class WorkspaceService implements IWorkspaceService {
             name: ws.name,
             logoUrl: ws.logoUrl || null,
             ownerId: ws.ownerId,
-            createdAt: ws.createdAt,
+            createdAt: ws.createdAt
         }))
+    }
+
+    async getActiveWorkspace(userId: string): Promise<WorkspaceDTO> {
+        const workspace = await this.workspaceRepository.getActiveWorkspace(userId)
+        if (!workspace) {
+            throw new NotFoundError(
+                'Active workspace not found',
+                'workspaceService.getActiveWorkspace'
+            )
+        }
+        return workspace
     }
 
     async getById(workspaceId: string, userId: string): Promise<WorkspaceDTO> {

@@ -68,6 +68,27 @@ export class WorkspaceController extends BaseController {
         )
     }
 
+    getActiveWorkspace = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<WorkspaceDTO>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+                const workspace = await this.workspaceService.getActiveWorkspace(userId)
+
+                return this.createResponse<WorkspaceDTO>({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Active workspace fetched successfully',
+                    data: workspace
+                })
+            }
+        )
+    }
+
     // Create new workspace
     create = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(
