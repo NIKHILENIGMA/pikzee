@@ -1,15 +1,28 @@
 import { useSignUp } from '@clerk/clerk-react'
+import { useCallback, useEffect } from 'react'
 import { useErrorBoundary } from 'react-error-boundary'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 
 import type { SignupFormRequest } from '../types/auth'
-
-// import type { SignupFormRequest } from '../types/auth'
 
 export const useSignup = () => {
     const { isLoaded, signUp, setActive } = useSignUp()
     const { showBoundary } = useErrorBoundary()
     const navigate = useNavigate()
+
+    const { token } = useParams<{ token?: string }>()
+
+    // Inject token into unsafeMetadata if it exists in URL params
+    const injectToken = useCallback(async () => {
+        if (!isLoaded) return
+        await signUp.update({ unsafeMetadata: { token } })
+    }, [signUp, token, isLoaded])
+
+    useEffect(() => {
+        if (isLoaded && token) {
+            injectToken()
+        }
+    }, [isLoaded, token])
 
     const onSubmit = async (
         data: SignupFormRequest,
@@ -17,14 +30,17 @@ export const useSignup = () => {
         reset: () => void,
         setStep: (step: 'initial' | 'email' | 'code') => void
     ) => {
-        if (!isLoaded) return
         clearErrors()
         try {
+            if (!isLoaded) return
             await signUp.create({
                 emailAddress: data.email,
                 password: data.password,
                 firstName: data.firstName,
-                lastName: data.lastName
+                lastName: data.lastName,
+                unsafeMetadata: {
+                    token: data.token
+                }
             })
 
             await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
