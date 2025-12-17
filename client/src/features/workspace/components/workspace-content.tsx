@@ -2,17 +2,15 @@ import { useState, type FC } from 'react'
 
 import ContentLayout from '@/components/layout/content-layout'
 import { TabsContent } from '@/components/ui/tabs'
-import { columns } from '@/features/workspace/components/columns'
 
-import type { Project, Workspace } from '../types'
+import type { WorkspaceDTO } from '../types'
 
 import ContentHeader from './content-header'
 import MembersDialog from './members-dialog'
 import ProjectGrid from './project/project-grid'
-import ProjectTable from './project/project-table'
 
 interface WorkspaceContentProps {
-    workspace: Workspace
+    workspace: WorkspaceDTO
 }
 
 const WorkspaceContent: FC<WorkspaceContentProps> = ({ workspace }) => {
@@ -23,7 +21,7 @@ const WorkspaceContent: FC<WorkspaceContentProps> = ({ workspace }) => {
         <ContentLayout>
             <ContentHeader
                 name={workspace.name}
-                noOfProjects={workspace.projects.length}
+                noOfProjects={1}
                 onShowMembers={() => setShowMembers(true)}
                 onSettingsOpen={() => setIsSettingsOpen(true)}
                 members={workspace.members}
@@ -38,12 +36,12 @@ const WorkspaceContent: FC<WorkspaceContentProps> = ({ workspace }) => {
             </TabsContent>
             {/* Table View */}
             <TabsContent value="table">
-                <div className="w-full min-h-[40vh] mx-auto">
+                {/* <div className="w-full min-h-[40vh] mx-auto">
                     <ProjectTable<Project, unknown>
                         columns={columns}
                         data={workspace.projects}
                     />
-                </div>
+                </div> */}
             </TabsContent>
 
             {/* Members Dialog */}

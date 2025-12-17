@@ -1,5 +1,5 @@
 import { LayoutGrid, List, ListFilter, Plus } from 'lucide-react'
-import { useState, type FC } from 'react'
+import { type FC } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -7,21 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import AddProjectCard from '@/features/dashboard/components/workspace/add-project-card'
 
-import type { ProjectStatus } from '../types'
+// interface WorkspaceHeaderProps {
+//     onStatusChange: (status: ProjectStatus) => void
+// }
 
-interface WorkspaceHeaderProps {
-    onStatusChange: (status: ProjectStatus) => void
-}
-
-const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({ onStatusChange }) => {
-    const [status, setStatus] = useState<ProjectStatus>('All')
-    const [open, setOpen] = useState<boolean>(false)
-
-    const handleStatusChange = (newStatus: ProjectStatus) => {
-        setStatus(newStatus)
-        onStatusChange(newStatus)
-    }
-
+const WorkspaceHeader: FC = () => {
     return (
         <div className="w-full h-12 border-b border-border flex-shrink-0 justify-between items-center px-10 flex">
             <div className="filters flex space-x-4 items-center">
@@ -42,8 +32,9 @@ const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({ onStatusChange }) => {
                         className="w-40 p-1.5"
                         align="start">
                         <Select
-                            value={status}
-                            onValueChange={(value: ProjectStatus) => handleStatusChange(value)}>
+                        // value={status}
+                        // onValueChange={(value: ProjectStatus) => handleStatusChange(value)}
+                        >
                             <SelectTrigger className="w-full">
                                 <SelectValue
                                     placeholder="All"
@@ -65,16 +56,17 @@ const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({ onStatusChange }) => {
                 <Button
                     variant="outline"
                     size={'sm'}
-                    onClick={() => {
-                        setOpen(true)
-                    }}>
+                    // onClick={() => {
+                    //     setOpen(true)
+                    // }}
+                >
                     <Plus /> New Project
                 </Button>
             </div>
 
             <AddProjectCard
-                open={open}
-                setOpen={setOpen}
+                open={true}
+                setOpen={() => {}}
                 triggerBtn={false}
             />
         </div>

@@ -4,22 +4,28 @@ import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 
+import type { MemberPermission } from '../types'
+
 interface ContentHeaderProps {
     name: string
     noOfProjects: number
     onShowMembers: () => void
     onSettingsOpen: () => void
     members?: {
-        userId: string
-        name: string
+        id: string
+        firstName: string
+        lastName: string
         email: string
-        permission: string
-        avatar?: string
+        avatarUrl: string | null
+        permission: MemberPermission
     }[]
 }
 
 const ContentHeader: FC<ContentHeaderProps> = ({ name, noOfProjects, onShowMembers, members }) => {
     const navigate = useNavigate()
+    const fullName = (member: { firstName: string; lastName: string }) => {
+        return `${member.firstName} ${member.lastName}`
+    }
     const displayMembers = members && members.length > 0 ? members.slice(0, 3) : []
 
     return (
@@ -33,18 +39,18 @@ const ContentHeader: FC<ContentHeaderProps> = ({ name, noOfProjects, onShowMembe
                     <>
                         {displayMembers.map((member, index) => (
                             <div
-                                key={member.userId}
+                                key={member.id}
                                 className="w-7 h-7 rounded-full overflow-hidden border-2 border-border flex-shrink-0 cursor-pointer"
                                 style={{
                                     zIndex: displayMembers.length - index,
                                     marginLeft: index === 0 ? 0 : -10
                                 }}
                                 onClick={onShowMembers}
-                                title={member.name}>
-                                {member.avatar ? (
+                                title={member.firstName + ' ' + member.lastName}>
+                                {member.avatarUrl ? (
                                     <img
-                                        src={member.avatar || '/placeholder.svg'}
-                                        alt={member.name}
+                                        src={member.avatarUrl || '/placeholder.svg'}
+                                        alt={member.firstName + ' ' + member.lastName}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                             // Fallback to initials if image fails
@@ -52,7 +58,7 @@ const ContentHeader: FC<ContentHeaderProps> = ({ name, noOfProjects, onShowMembe
                                             target.style.display = 'none'
                                             const parent = target.parentElement
                                             if (parent) {
-                                                const initials = member.name
+                                                const initials = fullName(member)
                                                     .split(' ')
                                                     .map((n) => n[0])
                                                     .join('')
@@ -63,7 +69,7 @@ const ContentHeader: FC<ContentHeaderProps> = ({ name, noOfProjects, onShowMembe
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground text-xs font-semibold">
-                                        {member.name
+                                        {fullName(member)
                                             .split(' ')
                                             .map((n) => n[0])
                                             .join('')

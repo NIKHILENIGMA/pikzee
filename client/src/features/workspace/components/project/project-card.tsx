@@ -7,7 +7,7 @@ interface ProjectCardProps {
     projectName: string
     projectCover: string
     fileSize: string
-    projectStatus: 'Active' | 'Inactive'
+    projectStatus: 'ACTIVE' | 'INACTIVE'
     onProjectCardClick?: () => void
 }
 
@@ -38,7 +38,7 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectName, projectStatus, project
                             </span>
                         </div>
                         <div className="absolute top-1 left-2 h-10 z-10">
-                            {projectStatus === 'Active' ? <Badge variant={'secondary'}>Active</Badge> : <Badge variant={'secondary'}>Inactive</Badge>}
+                            {projectStatus === 'ACTIVE' ? <Badge variant={'secondary'}>Active</Badge> : <Badge variant={'secondary'}>Inactive</Badge>}
                         </div>
                         {/* soft dark gradient from bottom + subtle color tint */}
                         <div className="absolute inset-0 rounded-lg pointer-events-none z-10">
@@ -56,7 +56,7 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectName, projectStatus, project
                                 </span>
                             </div>
                             <div className="absolute top-1 left-2 h-10 z-10">
-                                {projectStatus === 'Active' ? (
+                                {projectStatus === 'ACTIVE' ? (
                                     <Badge variant={'secondary'}>Active</Badge>
                                 ) : (
                                     <Badge variant={'secondary'}>Inactive</Badge>
