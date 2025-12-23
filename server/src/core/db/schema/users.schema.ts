@@ -10,6 +10,7 @@ export const users = pgTable('users', {
     email: varchar('email', { length: 255 }).notNull().unique(),
     avatarUrl: text('avatar_url'),
     isActive: boolean('is_active').notNull().default(true),
+    defaultWorkspaceId: text('default_workspace_id'),
     lastActiveWorkspaceId: text('last_active_workspace_id'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
