@@ -8,6 +8,7 @@ CREATE TABLE "users" (
 	"email" varchar(255) NOT NULL,
 	"avatar_url" text,
 	"is_active" boolean DEFAULT true NOT NULL,
+	"default_workspace_id" text,
 	"last_active_workspace_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
