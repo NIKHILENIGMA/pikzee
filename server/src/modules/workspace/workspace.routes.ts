@@ -16,7 +16,7 @@ router
     .post(clerkMiddleware, workspaceController.create)
     .get(clerkMiddleware, workspaceController.list)
 
-router.route('/active').get(clerkMiddleware, workspaceController.getActiveWorkspace)
+router.route('/me').get(clerkMiddleware, workspaceController.me)
 // Get workspace details by ID
 // Update workspace (name, logo)
 // Delete workspace (ensure at least one remains)

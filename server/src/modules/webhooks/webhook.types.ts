@@ -1,5 +1,6 @@
 import z from 'zod'
-import { ClerkUserJSONSchema } from './webhook.validator'
+import { ClerkUserJSONSchema, ClerkUnsafeMetadataSchema } from './webhook.validator'
+
 
 export enum WebhookProvider {
     CLERK = 'CLERK',
@@ -55,6 +56,8 @@ export enum ClerkEventType {
     USER_DELETED = 'user.deleted'
 }
 
+export type ClerkUserUnsafeMetadata = z.infer<typeof ClerkUnsafeMetadataSchema>
+
 export interface ClerkUserJSON {
     id: string
     email_addresses: Array<{
@@ -65,7 +68,9 @@ export interface ClerkUserJSON {
     first_name: string | null
     last_name: string | null
     image_url: string | null
+    unsafe_metadata: ClerkUserUnsafeMetadata
 }
+
 
 export interface ClerkWebhookEvent {
     type: ClerkEventType

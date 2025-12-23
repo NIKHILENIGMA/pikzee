@@ -21,6 +21,7 @@ export interface IWorkspaceService {
     listAll(userId: string): Promise<WorkspaceDTO[]>
     isOwner(workspaceId: string, userId: string): Promise<WorkspaceDTO | null>
     getActiveWorkspace(userId: string): Promise<WorkspaceDTO>
+    getMyWorkspace(userId: string): Promise<WorkspaceDTO>
 }
 
 export class WorkspaceService implements IWorkspaceService {
@@ -58,13 +59,31 @@ export class WorkspaceService implements IWorkspaceService {
     }
 
     async getActiveWorkspace(userId: string): Promise<WorkspaceDTO> {
-        const workspace = await this.workspaceRepository.getActiveWorkspace(userId)
+        // Fetch user to get last active workspace
+        const user = await this.userService.getUserById(userId)
+        if (!user) {
+            throw new NotFoundError('User not found', 'workspaceService.getActiveWorkspace')
+        }
+
+        let workspace
+
+        // If no last active workspace, fallback to default workspace
+        if (!user.lastActiveWorkspaceId && user.defaultWorkspaceId) {
+            workspace = await this.workspaceRepository.getById(user.defaultWorkspaceId)
+        } else if (user.lastActiveWorkspaceId) {
+            // Fetch last active workspace
+            workspace = await this.workspaceRepository.getById(user.lastActiveWorkspaceId)
+        }
+
+        // Validate workspace existence
         if (!workspace) {
             throw new NotFoundError(
                 'Active workspace not found',
                 'workspaceService.getActiveWorkspace'
             )
         }
+
+        // Return workspace DTO
         return workspace
     }
 
@@ -130,6 +149,15 @@ export class WorkspaceService implements IWorkspaceService {
             throw new NotFoundError('Workspace not found', 'workspaceService.isOwner')
         }
         return workspace.ownerId === userId ? workspace : null
+    }
+
+    async getMyWorkspace(userId: string): Promise<WorkspaceDTO> {
+        const workspace = await this.workspaceRepository.getMyWorkspace(userId)
+        if (!workspace) {
+            throw new NotFoundError('Workspace not found', 'workspaceService.getMyWorkspace')
+        }
+
+        return workspace
     }
 
     // ------------------------------------------

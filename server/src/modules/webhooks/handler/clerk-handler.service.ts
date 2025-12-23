@@ -1,16 +1,18 @@
+import { INotificationService } from '@/core'
 import { logger } from '@/config'
-import { IUserService } from '@/modules/user'
-import { IWorkspaceService } from '@/modules/workspace'
 import { InternalServerError, NotFoundError } from '@/util'
+
+import { DatabaseConnection } from '@/core/db/service/database.service'
+import { UserRepository } from '@/modules/user/user.repository'
+import { WorkspaceRepository } from '@/modules/workspace/workspace.repository'
+import { InvitationRepository } from '@/modules/invitation/invitation.repository'
 
 import { ClerkEventType, ClerkUser, ClerkWebhookEvent, IWebhookHandler } from '../webhook.types'
 import { ClerkWebhookEventSchema } from '../webhook.validator'
-import { INotificationService } from '@/core'
 
 export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, void> {
     constructor(
-        private readonly userService: IUserService,
-        private readonly workspaceService: IWorkspaceService,
+        private readonly db: DatabaseConnection,
         private readonly notificationService: INotificationService
     ) {}
 
@@ -51,48 +53,66 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, v
             throw new NotFoundError('Primary email not found', 'PRIMARY_EMAIL_NOT_FOUND')
         }
 
-        // Implement user created handling logic
-        const createdUser = await this.userService.createUser({
-            id: data.id,
-            email: primaryEmail,
-            firstName: data.first_name || '',
-            lastName: data.last_name || '',
-            avatarUrl: data.image_url || null
-        })
+        const result = await this.db.transaction(async (tx) => {
+            const userRepo = new UserRepository(tx)
+            const workspaceRepo = new WorkspaceRepository(tx)
+            const invitationRepo = new InvitationRepository(tx)
 
-        // Create a default workspace for the new user
-        await this.workspaceService.createWorkspaceWithOwnerPermission({
-            name: `${data.first_name}'s Workspace`,
-            ownerId: createdUser.id
-        })
+            const existingUser = await userRepo.getByEmail(primaryEmail)
 
-        // todo: Handle invitation acceptance if invitation token is present in metadata
-        // if (data.unsafe_metadata) {
-        //     // If invitation token is present in metadata, handle invitation acceptance
-        //     const invitationToken = data.unsafe_metadata['invitationToken']
-        //     if (invitationToken) {
-        //         try {
-        //             // await this.workspaceService.acceptInvitation(invitationToken, createdUser.id)
-        //             // logger.info(
-        //             //     `User ${createdUser.id} accepted invitation with token ${invitationToken}`
-        //             // )
-        //             await Promise.resolve()
-        //         } catch (error) {
-        //             logger.error(
-        //                 `Failed to accept invitation for user ${createdUser.id} with token ${JSON.stringify(invitationToken)}: ${
-        //                     (error as Error).message
-        //                 }`
-        //             )
-        //         }
-        //     }
-        // }
+            if (existingUser) {
+                throw new InternalServerError(
+                    'User with this email already exists',
+                    'USER_ALREADY_EXISTS'
+                )
+            }
+
+            // Create the user
+            const newUser = await userRepo.create({
+                id: data.id,
+                email: primaryEmail,
+                firstName: data.first_name || '',
+                lastName: data.last_name || '',
+                avatarUrl: data.image_url || null
+            })
+
+            // Create a default workspace for the new user
+            const workspace = await workspaceRepo.createWorkspaceWithMemberAsAdmin({
+                name: `${data.first_name}'s Workspace`,
+                ownerId: newUser.id
+            })
+
+            // Set the default workspace for the user
+            await userRepo.update(newUser.id, {
+                defaultWorkspaceId: workspace.id
+            })
+
+            // Accept the inivitation if token is present in unsafe metadata
+            if (data.unsafe_metadata) {
+                const token = data.unsafe_metadata.invite_token
+                if (token) {
+                    const invitation = await invitationRepo.getByToken(token)
+                    if (invitation) {
+                        await invitationRepo.addMemberAndMarkAccept({
+                            invitationId: invitation.id,
+                            inviteeUserId: newUser.id,
+                            workspaceId: invitation.workspaceId,
+                            token: invitation.token,
+                            permission: invitation.permission
+                        })
+                    }
+                }
+            }
+
+            return newUser
+        })
 
         await this.notificationService.sendWelcomEmail({
-            id: createdUser.id,
-            email: createdUser.email,
-            firstName: createdUser.firstName!,
-            lastName: createdUser.lastName!,
-            avatar: createdUser.avatarUrl || undefined
+            id: result.id,
+            email: result.email,
+            firstName: result.firstName!,
+            lastName: result.lastName!,
+            avatar: result.avatarUrl || undefined
         })
     }
 

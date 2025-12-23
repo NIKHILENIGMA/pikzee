@@ -14,6 +14,7 @@ export interface IWorkspaceRepository {
     getById(workspaceId: string): Promise<WorkspaceRecord | null>
     listAll(userId: string): Promise<WorkspaceRecord[]>
     getActiveWorkspace(userId: string): Promise<WorkspaceRecord | null>
+    getMyWorkspace(userId: string): Promise<WorkspaceRecord | null>
 }
 
 const [FULL_ACCESS] = memberPermissionEnum.enumValues
@@ -139,6 +140,21 @@ export class WorkspaceRepository implements IWorkspaceRepository {
             .orderBy(desc(workspaces.createdAt))
 
         return listWorkspace
+    }
+
+    async getMyWorkspace(userId: string): Promise<WorkspaceRecord | null> {
+        const [workspace] = await this.db
+            .select()
+            .from(workspaces)
+            .where(
+                and(
+                    eq(workspaces.ownerId, userId),
+                    eq(workspaces.isDeleted, false),
+                )
+            )
+            .limit(1)
+            
+        return workspace || null
     }
 
     async getActiveWorkspace(userId: string): Promise<WorkspaceRecord | null> {
