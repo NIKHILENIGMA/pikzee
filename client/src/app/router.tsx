@@ -19,19 +19,19 @@ const router = createBrowserRouter([
             {
                 index: true,
                 path: 'ws',
-                lazy: () => import('./routes/workspace/workspace-dashboard').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/dashboard/dashboard').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'documents',
-                lazy: () => import('./routes/dashboard/document').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/dashboard/dashboard').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'magic-editor',
-                lazy: () => import('./routes/dashboard/magic-editor').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/magic-editor/magic-editor').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'media-scheduler',
-                lazy: () => import('./routes/dashboard/media-scheduler').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/uploader/media-scheduler').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'projects/:projectId',
