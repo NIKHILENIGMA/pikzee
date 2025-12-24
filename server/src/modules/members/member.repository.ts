@@ -7,6 +7,7 @@ import {
     CreateMemberRecord,
     DeleteMemberRecord,
     MemberDetailRecord,
+    MemberDTO,
     MemberRecord,
     UpdatePermissionRecord
 } from './member.types'
@@ -17,7 +18,7 @@ export interface IMemberRepository {
     updatePermission(data: UpdatePermissionRecord): Promise<MemberRecord[]>
     delete(data: DeleteMemberRecord): Promise<MemberRecord>
     getById(memberId: string): Promise<MemberRecord | null>
-    listAll(workspaceId: string): Promise<MemberRecord[]>
+    listAll(workspaceId: string): Promise<MemberDTO[]>
     getMemberDetails(memberId: string): Promise<MemberDetailRecord | null>
     getByWorkspaceIdAndEmail(workspaceId: string, email: string): Promise<MemberRecord | null>
 }
@@ -93,11 +94,26 @@ export class MemberRepository implements IMemberRepository {
     }
 
     // List all members of a workspace
-    async listAll(workspaceId: string): Promise<MemberRecord[]> {
-        return await this.db
-            .select()
+    async listAll(workspaceId: string): Promise<MemberDTO[]> {
+        const members = await this.db
+            .select({
+                id: workspaceMembers.id,
+                workspaceId: workspaceMembers.workspaceId,
+                permission: workspaceMembers.permission,
+                joinedAt: workspaceMembers.joinedAt,
+                user: {
+                    id: users.id,
+                    firstName: users.firstName!,
+                    lastName: users.lastName!,
+                    email: users.email,
+                    avatarUrl: users.avatarUrl
+                }
+            })
             .from(workspaceMembers)
+            .innerJoin(users, eq(users.id, workspaceMembers.userId))
             .where(eq(workspaceMembers.workspaceId, workspaceId))
+
+        return members
     }
 
     // Get detailed information of a workspace member
