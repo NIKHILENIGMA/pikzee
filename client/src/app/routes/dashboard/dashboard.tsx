@@ -1,42 +1,41 @@
-import { useUser } from '@clerk/clerk-react'
-import { type FC } from 'react'
+import { useState } from 'react'
 
-import { Tabs } from '@/components/ui/tabs'
-import { useUserWorkspace } from '@/features/workspace/api/get-user-workspace'
-import WorkspaceContent from '@/features/workspace/components/workspace-content'
-import WorkspaceHeader from '@/features/workspace/components/workspace-header'
+import { type ProjectView, useDefaultWorkspace, Header } from '@/features/workspace'
+import { FilterBar } from '@/features/workspace'
+import ProjectGrid from '@/features/workspace/components/project/project-grid'
 
-const DashboardPage: FC = () => {
-    const workspaceQuery = useUserWorkspace({
+export default function DashboardPage() {
+    const [view, setView] = useState<ProjectView>('GRID')
+    const workspaceQuery = useDefaultWorkspace({
         queryConfig: {
-            gcTime: 5 * 60 * 1000, // 5 minutes
-            staleTime: 4 * 60 * 1000 // 4 minutes
+            staleTime: 10 * 60 * 1000, // 10 minutes
+            gcTime: 15 * 60 * 1000 // 15 minutes
         }
     })
-    const { user } = useUser()
-    if (!user) {
-        return <div>User not found.</div>
-    }
-
-    const workspace = workspaceQuery.data?.data
-
-    if (workspaceQuery.isLoading) {
-        return <div>Loading...</div>
-    }
-
-    if (workspaceQuery.isError || !workspace) {
-        return <div>Error loading workspace.</div>
-    }
 
     return (
-        <Tabs defaultValue="grid">
-            {/* Header */}
-            <WorkspaceHeader />
-
-            {/* Content */}
-            <WorkspaceContent workspace={workspace} />
-        </Tabs>
+        <div className="flex min-h-screen bg-background text-foreground">
+            <main className="flex-1">
+                <Header
+                    workspaceId={workspaceQuery.data?.data.id}
+                    workspaceName={workspaceQuery.data?.data.name}
+                    workspaceLogo={workspaceQuery.data?.data.logoUrl}
+                />
+                <div className="py-8">
+                    <FilterBar
+                        view={view}
+                        onViewChange={setView}
+                    />
+                    {workspaceQuery.isPending ? (
+                        <div className="p-8 text-center text-sm text-muted-foreground">Loading workspace...</div>
+                    ) : workspaceQuery.data ? (
+                        <ProjectGrid
+                            projects={workspaceQuery.data?.data.projects}
+                            view={view}
+                        />
+                    ) : null}
+                </div>
+            </main>
+        </div>
     )
 }
-
-export default DashboardPage
