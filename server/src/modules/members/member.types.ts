@@ -39,7 +39,7 @@ export interface MemberDTO {
     joinedAt: Date
     user?: {
         id: string
-        firstName: string
+        firstName: string | null
         lastName: string | null
         email: string
         avatarUrl: string | null

@@ -1,5 +1,7 @@
 export type ProjectStatus = 'ACTIVE' | 'INACTIVE'
 
+export type ProjectView = 'LIST' | 'GRID'
+
 export type Project = {
     id: string
     name: string
@@ -7,5 +9,5 @@ export type Project = {
     status: ProjectStatus
     storage: number
     createdAt: Date
-    updatedAt?: Date
+    updatedAt: Date
 }
