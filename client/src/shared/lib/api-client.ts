@@ -12,28 +12,28 @@ class ApiClient {
         })
     }
 
-    public async get<T>(path: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response: AxiosResponse<ApiResponse<T>> = await this.client.get(path, config)
+    public async get<TResponse>(path: string, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
+        const response: AxiosResponse<ApiResponse<TResponse>> = await this.client.get(path, config)
         return response.data
     }
 
-    public async post<T, K>(path: string, data: K, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response: AxiosResponse<ApiResponse<T>> = await this.client.post(path, data, config)
+    public async post<TResponse, TRequest>(path: string, data: TRequest, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
+        const response: AxiosResponse<ApiResponse<TResponse>> = await this.client.post(path, data, config)
         return response.data
     }
 
-    public async put<T, K>(path: string, data: K, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response: AxiosResponse<ApiResponse<T>> = await this.client.put(path, data, config)
+    public async put<TResponse, TRequest>(path: string, data: TRequest, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
+        const response: AxiosResponse<ApiResponse<TResponse>> = await this.client.put(path, data, config)
         return response.data
     }
 
-    public async patch<T, K>(path: string, data: K, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response: AxiosResponse<ApiResponse<T>> = await this.client.patch(path, data, config)
+    public async patch<TResponse, TRequest>(path: string, data: TRequest, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
+        const response: AxiosResponse<ApiResponse<TResponse>> = await this.client.patch(path, data, config)
         return response.data
     }
 
-    public async delete<T>(path: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response: AxiosResponse<ApiResponse<T>> = await this.client.delete(path, config)
+    public async delete<TResponse>(path: string, config?: AxiosRequestConfig): Promise<ApiResponse<TResponse>> {
+        const response: AxiosResponse<ApiResponse<TResponse>> = await this.client.delete(path, config)
         return response.data
     }
 }
