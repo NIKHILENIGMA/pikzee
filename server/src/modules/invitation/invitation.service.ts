@@ -25,6 +25,7 @@ export interface IInvitationService {
     reject(data: RejectInvitationDTO): Promise<{ message: string }>
     cancel(data: CancelInvitationDTO): Promise<{ message: string }>
     list(workspaceId: string, limit?: number, offset?: number): Promise<Invitation[]>
+    hashInvitationToken(token: string): string
 }
 
 export class InvitationService implements IInvitationService {
@@ -102,6 +103,15 @@ export class InvitationService implements IInvitationService {
                 workspaceName: isOwner.name,
                 accpetLink: this.invitationLink(inviteToken, 'LOGIN'),
                 rejectLink: '',
+                customMessage: customMessage || ''
+            })
+        } else {
+            // Send email invitation to invitee
+            await this.notificationService.sendInvitationEmail({
+                email: email,
+                inviterName: isOwner.ownerId,
+                workspaceName: isOwner.name,
+                signupLink: this.invitationLink(inviteToken, 'SIGNUP'),
                 customMessage: customMessage || ''
             })
         }
@@ -183,7 +193,7 @@ export class InvitationService implements IInvitationService {
         return crypto.randomBytes(32).toString('hex') // 64-character hex string
     }
 
-    private hashInvitationToken(token: string): string {
+    public hashInvitationToken(token: string): string {
         const secret = INVITATION_TOKEN_SECRET
         return crypto.createHmac('sha256', secret).update(token).digest('hex')
     }

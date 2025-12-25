@@ -7,13 +7,15 @@ import { RazorpayWebhookHandler } from './handler/razor-handler.service'
 import { WebhookController } from './webhook.controller'
 import { WebhookService } from './webhook.service'
 import { WebhookHandlerRegistry, WebhookProvider } from './webhook.types'
+import { invitationService } from '../invitation'
 
 // Instantiate the webhook validator
 const validator = new WebhookValidation()
 
 const notificationService = new NotificationService()
+
 // Instantiate individual webhook handlers
-const clerkHandler = new ClerkWebhookHandler(db, notificationService)
+const clerkHandler = new ClerkWebhookHandler(db, notificationService, invitationService)
 const razorpayHandler = new RazorpayWebhookHandler()
 
 // Map providers to their respective handlers

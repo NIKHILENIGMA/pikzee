@@ -1,10 +1,11 @@
 import { INotificationService } from '@/core'
-import { logger } from '@/config'
-import { InternalServerError, NotFoundError } from '@/util'
-
 import { DatabaseConnection } from '@/core/db/service/database.service'
+import { logger } from '@/config'
 import { UserRepository } from '@/modules/user/user.repository'
 import { WorkspaceRepository } from '@/modules/workspace/workspace.repository'
+import { InternalServerError, NotFoundError } from '@/util'
+
+import { IInvitationService } from '@/modules/invitation/invitation.service'
 import { InvitationRepository } from '@/modules/invitation/invitation.repository'
 
 import { ClerkEventType, ClerkUser, ClerkWebhookEvent, IWebhookHandler } from '../webhook.types'
@@ -13,7 +14,8 @@ import { ClerkWebhookEventSchema } from '../webhook.validator'
 export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, void> {
     constructor(
         private readonly db: DatabaseConnection,
-        private readonly notificationService: INotificationService
+        private readonly notificationService: INotificationService,
+        private readonly invitationService: IInvitationService
     ) {}
 
     parse(raw: Buffer | string): ClerkWebhookEvent {
@@ -86,12 +88,18 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, v
             await userRepo.update(newUser.id, {
                 defaultWorkspaceId: workspace.id
             })
-
+            logger.info(`Created default workspace ${workspace.id} for user ${newUser.id}`)
             // Accept the inivitation if token is present in unsafe metadata
             if (data.unsafe_metadata) {
                 const token = data.unsafe_metadata.invite_token
+                logger.info(`Processing invitation acceptance for user ${newUser.id} with token ${token}`)
+                
                 if (token) {
-                    const invitation = await invitationRepo.getByToken(token)
+                    const hashToken = this.invitationService.hashInvitationToken(token)
+
+                    const invitation = await invitationRepo.getByToken(hashToken)
+                    logger.info(`Found invitation ${invitation?.id} for token ${token}`)
+
                     if (invitation) {
                         await invitationRepo.addMemberAndMarkAccept({
                             invitationId: invitation.id,
@@ -101,6 +109,14 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, v
                             permission: invitation.permission
                         })
                     }
+
+                    logger.info(`Processed completion of invitation acceptance for user ${newUser.id} with token ${token}`)
+                    // 
+
+                    // Clear the invite_token from user's unsafe metadata
+                    // await clerkClient.users.updateUser(data.id, {
+                    //     unsafeMetadata: { invite_token: null }
+                    // })
                 }
             }
 

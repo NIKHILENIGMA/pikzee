@@ -96,7 +96,7 @@ export class InvitationRepository implements IInvitationRepository {
         return invitation
     }
 
-    async getByToken(token: string): Promise<Invitation | null> {
+    async getByToken(token: string): Promise<Invitation | null> { 
         const [invitation] = await this.db
             .select()
             .from(invitations)
