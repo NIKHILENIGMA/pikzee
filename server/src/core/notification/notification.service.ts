@@ -1,3 +1,5 @@
+import crypto from 'node:crypto'
+
 import { Novu, SDKOptions } from '@novu/api'
 
 import { logger, NOVU_API_KEY } from '@/config'
@@ -6,13 +8,14 @@ import { InternalServerError } from '@/util'
 import {
     CreateSubscriberDTO,
     SendInvitationDTO,
+    SendInvitationEmailDTO,
     SendWelcomeEmailDTO,
     WORKFLOW_ID
 } from './notification.types'
 
 export interface INotificationService {
     sendWelcomEmail(payload: SendWelcomeEmailDTO): Promise<void>
-    sendInvitationEmail(param: SendInvitationDTO): Promise<void>
+    sendInvitationEmail(param: SendInvitationEmailDTO): Promise<void>
     sendInAppInvitation(param: SendInvitationDTO): Promise<void>
 }
 
@@ -130,35 +133,40 @@ export class NotificationService implements INotificationService {
         })
     }
 
-    async sendInvitationEmail(param: SendInvitationDTO): Promise<void> {
+    async sendInvitationEmail(param: SendInvitationEmailDTO): Promise<void> {
         if (!this.isActive()) {
             return
         }
 
         // Extract invitation details from payload
-        const { subscriber, inviterName, workspaceName, accpetLink, customMessage } = param
+        const { email, inviterName, workspaceName, signupLink, customMessage } = param
 
         // Create or ensure subscriber exists
-        await this.createSubscriber({
-            subscriberId: subscriber.id,
-            email: subscriber.email,
-            firstName: subscriber.firstName,
-            lastName: subscriber.lastName,
-            avatar: subscriber.avatar
-        })
-
-        // Trigger invitation in-app notification
-        await this.novu!.trigger({
-            workflowId: WORKFLOW_ID.INVITE_USER,
-            to: {
-                subscriberId: subscriber.id
-            },
-            payload: {
-                inviterName: inviterName,
-                workspaceName: workspaceName,
-                invitationLink: accpetLink,
-                customMessage: customMessage
-            }
-        })
+        try {
+            await this.createSubscriber({
+                subscriberId: email,
+                email: email,
+                firstName: '',
+                lastName: '',
+                avatar: undefined
+            })
+    
+            // Trigger invitation in-app notification
+            await this.novu!.trigger({
+                workflowId: WORKFLOW_ID.INVITE_USER,
+                to: {
+                    subscriberId: 'pikzee_random_id' + crypto.randomBytes(16).toString('hex'),
+                    email: email
+                },
+                payload: {
+                    inviterName: inviterName,
+                    workspaceName: workspaceName,
+                    invitationLink: signupLink,
+                    customMessage: customMessage
+                }
+            })
+        } catch (error) {
+            logger.error(`Failed to send invitation email: ${(error as Error)?.message}`)
+        }
     }
 }

@@ -1,6 +1,6 @@
 export const WORKFLOW_ID = {
     WELCOME_EMAIL: 'user-welcome',
-    INVITE_USER: 'user-invite',
+    INVITE_USER: 'invite-user',
     PASSWORD_RESET: 'user-password-reset'
 } as const
 
@@ -32,5 +32,13 @@ export interface SendInvitationDTO {
     workspaceName: string
     accpetLink: string
     rejectLink: string
+    customMessage: string
+}
+
+export interface SendInvitationEmailDTO {
+    email: string
+    inviterName: string
+    workspaceName: string
+    signupLink: string
     customMessage: string
 }
