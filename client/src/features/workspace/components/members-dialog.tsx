@@ -3,7 +3,7 @@ import { useState, type FC } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 
 import { useGetMembers } from '../api/get-members'
-import { useWorkspaceContext } from '../hooks/useWorkspaceContext'
+import { useWorkspaceContext } from '../hooks/use-workspace-context'
 import { useCreateInvitation } from '../api/create-invitation'
 import type { MemberPermission } from '../types'
 
@@ -87,7 +87,7 @@ const MembersDialog: FC<MembersDialogProps> = ({ children }) => {
                         </div>
                         <div>
                             <DialogTitle className="text-lg font-semibold">Invite Members</DialogTitle>
-                            <p className="text-sm text-muted-foreground mt-1">Add team members to your workspace</p>
+                            <DialogDescription className="text-sm text-muted-foreground mt-1">Add team members to your workspace</DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
