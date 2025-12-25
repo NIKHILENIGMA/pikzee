@@ -1,17 +1,20 @@
-
 # Workspace Implementation
 
-This document provides an overview of the workspace implementation in the Pikzee backend.
+This document provides an overview of the workspace implementation in the Pikzee, covering both the backend and frontend components.
 
-## Architecture
+## Backend
 
-The workspace module is designed to manage user workspaces, including their creation, update, deletion, and retrieval. The core of the architecture revolves around the following components:
+The backend of the workspace module is responsible for managing user workspaces, including their creation, update, deletion, and retrieval.
 
-- **WorkspaceController:** The Express controller that handles incoming workspace-related requests.
-- **WorkspaceService:** The service that contains the core business logic for managing workspaces.
-- **WorkspaceRepository:** The repository responsible for all database interactions related to workspaces.
+### Architecture
 
-## Flow of a Workspace Operation
+The core of the backend architecture revolves around the following components:
+
+-   **WorkspaceController:** The Express controller that handles incoming workspace-related requests.
+-   **WorkspaceService:** The service that contains the core business logic for managing workspaces. It interacts with `UserService` and `MemberService` to handle user-related and member-related operations.
+-   **WorkspaceRepository:** The repository responsible for all database interactions related to workspaces, using `drizzle-orm` for database queries.
+
+### Flow of a Workspace Operation
 
 1.  A request is sent to a workspace endpoint (e.g., `/workspaces`).
 2.  The `WorkspaceController` receives the request.
@@ -21,7 +24,7 @@ The workspace module is designed to manage user workspaces, including their crea
 6.  The `WorkspaceRepository` uses `drizzle-orm` to execute the database query.
 7.  The result is returned up the chain to the controller, which sends the response.
 
-## File Structure
+### File Structure
 
 ```
 server/src/modules/workspace/
@@ -45,3 +48,52 @@ server/src/modules/workspace/
 -   `workspace.service.ts`: The service that contains the core business logic for managing workspaces.
 -   `workspace.types.ts`: Contains the types and interfaces for the workspace module.
 -   `workspace.validator.ts`: Contains the validation schemas for the workspace module.
+
+---
+
+## Frontend
+
+The frontend of the workspace module is responsible for providing a user interface for managing workspaces.
+
+### Architecture
+
+The frontend of the workspace module is built with React and uses the following components:
+
+-   **`WorkspaceProvider`:** A context provider that manages the state of the workspace feature.
+-   **`useWorkspace`:** A custom hook that provides access to the workspace context.
+-   **API Functions:** A set of functions that make API calls to the backend to perform workspace-related operations.
+-   **Components:** A set of React components that provide the UI for the workspace feature.
+
+### File Structure
+
+```
+client/src/features/workspace/
+├── api/
+├── components/
+├── context/
+├── hooks/
+├── types/
+└── index.ts
+```
+
+-   `api/`: Contains the code for making API calls to the backend. Each file in this directory is responsible for a specific API call.
+-   `components/`: Contains the React components related to the workspace feature, such as the workspace switcher, members dialog, and project list.
+-   `context/`: Manages the state of the workspace feature using React's Context API.
+-   `hooks/`: Contains custom hooks for the workspace feature.
+-   `types/`: Contains the type definitions for the workspace feature.
+-   `index.ts`: Exports all the necessary modules.
+
+### Frontend-Backend Interaction
+
+The frontend and backend communicate with each other through a set of RESTful API endpoints. The frontend uses the `fetch` API to make requests to the backend, and the backend responds with JSON data.
+
+The following are the main API endpoints for the workspace feature:
+
+-   `GET /workspaces`: Get all workspaces for the authenticated user.
+-   `POST /workspaces`: Create a new workspace.
+-   `GET /workspaces/me`: Get the active workspace for the authenticated user.
+-   `GET /workspaces/:workspaceId`: Get workspace details by ID.
+-   `PATCH /workspaces/:workspaceId`: Update a workspace.
+-   `DELETE /workspaces/:workspaceId`: Delete a workspace.
+-   `POST /workspaces/:workspaceId/switch`: Switch to a different workspace.
+-   `GET /workspaces/:workspaceId/members`: Get all members of a workspace.
