@@ -23,7 +23,7 @@ const router = createBrowserRouter([
             },
             {
                 path: 'documents',
-                lazy: () => import('./routes/dashboard/dashboard').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/documents/document').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'magic-editor',
