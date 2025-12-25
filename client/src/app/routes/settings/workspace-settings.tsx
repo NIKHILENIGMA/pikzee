@@ -4,13 +4,12 @@ import { type FC, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
-import MembersDialog from '@/features/workspace/components/members-dialog'
+// import MembersDialog from '@/features/workspace/components/members-dialog'
 
 const WorkspaceSettings: FC = () => {
     const [isEditing, setIsEditing] = useState(false)
     const [workspaceName, setWorkspaceName] = useState('Acme Co — Design')
     const [workspaceSlug, setWorkspaceSlug] = useState('design')
-    // const [isAdmin, setIsAdmin] = useState(true) // Current user is admin
 
     const members = [
         {
@@ -38,32 +37,6 @@ const WorkspaceSettings: FC = () => {
             isCurrentUser: false
         }
     ]
-    const workspace = {
-        id: 'e250c90f-13ec-4282-a6c2-31794d2477f4',
-        name: "Nikhil\t's Workspace",
-        slug: 'Nikhil\t-1760458402045',
-        ownerId: 'user_32xk6cu6zGi6DrkikD1L3c7do16',
-        workspaceLogo: '',
-        members: [
-            {
-                id: 'member_user_32xk6cu6zGi6DrkikD1L3c7do16',
-                userId: 'user_32xk6cu6zGi6DrkikD1L3c7do16',
-                name: 'Nikhil',
-                email: 'nikhil@example.com',
-                permission: 'FULL_ACCESS'
-            },
-            {
-                id: 'member_user_3442DKF54P6zrk4cw0KkivEZVlB',
-                userId: 'user_3442DKF54P6zrk4cw0KkivEZVlB',
-                name: 'John',
-                email: 'john@example.com',
-                permission: 'READ_ONLY'
-            }
-        ],
-        projects: []
-    }
-
-    const [showMembers, setShowMembers] = useState<boolean>(false)
 
     return (
         <div className="min-h-screen bg-background p-6 md:p-8">
@@ -238,11 +211,7 @@ const WorkspaceSettings: FC = () => {
                             <p className="text-sm text-muted-foreground">Manage member access and permissions</p>
                         </div>
                         {/* Todo: Add invite member functionality only for admins */}
-                        <Button
-                            className="gap-2"
-                            onClick={() => {
-                                setShowMembers(true)
-                            }}>
+                        <Button className="gap-2">
                             {/* <Plus size={16} /> */}
                             Invite Members
                         </Button>
@@ -301,8 +270,6 @@ const WorkspaceSettings: FC = () => {
                     </div>
                 </section>
 
-                {/* Section 3: Leave Workspace */}
-
                 {/* Todo: Add leave workspace functionality only for members not admin */}
                 <section className="border border-destructive/30 rounded-lg bg-destructive/5 p-6">
                     <div className="flex items-start justify-between">
@@ -321,11 +288,6 @@ const WorkspaceSettings: FC = () => {
                     </div>
                 </section>
             </div>
-            <MembersDialog
-                showMembers={showMembers}
-                setShowMembers={setShowMembers}
-                workspace={workspace}
-            />
         </div>
     )
 }
