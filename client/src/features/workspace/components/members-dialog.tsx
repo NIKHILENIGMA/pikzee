@@ -1,92 +1,77 @@
-import { CheckCheck, ChevronDown, X } from 'lucide-react'
-import { useState, type ChangeEvent, type FC, type KeyboardEvent } from 'react'
+import { LoaderCircle, Mail, MessageSquare, Send, Shield, Users } from 'lucide-react'
+import { useState, type FC } from 'react'
 import { toast } from 'sonner'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 
 import { useGetMembers } from '../api/get-members'
+import { useWorkspaceContext } from '../hooks/useWorkspaceContext'
+import { useCreateInvitation } from '../api/create-invitation'
+import type { MemberPermission } from '../types'
+
+interface CreateMemberForm {
+    email: string
+    permission: MemberPermission
+    message: string
+}
 
 interface MembersDialogProps {
     children: React.ReactNode
-    workspaceId?: string
 }
 
-const PermissionPalette = [
-    { label: 'Full Access', value: 'FULL_ACCESS', description: 'Can view, comment, edit, and manage settings' },
-    { label: 'Edit', value: 'EDIT', description: 'Can edit content and comment' },
-    { label: 'View Only', value: 'VIEW_ONLY', description: 'Can view content' },
-    { label: 'Comment Only', value: 'COMMENT_ONLY', description: 'Can view and comment on content' }
-]
-
-interface SelectedEmail {
-    id: string
-    email: string
-}
-
-const MembersDialog: FC<MembersDialogProps> = ({ children, workspaceId }) => {
+const MembersDialog: FC<MembersDialogProps> = ({ children }) => {
+    const { id } = useWorkspaceContext()
     const [open, setOpen] = useState<boolean>(false)
-    const [inviteEmail, setInviteEmail] = useState<string>('')
-    const [selectedEmail, setSelectedEmail] = useState<SelectedEmail[]>([])
+    const [formData, setFormData] = useState<CreateMemberForm>({
+        email: '',
+        permission: 'VIEW_ONLY',
+        message: ''
+    })
     const [error, setError] = useState<string>('')
 
     const { data: members, isPending } = useGetMembers({
-        workspaceId: workspaceId!,
-        queryConfig: { enabled: !!workspaceId && open }
+        workspaceId: id!,
+        queryConfig: { enabled: !!id && open }
     })
 
-    const handleInviteEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (error) setError('')
-        setInviteEmail(e.target.value)
-    }
-
-    const handleEmailKeydown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault()
-            const email = inviteEmail.trim()
-            if (email.length > 0 && !selectedEmail.some((e) => e.email === email)) {
-                if (selectedEmail.length >= 5) {
-                    setError('You can only invite up to 5 members.')
-                    return
-                }
-                const id = Date.now().toString()
-                const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-                if (!isValidEmail) {
-                    setError('Please enter a valid email address.')
-                    return
-                }
-
-                setSelectedEmail((prev) => [...prev, { id, email }])
-                setInviteEmail('')
+    const createInviteMutation = useCreateInvitation({
+        mutationConfig: {
+            onSuccess: () => {
+                // toast.success('Invitation sent successfully!')
+                setFormData({
+                    email: '',
+                    permission: 'VIEW_ONLY',
+                    message: ''
+                })
             }
         }
-    }
+    })
 
     const handleSendInvite = () => {
-        if (selectedEmail.length === 0) {
-            setError('Please enter an email address.')
-            return
-        }
-        // Send invite logic here
-        // todo: integrate with backend API
-
-        // Clear selected emails after sending invites
-        setSelectedEmail([])
-        setInviteEmail('')
-
-        // Show success toast
-        toast.success('Invitations sent successfully!', {
-            description: <span className="text-foreground/80">Invites sent to: {selectedEmail.map((e) => e.email).join(', ')}</span>,
-            duration: 5000,
-            action: {
-                label: 'Close',
-                onClick: () => toast.dismiss()
+        try {
+            if (!id) {
+                return
             }
-        })
+            console.log(formData)
+
+            createInviteMutation.mutate({
+                email: formData.email,
+                workspaceId: id,
+                permission: formData.permission,
+                customMessage: formData.message
+            })
+
+            toast.success('Invitation sent successfully!')
+            setOpen(false) // Close dialog after sending invite
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'An unexpected error occurred.')
+        }
     }
 
     return (
@@ -94,121 +79,130 @@ const MembersDialog: FC<MembersDialogProps> = ({ children, workspaceId }) => {
             open={open}
             onOpenChange={() => setOpen(!open)}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Members</DialogTitle>
-                    <div className="flex flex-col space-y-2 mt-4">
-                        <div className="invite-member flex items-end space-x-2">
-                            <div className="flex flex-col flex-1 space-y-2">
-                                <Label htmlFor="user-email">Email: </Label>
-                                <Input
-                                    id="user-email"
-                                    type="email"
-                                    value={inviteEmail}
-                                    autoComplete="off"
-                                    placeholder="Enter email to invite (e.g. jane@company.com)"
-                                    aria-label="Invite member email"
-                                    onChange={handleInviteEmailChange}
-                                    onKeyDown={handleEmailKeydown}
-                                />
-                            </div>
-                            <Button
-                                variant="default"
-                                type="button"
-                                disabled={selectedEmail.length === 0}
-                                onClick={handleSendInvite}>
-                                Send Invite
-                            </Button>
+            <DialogContent className="sm:max-w-lg bg-card border border-border/50 shadow-lg">
+                <DialogHeader className="space-y-2.5 pb-4 border-b border-border/40">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-blue-500/10 rounded-lg">
+                            <Users className="w-5 h-5 text-blue-600" />
                         </div>
-                        {selectedEmail.length > 0 && (
-                            <div className="w-full flex flex-wrap items-start gap-2 px-2 py-1">
-                                {selectedEmail.map((mail) => (
-                                    <Badge
-                                        key={mail.id}
-                                        variant={'secondary'}
-                                        className="flex items-center">
-                                        {mail.email}{' '}
-                                        <button
-                                            // prevent parent handlers from firing and improve accessibility
-                                            type="button"
-                                            aria-label={`Remove ${mail.email}`}
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setSelectedEmail((prev) => prev.filter((e) => e.id !== mail.id))
-                                                if (error) setError('')
-                                            }}
-                                            className="cursor-pointer z-20 h-4 w-4 inline-flex items-center justify-center">
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-                        {/* Members List */}
-                        {isPending ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <div className="members flex space-x-2 border-t border-border mt-4 flex-col">
-                                {!!members &&
-                                    members.data?.map((member) => (
-                                        <div className="w-full flex items-center justify-between p-2 border-b border-border">
-                                            <div className="flex flex-1 items-center justify-start">
-                                                <img
-                                                    src={member.user?.avatarUrl || '/placeholder.svg'}
-                                                    alt={`${member.user?.firstName + ' ' + member.user?.lastName}'s avatar`}
-                                                    className="w-10 h-10 rounded-full object-cover"
-                                                />
-                                                <div className="flex flex-col ml-3">
-                                                    <span className="font-semibold">{member.user?.firstName + ' ' + member.user?.lastName}</span>
-                                                    <span className="text-sm text-muted-foreground">{member.user?.email}</span>
-                                                </div>
-                                            </div>
-
-                                            {member.permission === 'FULL_ACCESS' ? (
-                                                <div className="flex items-center gap-2 text-sm px-2 py-1.5">FULL ACCESS</div>
-                                            ) : (
-                                                <Popover>
-                                                    <PopoverTrigger className="flex items-center gap-2 text-sm px-2 py-1.5 hover:bg-secondary">
-                                                        <div className="flex items-center gap-2">
-                                                            {member.permission.replace('_', ' ')} <ChevronDown size={14} />
-                                                        </div>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent align="end">
-                                                        <div className="flex flex-col">
-                                                            <span className="font-semibold">Change Permission</span>
-                                                            <div className="flex flex-col space-y-1">
-                                                                {PermissionPalette.map((permission) => (
-                                                                    <button
-                                                                        key={permission.label}
-                                                                        type="button"
-                                                                        className="w-full flex justify-between items-center hover:bg-secondary/90 p-2 rounded cursor-pointer pointer-events-auto text-left">
-                                                                        <div className="flex flex-col">
-                                                                            <span>{permission.label}</span>
-                                                                            <span className="text-xs text-muted-foreground">
-                                                                                {permission.description}{' '}
-                                                                            </span>
-                                                                        </div>
-                                                                        {member.permission === permission.value ? (
-                                                                            <CheckCheck
-                                                                                size={20}
-                                                                                className="text-primary"
-                                                                            />
-                                                                        ) : null}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </PopoverContent>
-                                                </Popover>
-                                            )}
-                                        </div>
-                                    ))}
-                            </div>
-                        )}
-
-                        {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+                        <div>
+                            <DialogTitle className="text-lg font-semibold">Invite Members</DialogTitle>
+                            <p className="text-sm text-muted-foreground mt-1">Add team members to your workspace</p>
+                        </div>
                     </div>
                 </DialogHeader>
+
+                <div className="space-y-3 py-1">
+                    {/* Email + Permission Fields */}
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <div className="flex-[2] justify-end space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Mail className="w-4 h-4 text-muted-foreground" />
+                                <Label className="text-sm font-medium text-foreground">Email Address</Label>
+                            </div>
+                            <Input
+                                type="email"
+                                placeholder="jane@company.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="bg-muted/50 border-border/60 h-10"
+                            />
+                        </div>
+
+                        <div className="flex-1 justify-end space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-muted-foreground" />
+                                <Label className="text-sm font-medium text-foreground">Permission Level</Label>
+                            </div>
+                            <Select
+                                value={formData.permission}
+                                onValueChange={(value: MemberPermission) => setFormData({ ...formData, permission: value })}>
+                                <SelectTrigger className="bg-muted/50 border-border/60 p-4 py-4.5">
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="VIEW_ONLY">
+                                        <span className="font-medium">Viewer</span>
+                                    </SelectItem>
+                                    <SelectItem value="EDIT">
+                                        <span className="font-medium">Editor</span>
+                                    </SelectItem>
+                                    <SelectItem value="FULL_ACCESS">
+                                        <span className="font-medium">Admin</span>
+                                    </SelectItem>
+                                    <SelectItem value="COMMENT_ONLY">
+                                        <span className="font-medium">Commentor</span>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {/* Custom Message Field */}
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                            <Label className="text-sm font-medium text-foreground">
+                                Custom Message <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+                            </Label>
+                        </div>
+                        <Textarea
+                            placeholder="Add a personal message to the invitation..."
+                            value={formData.message}
+                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                            className="bg-muted/50 border-border/60 resize-none h-24"
+                        />
+                    </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="py-1">
+                    <Button
+                        onClick={handleSendInvite}
+                        disabled={!formData.email || !formData.permission}
+                        className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                        {createInviteMutation.isPending ? (
+                            <div className="flex items-center justify-center">
+                                <LoaderCircle className="animate-spin w-5 h-5 mr-2" /> Sending Invite...
+                            </div>
+                        ) : (
+                            <div className="flex items-center">
+                                <Send /> Send Invitation
+                            </div>
+                        )}
+                    </Button>
+                </div>
+                {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+
+                <Separator />
+
+                {isPending ? (
+                    <div>Loading...</div>
+                ) : (
+                    <div className="members flex space-x-2 mt-1 flex-col">
+                        {!!members &&
+                            members.data?.map((member) => (
+                                <div
+                                    key={member.id}
+                                    className="w-full flex items-center justify-between p-2 border-b border-border">
+                                    <div className="flex flex-1 items-center justify-start">
+                                        <img
+                                            src={member.user?.avatarUrl || '/placeholder.svg'}
+                                            alt={`${member.user?.firstName + ' ' + member.user?.lastName}'s avatar`}
+                                            className="w-10 h-10 rounded-full object-cover"
+                                        />
+                                        <div className="flex flex-col ml-3">
+                                            <span className="font-semibold">{member.user?.firstName + ' ' + member.user?.lastName}</span>
+                                            <span className="text-sm text-muted-foreground">{member.user?.email}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-muted-foreground">{member.permission.replace('_', ' ')}</span>
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     )

@@ -36,6 +36,6 @@ export const useCreateInvitation = ({ mutationConfig }: UseCreateInvitation = {}
     const { ...restConfig } = mutationConfig || {}
     return useMutation({
         ...restConfig,
-        mutationFn: createInvitation
+        mutationFn: (data) => createInvitation(data)
     })
 }

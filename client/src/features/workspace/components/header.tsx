@@ -6,15 +6,11 @@ import { Button } from '@/components/ui/button'
 
 import MembersDialog from './members-dialog'
 import { CreateProjectDialog } from './project/create-project-dialog'
+import { useWorkspaceContext } from '../hooks/useWorkspaceContext'
 
-interface HeaderProps {
-    workspaceId?: string
-    workspaceName?: string
-    workspaceLogo: string | null | undefined
-}
-
-export function Header({ workspaceId, workspaceName, workspaceLogo }: HeaderProps) {
+export function Header() {
     const { user } = useUser()
+    const { id, name, logoUrl } = useWorkspaceContext()
 
     return (
         <header className="border-b border-border bg-background flex-shrink-0">
@@ -22,23 +18,21 @@ export function Header({ workspaceId, workspaceName, workspaceLogo }: HeaderProp
             <div className="px-8 py-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Avatar className="w-12 h-12 bg-orange-500 text-white font-semibold flex items-center justify-center">
-                        {workspaceLogo !== null ? (
+                        {logoUrl !== null ? (
                             <img
-                                src={workspaceLogo}
-                                alt={`${workspaceName} logo`}
+                                src={logoUrl}
+                                alt={`${name} logo`}
                                 className="w-12 h-12 object-cover rounded-full"
                             />
                         ) : (
-                            <div className="text-xl">
-                                {workspaceName ? workspaceName.charAt(0).toUpperCase() : user?.firstName?.charAt(0).toUpperCase()}
-                            </div>
+                            <div className="text-xl">{name ? name.charAt(0).toUpperCase() : user?.firstName?.charAt(0).toUpperCase()}</div>
                         )}
                     </Avatar>
-                    <h1 className="text-2xl font-semibold text-foreground">{workspaceName}</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">{name}</h1>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <MembersDialog workspaceId={workspaceId}>
+                    <MembersDialog>
                         <Button
                             variant="ghost"
                             size="icon">
