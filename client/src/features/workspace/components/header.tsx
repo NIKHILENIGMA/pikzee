@@ -1,23 +1,25 @@
 import { useUser } from '@clerk/clerk-react'
-import { Plus, Users } from 'lucide-react'
+import { ChevronDown, Plus, Users } from 'lucide-react'
 
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
+import { useWorkspaceContext } from '../hooks/use-workspace-context'
+
 import MembersDialog from './members-dialog'
 import { CreateProjectDialog } from './project/create-project-dialog'
-import { useWorkspaceContext } from '../hooks/useWorkspaceContext'
+import Switcher from './switcher'
 
 export function Header() {
     const { user } = useUser()
-    const { id, name, logoUrl } = useWorkspaceContext()
+    const { name, logoUrl } = useWorkspaceContext()
 
     return (
         <header className="border-b border-border bg-background flex-shrink-0">
             {/* Account header */}
             <div className="px-8 py-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Avatar className="w-12 h-12 bg-orange-500 text-white font-semibold flex items-center justify-center">
+                    <Avatar className="w-12 h-12 border-2 border-accent text-white font-semibold flex items-center justify-center">
                         {logoUrl !== null ? (
                             <img
                                 src={logoUrl}
@@ -29,6 +31,9 @@ export function Header() {
                         )}
                     </Avatar>
                     <h1 className="text-2xl font-semibold text-foreground">{name}</h1>
+                    <Switcher>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                    </Switcher>
                 </div>
 
                 <div className="flex items-center gap-3">

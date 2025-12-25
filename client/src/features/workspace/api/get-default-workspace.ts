@@ -15,7 +15,7 @@ export const getDefaultWorkspace = async () => {
 // Provides the query options for fetching a specific workspace
 export const getDefaultWorkspaceQueryOptions = () => {
     return queryOptions({
-        queryKey: [workspaceKeys.all, 'default'],
+        queryKey: workspaceKeys.default(),
         queryFn: () => getDefaultWorkspace()
     })
 }
