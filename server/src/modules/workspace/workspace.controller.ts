@@ -89,6 +89,26 @@ export class WorkspaceController extends BaseController {
         )
     }
 
+    switch = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) {
+                throw new UnauthorizedError('User not authenticated')
+            }
+
+            // Validate path params
+            const { workspaceId } = ValidationService.validateParams(req.params, WorkspaceIdSchema)
+
+            await this.workspaceService.switchWorkspace(workspaceId, userId)
+
+            return this.createResponse<null>({
+                statusCode: STATUS_CODE.OK,
+                message: 'Switched workspace successfully',
+                data: null
+            })
+        })
+    }
+
     me = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(
             req,
@@ -99,7 +119,7 @@ export class WorkspaceController extends BaseController {
                 if (!userId) {
                     throw new UnauthorizedError('User not authenticated')
                 }
-                const workspace = await this.workspaceService.getMyWorkspace(userId)
+                const workspace = await this.workspaceService.getActiveWorkspace(userId)
                 return this.createResponse<WorkspaceDTO>({
                     statusCode: STATUS_CODE.OK,
                     message: 'My workspace fetched successfully',

@@ -17,11 +17,11 @@ export interface IWorkspaceService {
     createWorkspaceWithOwnerPermission(data: CreateWorkspaceDTO): Promise<WorkspaceDTO>
     update(workspaceId: string, data: UpdateWorkspaceDTO): Promise<WorkspaceDTO>
     softDelete(data: SoftDeleteDTO): Promise<string>
+    switchWorkspace(workspaceId: string, userId: string): Promise<void>
     getById(workspaceId: string, userId: string): Promise<WorkspaceDTO>
     listAll(userId: string): Promise<WorkspaceDTO[]>
     isOwner(workspaceId: string, userId: string): Promise<WorkspaceDTO | null>
     getActiveWorkspace(userId: string): Promise<WorkspaceDTO>
-    getMyWorkspace(userId: string): Promise<WorkspaceDTO>
 }
 
 export class WorkspaceService implements IWorkspaceService {
@@ -257,5 +257,23 @@ export class WorkspaceService implements IWorkspaceService {
         }
 
         return 'Workspace deleted successfully'
+    }
+
+    async switchWorkspace(workspaceId: string, userId: string): Promise<void> {
+        // Verify workspace exists and user is a member
+        const workspace = await this.workspaceRepository.getById(workspaceId)
+        if (!workspace) {
+            throw new NotFoundError('Workspace not found', 'workspaceService.switchWorkspace')
+        }
+
+        const userExist = await this.userService.getUserById(userId)
+        if (!userExist) {
+            throw new NotFoundError('User not found', 'workspaceService.switchWorkspace')
+        }
+
+        // Update user's last active workspace
+        await this.userService.updateUser(userId, {
+            lastActiveWorkspaceId: workspaceId
+        })
     }
 }

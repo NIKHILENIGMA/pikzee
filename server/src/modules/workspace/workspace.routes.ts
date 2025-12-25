@@ -26,6 +26,8 @@ router
     .patch(clerkMiddleware, workspaceController.update)
     .delete(clerkMiddleware, workspaceController.delete)
 
+router.route('/:workspaceId/switch').post(clerkMiddleware, workspaceController.switch)
+
 // Nested routes for workspace members
 router.use('/:workspaceId/members', clerkMiddleware, membersRoutes)
 
