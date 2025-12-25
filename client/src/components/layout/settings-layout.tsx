@@ -4,16 +4,16 @@ import SettingsSidebar from '@/features/settings/components/setting-sidebar'
 
 export default function SettingsLayout() {
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <div className="flex">
-                {/* Sidebar */}
+        <div className="flex h-screen overflow-hidden">
+            {/* Sidebar */}
+            <aside className="hidden md:block">
                 <SettingsSidebar />
+            </aside>
 
-                {/* Main Content */}
-                <div className="w-full min-h-screen">
-                    <Outlet />
-                </div>
-            </div>
+            {/* Main Content */}
+            <main className="flex-1 overflow-y-auto p-4 bg-background">
+                <Outlet />
+            </main>
         </div>
     )
 }

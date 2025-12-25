@@ -24,7 +24,7 @@ const SETTINGS_SIDEBAR_LINKS = [
 const SettingsSidebar: FC = () => {
     const navigate = useNavigate()
     return (
-        <div className="w-52 px-5 py-2 bg-sidebar-accent overflow-hidden border-r border-sidebar-border flex flex-col fixed h-screen">
+        <div className="h-full w-64 bg-sidebar/70 text-foreground p-4 space-y-4">
             {/* Personal Section */}
             <div className="mb-6">
                 <h3 className="text-sm font-medium text-muted-foreground mb-3">Personal</h3>
