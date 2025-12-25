@@ -1,6 +1,6 @@
 import { type FC, type ReactNode } from 'react'
 
-import { WorkspaceContext } from '../hooks/useWorkspaceContext'
+import { WorkspaceContext } from '../hooks/use-workspace-context'
 import type { Project, WorkspaceDTO } from '../types'
 
 type WorkspaceContextType = {
