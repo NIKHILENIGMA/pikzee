@@ -1,7 +1,7 @@
 import { useSignUp } from '@clerk/clerk-react'
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useErrorBoundary } from 'react-error-boundary'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import type { SignupFormRequest } from '../types/auth'
 
@@ -10,19 +10,29 @@ export const useSignup = () => {
     const { showBoundary } = useErrorBoundary()
     const navigate = useNavigate()
 
-    const { token } = useParams<{ token?: string }>()
+    const [searchParams, setSearchParams] = useSearchParams()
 
-    // Inject token into unsafeMetadata if it exists in URL params
-    const injectToken = useCallback(async () => {
-        if (!isLoaded) return
-        await signUp.update({ unsafeMetadata: { token } })
-    }, [signUp, token, isLoaded])
-
+    // Handle invitation token from URL query parameters
     useEffect(() => {
-        if (isLoaded && token) {
-            injectToken()
+        const token = searchParams.get('invitationToken') || null
+        if (!token || !isLoaded || !signUp) return
+
+        const handleInvitationToken = async () => {
+            try {
+                await signUp.update({ unsafeMetadata: { 'invite_token': token } })
+
+                // Remove token from URL after processing for security reasons
+                setSearchParams((params) => {
+                    params.delete('token')
+                    return params
+                })
+            } catch (error) {
+                showBoundary(error)
+            }
         }
-    }, [isLoaded, token])
+
+        handleInvitationToken()
+    }, [searchParams, isLoaded, signUp, setSearchParams, showBoundary])
 
     const onSubmit = async (
         data: SignupFormRequest,
@@ -39,7 +49,7 @@ export const useSignup = () => {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 unsafeMetadata: {
-                    token: data.token
+                    invite_token: data.token
                 }
             })
 
