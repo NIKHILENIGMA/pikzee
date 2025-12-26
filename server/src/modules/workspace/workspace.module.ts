@@ -7,12 +7,18 @@ import { WorkspaceService, IWorkspaceService } from './workspace.service'
 // Import dependent services
 import { userService } from '../user'
 import { memberService } from '../members'
+import { projectService } from '../projects'
 
 // Create repository instances with database connection
 const workspaceRepository = new WorkspaceRepository(db)
 
 // Create service instance with dependencies
-const workspaceService = new WorkspaceService(workspaceRepository, memberService, userService)
+const workspaceService = new WorkspaceService(
+    workspaceRepository,
+    memberService,
+    userService,
+    projectService
+)
 
 const workspaceController = new WorkspaceController(workspaceService)
 

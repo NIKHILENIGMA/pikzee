@@ -6,6 +6,7 @@ import { subscriptionPlanEnum, workspaces } from '@/core'
 import { CreateWorkspaceSchema, UpdateWorkspaceSchema } from './workspace.validator'
 
 import { MemberPermission } from '../members'
+import { ProjectDTO } from '../projects/project.types'
 
 // --------------------------------------------
 // Drizzle Model types (Repository Layer Types)
@@ -37,11 +38,7 @@ export interface WorkspaceDTO {
         avatarUrl: string | null
         permission: MemberPermission
     }[]
-    projects?: {
-        id: string
-        name: string
-        projectCoverUrl: string | null
-    }[]
+    projects?: ProjectDTO[]
 }
 
 export interface CreateWorkspaceDTO {

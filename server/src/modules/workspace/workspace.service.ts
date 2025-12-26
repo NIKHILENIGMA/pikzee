@@ -11,6 +11,7 @@ import {
     UpdateWorkspaceDTO,
     SoftDeleteDTO
 } from './workspace.types'
+import { IProjectService } from '../projects/project.service'
 
 export interface IWorkspaceService {
     create(data: CreateWorkspaceDTO): Promise<WorkspaceDTO>
@@ -28,7 +29,8 @@ export class WorkspaceService implements IWorkspaceService {
     constructor(
         private readonly workspaceRepository: IWorkspaceRepository,
         private readonly memberServicer: IMemberService,
-        private readonly userService: IUserService
+        private readonly userService: IUserService,
+        private readonly projectService: IProjectService
     ) {}
 
     /**
@@ -65,14 +67,20 @@ export class WorkspaceService implements IWorkspaceService {
             throw new NotFoundError('User not found', 'workspaceService.getActiveWorkspace')
         }
 
-        let workspace
+        let workspace, projects
 
         // If no last active workspace, fallback to default workspace
         if (!user.lastActiveWorkspaceId && user.defaultWorkspaceId) {
-            workspace = await this.workspaceRepository.getById(user.defaultWorkspaceId)
+            ;[workspace, projects] = await Promise.all([
+                this.workspaceRepository.getById(user.defaultWorkspaceId),
+                this.projectService.listAll(user.defaultWorkspaceId)
+            ])
         } else if (user.lastActiveWorkspaceId) {
             // Fetch last active workspace
-            workspace = await this.workspaceRepository.getById(user.lastActiveWorkspaceId)
+            ;[workspace, projects] = await Promise.all([
+                this.workspaceRepository.getById(user.lastActiveWorkspaceId),
+                this.projectService.listAll(user.lastActiveWorkspaceId)
+            ])
         }
 
         // Validate workspace existence
@@ -84,15 +92,37 @@ export class WorkspaceService implements IWorkspaceService {
         }
 
         // Return workspace DTO
-        return workspace
+        return {
+            id: workspace.id,
+            name: workspace.name,
+            logoUrl: workspace.logoUrl,
+            ownerId: workspace.ownerId,
+            createdAt: workspace.createdAt,
+            projects:
+                projects &&
+                projects.map((wp) => ({
+                    id: wp.id,
+                    workspaceId: wp.workspaceId,
+                    projectName: wp.projectName,
+                    projectCoverImageUrl: wp.projectCoverImageUrl,
+                    projectOwnerId: wp.projectOwnerId,
+                    storageUsed: wp.storageUsed,
+                    status: wp.status,
+                    isAccessRestricted: wp.isAccessRestricted,
+                    isDeleted: wp.isDeleted,
+                    createdAt: wp.createdAt,
+                    updatedAt: wp.updatedAt
+                }))
+        }
     }
 
     async getById(workspaceId: string, userId: string): Promise<WorkspaceDTO> {
-        const [workspace, members] = await Promise.all([
+        const [workspace, members, projects] = await Promise.all([
             // Fetch workspace details
             this.workspaceRepository.getById(workspaceId),
             // Fetch workspace members
-            this.memberServicer.listAll(workspaceId)
+            this.memberServicer.listAll(workspaceId),
+            this.projectService.listAll(workspaceId)
         ])
 
         // Validate workspace existence
@@ -102,7 +132,7 @@ export class WorkspaceService implements IWorkspaceService {
         }
 
         // Map members for easy access
-        const memberMap = new Map<string, MemberDTO>( //todo: optimize type
+        const memberMap = new Map<string, MemberDTO>(
             members.filter((wm) => wm.user?.id !== undefined).map((wm) => [wm.user!.id, wm])
         )
 
@@ -124,22 +154,25 @@ export class WorkspaceService implements IWorkspaceService {
             )
         }
 
-        // todo: fetch projects list when implemented
         return {
             id: workspace.id,
             name: workspace.name,
             logoUrl: workspace.logoUrl,
             ownerId: workspace.ownerId,
             createdAt: workspace.createdAt,
-            members: members.map((wm) => ({
-                id: wm.id,
-                firstName: wm.user?.firstName || '',
-                lastName: wm.user?.lastName || '',
-                email: wm.user?.email || '',
-                avatarUrl: wm.user?.avatarUrl || null,
-                permission: wm.permission
-            })),
-            projects: []
+            projects: projects.map((wp) => ({
+                id: wp.id,
+                workspaceId: wp.workspaceId,
+                projectName: wp.projectName,
+                projectCoverImageUrl: wp.projectCoverImageUrl,
+                projectOwnerId: wp.projectOwnerId,
+                storageUsed: wp.storageUsed,
+                status: wp.status,
+                isAccessRestricted: wp.isAccessRestricted,
+                isDeleted: wp.isDeleted,
+                createdAt: wp.createdAt,
+                updatedAt: wp.updatedAt
+            }))
         }
     }
 

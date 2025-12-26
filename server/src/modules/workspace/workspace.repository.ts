@@ -146,14 +146,9 @@ export class WorkspaceRepository implements IWorkspaceRepository {
         const [workspace] = await this.db
             .select()
             .from(workspaces)
-            .where(
-                and(
-                    eq(workspaces.ownerId, userId),
-                    eq(workspaces.isDeleted, false),
-                )
-            )
+            .where(and(eq(workspaces.ownerId, userId), eq(workspaces.isDeleted, false)))
             .limit(1)
-            
+
         return workspace || null
     }
 
@@ -161,14 +156,9 @@ export class WorkspaceRepository implements IWorkspaceRepository {
         const [workspace] = await this.db
             .select()
             .from(workspaces)
-            .where(
-                and(
-                    eq(workspaces.ownerId, userId),
-                    eq(workspaces.isDeleted, false),
-                )
-            )
+            .where(and(eq(workspaces.ownerId, userId), eq(workspaces.isDeleted, false)))
             .limit(1)
-            
+
         return workspace || null
     }
 }
