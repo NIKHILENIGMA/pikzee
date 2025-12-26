@@ -8,6 +8,7 @@ import {
     DeleteMemberRecord,
     MemberDetailRecord,
     MemberDTO,
+    MemberPermission,
     MemberRecord,
     UpdatePermissionRecord
 } from './member.types'
@@ -21,6 +22,7 @@ export interface IMemberRepository {
     listAll(workspaceId: string): Promise<MemberDTO[]>
     getMemberDetails(memberId: string): Promise<MemberDetailRecord | null>
     getByWorkspaceIdAndEmail(workspaceId: string, email: string): Promise<MemberRecord | null>
+    getPermissionByUserId(userId: string): Promise<MemberPermission | null>
 }
 
 export class MemberRepository implements IMemberRepository {
@@ -103,8 +105,8 @@ export class MemberRepository implements IMemberRepository {
                 joinedAt: workspaceMembers.joinedAt,
                 user: {
                     id: users.id,
-                    firstName: users.firstName!,
-                    lastName: users.lastName!,
+                    firstName: users.firstName,
+                    lastName: users.lastName,
                     email: users.email,
                     avatarUrl: users.avatarUrl
                 }
@@ -152,5 +154,16 @@ export class MemberRepository implements IMemberRepository {
             .limit(1)
 
         return member ? member.workspace_members : null
+    }
+
+    async getPermissionByUserId(userId: string): Promise<MemberPermission | null> {
+        const [member] = await this.db
+            .select({
+                permission: workspaceMembers.permission
+            })
+            .from(workspaceMembers)
+            .where(eq(workspaceMembers.userId, userId))
+            .limit(1)
+        return member ? member.permission : null
     }
 }

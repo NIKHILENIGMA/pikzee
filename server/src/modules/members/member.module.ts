@@ -7,4 +7,4 @@ const memberRepository = new MemberRepository(db)
 const memberService = new MemberService(memberRepository)
 const memberController = new MemberController(memberService)
 
-export { memberService, IMemberService, memberController }
+export { memberService, IMemberService, memberController, memberRepository }
