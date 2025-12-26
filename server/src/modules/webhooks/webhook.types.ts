@@ -1,7 +1,6 @@
 import z from 'zod'
 import { ClerkUserJSONSchema, ClerkUnsafeMetadataSchema } from './webhook.validator'
 
-
 export enum WebhookProvider {
     CLERK = 'CLERK',
     RAZORPAY = 'RAZORPAY'
@@ -70,7 +69,6 @@ export interface ClerkUserJSON {
     image_url: string | null
     unsafe_metadata: ClerkUserUnsafeMetadata
 }
-
 
 export interface ClerkWebhookEvent {
     type: ClerkEventType

@@ -92,8 +92,10 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, v
             // Accept the inivitation if token is present in unsafe metadata
             if (data.unsafe_metadata) {
                 const token = data.unsafe_metadata.invite_token
-                logger.info(`Processing invitation acceptance for user ${newUser.id} with token ${token}`)
-                
+                logger.info(
+                    `Processing invitation acceptance for user ${newUser.id} with token ${token}`
+                )
+
                 if (token) {
                     const hashToken = this.invitationService.hashInvitationToken(token)
 
@@ -110,8 +112,10 @@ export class ClerkWebhookHandler implements IWebhookHandler<ClerkWebhookEvent, v
                         })
                     }
 
-                    logger.info(`Processed completion of invitation acceptance for user ${newUser.id} with token ${token}`)
-                    // 
+                    logger.info(
+                        `Processed completion of invitation acceptance for user ${newUser.id} with token ${token}`
+                    )
+                    //
 
                     // Clear the invite_token from user's unsafe metadata
                     // await clerkClient.users.updateUser(data.id, {
