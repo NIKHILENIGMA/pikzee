@@ -150,7 +150,7 @@ export class NotificationService implements INotificationService {
                 lastName: '',
                 avatar: undefined
             })
-    
+
             // Trigger invitation in-app notification
             await this.novu!.trigger({
                 workflowId: WORKFLOW_ID.INVITE_USER,
