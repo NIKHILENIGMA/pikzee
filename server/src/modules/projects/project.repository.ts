@@ -5,8 +5,8 @@ import { and, desc, eq } from 'drizzle-orm'
 
 export interface IProjectRepository {
     create(data: NewProjectRecord): Promise<ProjectRecord>
-    update(projectId: string, data: Partial<ProjectRecord>): Promise<void>
-    delete(projectId: string): Promise<void>
+    update(projectId: string, data: Partial<ProjectRecord>): Promise<ProjectRecord | null>
+    delete(projectId: string, userId: string): Promise<ProjectRecord | null>
     updateName(record: {
         projectId: string
         userId: string
@@ -29,12 +29,32 @@ export class ProjectRepository implements IProjectRepository {
         return project
     }
 
-    async update(projectId: string, data: Partial<ProjectRecord>): Promise<void> {
-        await this.db.update(projects).set(data).where(eq(projects.id, projectId))
+    async update(projectId: string, data: Partial<ProjectRecord>): Promise<ProjectRecord | null> {
+        const updatedRecord = await this.db
+            .update(projects)
+            .set(data)
+            .where(
+                and(
+                    eq(projects.id, projectId),
+                    eq(projects.isDeleted, false)
+                )
+            )
+            .returning()
+        return updatedRecord.length > 0 ? updatedRecord[0] : null
     }
 
-    async delete(projectId: string): Promise<void> {
-        await this.db.delete(projects).where(eq(projects.id, projectId))
+    async delete(projectId: string, userId: string): Promise<ProjectRecord | null> {
+        const [deletedProject] = await this.db
+            .delete(projects)
+            .where(
+                and(
+                    eq(projects.id, projectId),
+                    eq(projects.projectOwnerId, userId),
+                    eq(projects.isDeleted, false)
+                )
+            )
+            .returning()
+        return deletedProject || null
     }
 
     async updateName(record: {

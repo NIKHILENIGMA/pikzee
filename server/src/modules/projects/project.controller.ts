@@ -128,7 +128,7 @@ export class ProjectController extends BaseController {
 
             const params = ValidationService.validateParams(req.params, ProjectIdParamSchema)
 
-            await this.projectService.delete(params.projectId)
+            await this.projectService.delete(params.projectId, userId)
 
             return this.createResponse<null>({
                 statusCode: STATUS_CODE.OK,

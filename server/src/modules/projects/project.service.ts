@@ -12,7 +12,7 @@ import {
 export interface IProjectService {
     create(data: CreateProjectDTO): Promise<ProjectDTO>
     update(projectId: string, userId: string, data: UpdateProjectDTO): Promise<void>
-    delete(projectId: string): Promise<void>
+    delete(projectId: string, userId: string): Promise<void>
     renameProject(data: { projectId: string; userId: string; newName: string }): Promise<void>
     changeStatus(data: ChangeProjectStatusDTO): Promise<void>
     getById(projectId: string): Promise<ProjectDTO>
@@ -51,17 +51,17 @@ export class ProjectService implements IProjectService {
         // Proceed to update the project
         await this.projectRepository.update(projectId, data)
     }
-    async delete(projectId: string): Promise<void> {
-        const permission: MemberPermission | null =
-            await this.memberRepository.getPermissionByUserId(projectId)
+    async delete(projectId: string, userId: string): Promise<void> {
+        const deletedProject = await this.projectRepository.delete(projectId, userId)
 
-        // Check if the user has permission to delete the project
-        if (!permission || permission !== 'FULL_ACCESS') {
-            throw new Error('User does not have permission to delete the project')
+        // Project not found or user does not have permission
+        if (!deletedProject) {
+            const existingProject = await this.projectRepository.getById(projectId)
+            if (!existingProject) {
+                throw new NotFoundError('Project not found', 'DELETE_PROJECT_NOT_FOUND')
+            }
+            throw new ForbiddenError('User does not have permission to delete the project')
         }
-
-        // Proceed to delete the project
-        await this.projectRepository.delete(projectId)
     }
 
     async renameProject(data: {
