@@ -2,8 +2,8 @@ import { Edit2, Save, X, Trash2, Shield, LogOut } from 'lucide-react'
 import { type FC, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-
 import { Separator } from '@/components/ui/separator'
+
 const members = [
     {
         id: 1,

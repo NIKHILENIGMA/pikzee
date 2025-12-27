@@ -1,10 +1,10 @@
 import { useState } from 'react'
+import { Toaster } from 'sonner'
 
 import { type ProjectView, useDefaultWorkspace, Header } from '@/features/workspace'
 import { FilterBar } from '@/features/workspace'
 import ProjectGrid from '@/features/workspace/components/project/project-grid'
 import { WorkspaceProvider } from '@/features/workspace/context/workspace-context'
-import { Toaster } from 'sonner'
 
 export default function DashboardPage() {
     const [view, setView] = useState<ProjectView>('GRID')
@@ -28,10 +28,7 @@ export default function DashboardPage() {
                         {workspaceQuery.isPending ? (
                             <div className="p-8 text-center text-sm text-muted-foreground">Loading workspace...</div>
                         ) : workspaceQuery.data ? (
-                            <ProjectGrid
-                                projects={workspaceQuery.data?.data.projects}
-                                view={view}
-                            />
+                            <ProjectGrid view={view} />
                         ) : null}
                     </div>
                     <Toaster />

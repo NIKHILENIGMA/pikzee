@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { BsGithub } from 'react-icons/bs'
+import { FcGoogle } from 'react-icons/fc'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { FcGoogle } from 'react-icons/fc'
 
 export default function SecuritySection() {
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
@@ -35,7 +35,7 @@ export default function SecuritySection() {
 
     const handleDisconnect = (provider: string) => {
         // Handle disconnect logic here
-        console.log(`Disconnected ${provider}`)
+        alert(`Disconnected from ${provider}`)
     }
 
     return (

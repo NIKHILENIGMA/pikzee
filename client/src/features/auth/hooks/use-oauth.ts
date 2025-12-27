@@ -27,8 +27,7 @@ export const useOAuth = () => {
                     return params
                 })
             } catch (error) {
-                alert('Failed to process invitation token.')
-                // showBoundary(error)
+                alert(`Some Error ${error}`) // todo: replace with proper error handling
             }
         }
 

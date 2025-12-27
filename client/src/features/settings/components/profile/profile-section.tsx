@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { Camera } from 'lucide-react'
+import { useState } from 'react'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useUser } from '@clerk/clerk-react'
+import { Input } from '@/components/ui/input'
 
 export default function ProfileSection() {
     const { user } = useUser()

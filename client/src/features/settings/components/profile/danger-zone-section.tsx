@@ -11,7 +11,7 @@ export default function DangerZoneSection() {
 
     const handleDeleteAccount = () => {
         // Handle account deletion logic here
-        console.log('Account deleted')
+        alert('Account deleted') // todo: replace with actual deletion logic
         setIsDeleteDialogOpen(false)
     }
 
