@@ -1,6 +1,8 @@
-import { Cog, Loader, Settings2Icon, ShieldBan, Trash2 } from 'lucide-react'
+import { Cog, Settings2Icon, ShieldBan, Trash2 } from 'lucide-react'
 import { type FC, type ReactNode } from 'react'
+import { toast } from 'sonner'
 
+import { ConfirmActionDialog } from '@/components'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
@@ -9,7 +11,6 @@ import { useDeleteProject } from '../../api/project/delete-project'
 import { useUpdateProjectStatus } from '../../api/project/update-project-status'
 import type { ProjectStatus } from '../../types'
 import ProjectAccessDialog from '../project/project-access-dialog'
-import { toast } from 'sonner'
 
 const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: ProjectStatus }> = ({ children, projectId, status }) => {
     const updateProjectStatusMutation = useUpdateProjectStatus()
@@ -65,20 +66,22 @@ const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: Proje
                         )}
                     </Button>
                     <Separator />
-                    <Button
-                        size={'sm'}
-                        onClick={() => handleProjectDeletion(projectId)}
-                        className="w-full text-start border border-destructive/30 rounded-lg bg-destructive/20 text-foreground justify-start hover:bg-destructive hover:text-white">
-                        {deleteProjectMutation.isPending ? (
-                            <>
-                                <Loader /> Deleting...
-                            </>
-                        ) : (
-                            <>
-                                <Trash2 className="w-4 h-4" /> Delete Project
-                            </>
-                        )}
-                    </Button>
+                    <ConfirmActionDialog
+                        title="Delete Project"
+                        description="Are you sure you want to delete this project? This action cannot be undone."
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        variant="destructive"
+                        isLoading={deleteProjectMutation.isPending}
+                        onConfirm={() => handleProjectDeletion(projectId)}
+                        trigger={
+                            <Button
+                                size={'sm'}
+                                className="w-full text-start border border-destructive/30 rounded-lg bg-destructive/20 text-foreground justify-start hover:bg-destructive hover:text-white">
+                                <Trash2 className="w-4 h-4 mr-2" /> Delete Project
+                            </Button>
+                        }
+                    />
                 </div>
             </PopoverContent>
         </Popover>
