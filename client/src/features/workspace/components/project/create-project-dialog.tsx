@@ -1,5 +1,6 @@
 import { Upload } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -8,7 +9,6 @@ import { Label } from '@/components/ui/label'
 
 import { useCreateProject } from '../../api/project/create-project'
 import { useWorkspaceContext } from '../../hooks/use-workspace-context'
-import { toast } from 'sonner'
 
 interface CreateProjectDialogProps {
     children: React.ReactNode
