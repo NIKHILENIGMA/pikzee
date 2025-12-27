@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 
+import { useCreateInvitation } from '../api/create-invitation'
 import { useGetMembers } from '../api/get-members'
 import { useWorkspaceContext } from '../hooks/use-workspace-context'
-import { useCreateInvitation } from '../api/create-invitation'
 import type { MemberPermission } from '../types'
 
 interface CreateMemberForm {
@@ -53,14 +53,13 @@ const MembersDialog: FC<MembersDialogProps> = ({ children }) => {
         }
     })
 
-    const handleSendInvite = () => {
+    const handleSendInvite = async () => {
         try {
             if (!id) {
                 return
             }
-            console.log(formData)
 
-            createInviteMutation.mutate({
+            await createInviteMutation.mutateAsync({
                 email: formData.email,
                 workspaceId: id,
                 permission: formData.permission,

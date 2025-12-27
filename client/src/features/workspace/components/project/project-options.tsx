@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 
-import ProjectAccessDialog from '../project/project-access-dialog'
-
-import type { ProjectStatus } from '../../types'
-import { useUpdateProjectStatus } from '../../api/project/update-project-status'
 import { useDeleteProject } from '../../api/project/delete-project'
+import { useUpdateProjectStatus } from '../../api/project/update-project-status'
+import type { ProjectStatus } from '../../types'
+import ProjectAccessDialog from '../project/project-access-dialog'
 
 const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: ProjectStatus }> = ({ children, projectId, status }) => {
     const updateProjectStatusMutation = useUpdateProjectStatus()

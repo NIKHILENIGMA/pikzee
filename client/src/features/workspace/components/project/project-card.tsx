@@ -1,24 +1,27 @@
+import { Ellipsis } from 'lucide-react'
 import { type FC } from 'react'
 
 import { Badge } from '@/components/ui/badge'
-import ProjectPopover from '@/features/workspace/components/project/project-popover'
+
+import ProjectOptions from './project-options'
 
 interface ProjectCardProps {
+    projectId: string
     projectName: string
     projectCover: string
-    fileSize: string
-    projectStatus: 'ACTIVE' | 'INACTIVE'
+    fileSize: number
+    projectStatus: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
     onProjectCardClick?: () => void
 }
 
-const ProjectCard: FC<ProjectCardProps> = ({ projectName, projectStatus, projectCover, fileSize = '0 MB', onProjectCardClick }) => {
-    function truncateText(text: string, maxLength: number = 17): string {
-        if (text.length <= maxLength) {
-            return text
-        }
-        return text.slice(0, maxLength) + '...'
+function truncateText(text: string, maxLength: number = 17): string {
+    if (text.length <= maxLength) {
+        return text
     }
+    return text.slice(0, maxLength) + '...'
+}
 
+const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStatus, projectCover, fileSize = 0, onProjectCardClick }) => {
     return (
         <div className="w-full h-62 rounded-xl bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
             <button
@@ -68,7 +71,13 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectName, projectStatus, project
             </button>
             <div className="card-footer h-[10%] flex justify-between items-center px-5 py-2 rounded-b-xl text-foreground/40">
                 <span className="font-medium">{fileSize}</span>
-                <ProjectPopover />
+                <ProjectOptions
+                    projectId={projectId}
+                    status={projectStatus}>
+                    <button className="px-2 py-1 rounded-sm cursor-pointer">
+                        <Ellipsis />
+                    </button>
+                </ProjectOptions>
             </div>
         </div>
     )

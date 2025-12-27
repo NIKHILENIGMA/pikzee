@@ -1,11 +1,12 @@
 import { createContext, useContext } from 'react'
-import type { Project } from '../types'
+
+import type { ProjectDTO } from '../types'
 
 type WorkspaceContextType = {
     id: string
     name: string
     logoUrl: string | null
-    projects?: Project[]
+    projects?: ProjectDTO[]
 } | null
 
 export const WorkspaceContext = createContext<WorkspaceContextType>(null)

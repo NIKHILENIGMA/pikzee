@@ -6,33 +6,56 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+import { useCreateProject } from '../../api/project/create-project'
+import { useWorkspaceContext } from '../../hooks/use-workspace-context'
+
 interface CreateProjectDialogProps {
     children: React.ReactNode
 }
 
 export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
-    const [title, setTitle] = useState('')
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [coverImage, setCoverImage] = useState<File | null>(null)
-    const [previewUrl, setPreviewUrl] = useState<string>('')
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState<boolean>(false)
+    const [createProjectData, setCreateProjectData] = useState<{
+        title: string
+        coverImage: File | null
+        previewUrl: string
+    }>({
+        title: '',
+        coverImage: null,
+        previewUrl: ''
+    })
+
+    const { id } = useWorkspaceContext()
+    const createProjectMutation = useCreateProject()
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            setCoverImage(file)
+            setCreateProjectData({
+                ...createProjectData,
+                coverImage: file
+            })
             const url = URL.createObjectURL(file)
-            setPreviewUrl(url)
+            setCreateProjectData({
+                ...createProjectData,
+                previewUrl: url
+            })
         }
     }
 
     const handleCreateProject = async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        // TODO: Implement API call to create project
+        await createProjectMutation.mutateAsync({
+            projectName: createProjectData.title,
+            workspaceId: id,
+            projectCoverImageUrl: createProjectData.previewUrl || undefined
+        })
+
         setOpen(false)
-        setTitle('')
-        setCoverImage(null)
-        setPreviewUrl('')
+        setCreateProjectData({
+            title: '',
+            coverImage: null,
+            previewUrl: ''
+        })
     }
 
     return (
@@ -55,8 +78,13 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                         </Label>
                         <Input
                             id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            value={createProjectData?.title || ''}
+                            onChange={(e) =>
+                                setCreateProjectData({
+                                    ...createProjectData,
+                                    title: e.target.value
+                                })
+                            }
                             placeholder="Enter project title"
                             className="bg-background border-border"
                         />
@@ -70,10 +98,10 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                             Cover Image
                         </Label>
 
-                        {previewUrl ? (
+                        {createProjectData?.previewUrl ? (
                             <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#252836] border border-[#2f3349]">
                                 <img
-                                    src={previewUrl || '/placeholder.svg'}
+                                    src={createProjectData?.previewUrl || '/placeholder.svg'}
                                     alt="Cover preview"
                                     className="w-full h-full object-cover"
                                 />
@@ -82,8 +110,11 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                                     size="sm"
                                     className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white"
                                     onClick={() => {
-                                        setCoverImage(null)
-                                        setPreviewUrl('')
+                                        setCreateProjectData({
+                                            ...createProjectData,
+                                            coverImage: null,
+                                            previewUrl: ''
+                                        })
                                     }}>
                                     Change
                                 </Button>
@@ -122,7 +153,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                         </Button>
                         <Button
                             onClick={handleCreateProject}
-                            disabled={!title}
+                            disabled={!createProjectData?.title}
                             className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
                             Create Project
                         </Button>

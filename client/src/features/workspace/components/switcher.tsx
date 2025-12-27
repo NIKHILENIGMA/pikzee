@@ -1,5 +1,5 @@
-import { type FC, type ReactNode } from 'react'
 import { Building } from 'lucide-react'
+import { type FC, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -22,7 +22,7 @@ const Switcher: FC<{ children: ReactNode }> = ({ children }) => {
     })
 
     const handleWorkspaceSwitch = (id: string) => {
-        console.log('Switching to workspace ID:', id)
+        alert('Switching to workspace ID: ' + id)
         switchWorkspaceMutation.mutate(id)
     }
 

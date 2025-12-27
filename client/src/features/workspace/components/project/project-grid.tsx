@@ -1,4 +1,5 @@
-import type { Project, ProjectView } from '../../types'
+import { useWorkspaceContext } from '../../hooks/use-workspace-context'
+import type { ProjectDTO, ProjectView } from '../../types'
 import { columns } from '../columns'
 
 import { NewProjectCard } from './new-project-card'
@@ -6,11 +7,12 @@ import ProjectCard from './project-card'
 import ProjectTable from './project-table'
 
 interface ProjectGridProps {
-    projects?: Project[]
     view: ProjectView
 }
 
-export default function ProjectGrid({ projects, view }: ProjectGridProps) {
+export default function ProjectGrid({ view }: ProjectGridProps) {
+    const { projects } = useWorkspaceContext()
+
     return (
         <div className="w-full px-8">
             {view === 'GRID' ? (
@@ -19,10 +21,11 @@ export default function ProjectGrid({ projects, view }: ProjectGridProps) {
                         projects.map((project) => (
                             <ProjectCard
                                 key={project.id}
-                                projectCover={project.projectCoverUrl || ''}
-                                projectName={project.name}
+                                projectId={project.id}
+                                projectCover={project.projectCoverImageUrl || ''}
+                                projectName={project.projectName}
                                 projectStatus={project.status}
-                                fileSize="2.5 MB"
+                                fileSize={project.storageUsed}
                             />
                         ))}
 
@@ -30,7 +33,7 @@ export default function ProjectGrid({ projects, view }: ProjectGridProps) {
                 </div>
             ) : (
                 <div className="space-y-2 mt-8">
-                    <ProjectTable<Project, unknown>
+                    <ProjectTable<ProjectDTO, unknown>
                         data={projects || []}
                         columns={columns}
                     />

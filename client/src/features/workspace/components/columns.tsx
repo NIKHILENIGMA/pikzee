@@ -1,18 +1,19 @@
 import { type ColumnDef } from '@tanstack/react-table'
+import { Ellipsis } from 'lucide-react'
 
-import type { Project } from '../types'
+import type { ProjectDTO } from '../types'
 
-import ProjectPopover from './project/project-popover'
+import ProjectOptions from './project/project-options'
 
-export const columns: ColumnDef<Project>[] = [
+export const columns: ColumnDef<ProjectDTO>[] = [
     {
         accessorKey: 'projectName',
         header: 'Project Name',
         cell: ({ row }) => (
             <div className="w-full p-2 flex items-center space-x-1.5">
-                {row.original.projectCoverImage && (
+                {row.original.projectCoverImageUrl && (
                     <img
-                        src={row.original.projectCoverImage || '/placeholder.svg'}
+                        src={row.original.projectCoverImageUrl || '/placeholder.svg'}
                         alt={row.original.projectName + ' Cover'}
                         className="w-8 h-8 rounded-sm object-cover mr-2"
                     />
@@ -29,7 +30,7 @@ export const columns: ColumnDef<Project>[] = [
         accessorKey: 'lastUpdated',
         header: 'Last Updated',
         cell: ({ row }) => {
-            const date = new Date(row.original.lastUpdated)
+            const date = new Date(row.original.updatedAt)
             return date.toLocaleDateString()
         }
     },
@@ -49,15 +50,19 @@ export const columns: ColumnDef<Project>[] = [
         id: 'action',
         header: 'Action',
         cell: ({ row }) => (
-            <button
-                type="button"
-                aria-label={`row actions ${row.original.id}`}
-                className="p-1 rounded hover:bg-muted"
-                onClick={(e) => {
-                    e.stopPropagation()
-                }}>
-                <ProjectPopover />
-            </button>
+            <ProjectOptions
+                projectId={row.original.id}
+                status={row.original.status}>
+                <button
+                    type="button"
+                    aria-label={`row actions ${row.original.id}`}
+                    className="p-1 rounded hover:bg-muted"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                    }}>
+                    <Ellipsis className="h-5 w-5" />
+                </button>
+            </ProjectOptions>
         ),
         enableSorting: false
     }
