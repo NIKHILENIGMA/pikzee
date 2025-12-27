@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 
-import { useCreateInvitation } from '../api/create-invitation'
-import { useGetMembers } from '../api/get-members'
+import { useCreateInvitation } from '../api/invitation/create-invitation'
+import { useGetMembers } from '../api/member/get-members'
 import { useWorkspaceContext } from '../hooks/use-workspace-context'
 import type { MemberPermission } from '../types'
 

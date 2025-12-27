@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Toaster } from 'sonner'
 
 import { type ProjectView, useDefaultWorkspace, Header, FilterBar, WorkspaceProvider, ProjectGrid } from '@/features/workspace'
+import { Loader } from '@/components'
 
 export default function DashboardPage() {
     const [view, setView] = useState<ProjectView>('GRID')
@@ -23,7 +24,9 @@ export default function DashboardPage() {
                             onViewChange={setView}
                         />
                         {workspaceQuery.isPending ? (
-                            <div className="p-8 text-center text-sm text-muted-foreground">Loading workspace...</div>
+                            <div className="fixed inset-0 flex items-center justify-center">
+                                <Loader size="xl" />
+                            </div>
                         ) : workspaceQuery.data ? (
                             <ProjectGrid view={view} />
                         ) : null}
