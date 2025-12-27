@@ -31,4 +31,4 @@ export interface ProjectDTO {
 export type CreateProjectDTO = z.infer<typeof CreateProjectSchema>
 export type UpdateProjectDTO = z.infer<typeof UpdateProjectSchema>
 export type GetProjectDTO = z.infer<typeof GetProjectSchema>
-export type ChangeProjectStatusDTO = z.infer<typeof ChangeProjectStatusSchema>
+export type ChangeProjectStatusDTO = z.infer<typeof ChangeProjectStatusSchema> & { userId: string }

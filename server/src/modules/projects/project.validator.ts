@@ -17,7 +17,6 @@ export const UpdateProjectSchema = z.object({
 export const ChangeProjectStatusSchema = z.object({
     status: z.enum(['ACTIVE', 'INACTIVE', 'ARCHIVED']),
     projectId: z.string().min(1, 'Project ID is required'),
-    userId: z.string().min(1, 'User ID is required')
 })
 
 export const RenameProjectSchema = z.object({
