@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 
 import { useCreateProject } from '../../api/project/create-project'
 import { useWorkspaceContext } from '../../hooks/use-workspace-context'
+import { toast } from 'sonner'
 
 interface CreateProjectDialogProps {
     children: React.ReactNode
@@ -56,6 +57,8 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
             coverImage: null,
             previewUrl: ''
         })
+
+        toast.success('Project created successfully')
     }
 
     return (
