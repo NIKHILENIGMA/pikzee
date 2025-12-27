@@ -10,7 +10,7 @@ interface ProjectGridProps {
     view: ProjectView
 }
 
-export default function ProjectGrid({ view }: ProjectGridProps) {
+export const ProjectGrid = ({ view }: ProjectGridProps) => {
     const { projects } = useWorkspaceContext()
 
     return (
@@ -42,3 +42,4 @@ export default function ProjectGrid({ view }: ProjectGridProps) {
         </div>
     )
 }
+

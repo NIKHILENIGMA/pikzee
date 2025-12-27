@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { Toaster } from 'sonner'
 
-import { type ProjectView, useDefaultWorkspace, Header } from '@/features/workspace'
-import { FilterBar } from '@/features/workspace'
-import ProjectGrid from '@/features/workspace/components/project/project-grid'
-import { WorkspaceProvider } from '@/features/workspace/context/workspace-context'
+import { type ProjectView, useDefaultWorkspace, Header, FilterBar, WorkspaceProvider, ProjectGrid } from '@/features/workspace'
 
 export default function DashboardPage() {
     const [view, setView] = useState<ProjectView>('GRID')
