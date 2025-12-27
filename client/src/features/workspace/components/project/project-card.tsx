@@ -21,6 +21,18 @@ function truncateText(text: string, maxLength: number = 17): string {
     return text.slice(0, maxLength) + '...'
 }
 
+const calculateFileSize = (sizeInBytes: number): string => {
+    if (sizeInBytes < 1024) {
+        return `${sizeInBytes} Bytes`
+    } else if (sizeInBytes < 1048576) {
+        return `${(sizeInBytes / 1024).toFixed(2)} KB`
+    } else if (sizeInBytes < 1073741824) {
+        return `${(sizeInBytes / 1048576).toFixed(2)} MB`
+    } else {
+        return `${(sizeInBytes / 1073741824).toFixed(2)} GB`
+    }
+}
+
 const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStatus, projectCover, fileSize = 0, onProjectCardClick }) => {
     return (
         <div className="w-full h-62 rounded-xl bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -69,8 +81,8 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStat
                     </div>
                 )}
             </button>
-            <div className="card-footer h-[10%] flex justify-between items-center px-5 py-2 rounded-b-xl text-foreground/40">
-                <span className="font-medium">{fileSize}</span>
+            <div className="card-footer h-[10%] flex justify-between items-center px-5 py-3 rounded-b-xl text-foreground/40">
+                <span className="font-medium">{calculateFileSize(fileSize)}</span>
                 <ProjectOptions
                     projectId={projectId}
                     status={projectStatus}>
