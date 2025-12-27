@@ -14,6 +14,12 @@ export const UpdateProjectSchema = z.object({
     isAccessRestricted: z.boolean().optional()
 })
 
+export const ChangeProjectStatusSchema = z.object({
+    status: z.enum(['ACTIVE', 'INACTIVE', 'ARCHIVED']),
+    projectId: z.string().min(1, 'Project ID is required'),
+    userId: z.string().min(1, 'User ID is required')
+})
+
 export const RenameProjectSchema = z.object({
     newName: z.string().min(1, 'New project name is required')
 })

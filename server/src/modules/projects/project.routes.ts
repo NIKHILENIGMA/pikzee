@@ -15,4 +15,6 @@ router
     .patch(clerkMiddleware, projectController.rename)
     .delete(clerkMiddleware, projectController.delete)
 
+router.route('/:projectId/status').patch(clerkMiddleware, projectController.changeStatus)
+
 export default router

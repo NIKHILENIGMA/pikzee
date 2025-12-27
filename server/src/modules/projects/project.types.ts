@@ -2,7 +2,12 @@ import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
 import { projects } from '@/core'
 import z from 'zod'
-import { CreateProjectSchema, GetProjectSchema, UpdateProjectSchema } from './project.validator'
+import {
+    ChangeProjectStatusSchema,
+    CreateProjectSchema,
+    GetProjectSchema,
+    UpdateProjectSchema
+} from './project.validator'
 
 export type ProjectRecord = InferSelectModel<typeof projects>
 export type NewProjectRecord = InferInsertModel<typeof projects>
@@ -26,3 +31,4 @@ export interface ProjectDTO {
 export type CreateProjectDTO = z.infer<typeof CreateProjectSchema>
 export type UpdateProjectDTO = z.infer<typeof UpdateProjectSchema>
 export type GetProjectDTO = z.infer<typeof GetProjectSchema>
+export type ChangeProjectStatusDTO = z.infer<typeof ChangeProjectStatusSchema>

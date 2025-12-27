@@ -12,6 +12,10 @@ export interface IProjectRepository {
         userId: string
         newName: string
     }): Promise<ProjectRecord | null>
+    changeStatus(record: {
+        projectId: string
+        status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
+    }): Promise<void>
     getById(projectId: string): Promise<ProjectRecord | null>
     listAll(workspaceId: string): Promise<ProjectRecord[]>
 }
@@ -50,6 +54,16 @@ export class ProjectRepository implements IProjectRepository {
             )
             .returning()
         return result.length > 0 ? result[0] : null
+    }
+
+    async changeStatus(record: {
+        projectId: string
+        status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
+    }): Promise<void> {
+        await this.db
+            .update(projects)
+            .set({ status: record.status })
+            .where(eq(projects.id, record.projectId))
     }
 
     async getById(projectId: string): Promise<ProjectRecord | null> {

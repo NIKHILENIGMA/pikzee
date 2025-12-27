@@ -5,6 +5,7 @@ import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
 import { IProjectService } from './project.service'
 import {
+    ChangeProjectStatusSchema,
     CreateProjectSchema,
     GetProjectSchema,
     ProjectIdParamSchema,
@@ -62,6 +63,31 @@ export class ProjectController extends BaseController {
             return this.createResponse<null>({
                 statusCode: STATUS_CODE.OK,
                 message: 'Project updated successfully',
+                data: null
+            })
+        })
+    }
+
+    changeStatus = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) {
+                throw new UnauthorizedError('User not authenticated')
+            }
+
+            // Validate params and body
+            const params = ValidationService.validateParams(req.params, ProjectIdParamSchema)
+            const body = ValidationService.validateBody(req.body, ChangeProjectStatusSchema)
+
+            await this.projectService.changeStatus({
+                projectId: params.projectId,
+                userId: userId,
+                status: body.status
+            })
+
+            return this.createResponse<null>({
+                statusCode: STATUS_CODE.OK,
+                message: 'Project status changed successfully',
                 data: null
             })
         })
