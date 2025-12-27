@@ -1,9 +1,9 @@
-import client from '@/shared/lib/api-client'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
 import { WORKSPACE_API_BASE } from '@/shared/constants'
+import client from '@/shared/lib/api-client'
 import { workspaceKeys } from '@/shared/lib/query-keys'
 import type { MutationConfig } from '@/shared/lib/react-query'
-
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 export const switchWorkspace = async (workspaceId: string) => {
     return await client.post<void, null>(`${WORKSPACE_API_BASE}/${workspaceId}/switch`, null)
@@ -36,4 +36,3 @@ export const useSwitchWorkspace = ({ mutationConfig }: UseSwitchWorkspace = {}) 
         }
     })
 }
-

@@ -2,9 +2,10 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 
 import { WORKSPACE_API_BASE } from '@/shared/constants'
 import client from '@/shared/lib/api-client'
-import type { QueryConfig } from '@/shared/lib/react-query'
-import type { WorkspaceDTO } from '../types'
 import { workspaceKeys } from '@/shared/lib/query-keys'
+import type { QueryConfig } from '@/shared/lib/react-query'
+
+import type { WorkspaceDTO } from '../types'
 
 // Fetches the list of workspaces from the API
 export const getWorkspaces = async () => {
