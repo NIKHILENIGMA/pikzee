@@ -19,7 +19,7 @@ export const useOAuth = () => {
 
         const handleInvitationToken = async () => {
             try {
-                await signUp.update({ unsafeMetadata: { 'invite_token': token } })
+                await signUp.update({ unsafeMetadata: { invite_token: token } })
 
                 // Remove token from URL after processing for security reasons
                 setSearchParams((params) => {
@@ -27,7 +27,7 @@ export const useOAuth = () => {
                     return params
                 })
             } catch (error) {
-                console.error('Error handling invitation token:', error)
+                alert('Failed to process invitation token.')
                 // showBoundary(error)
             }
         }

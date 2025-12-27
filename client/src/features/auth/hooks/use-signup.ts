@@ -19,7 +19,7 @@ export const useSignup = () => {
 
         const handleInvitationToken = async () => {
             try {
-                await signUp.update({ unsafeMetadata: { 'invite_token': token } })
+                await signUp.update({ unsafeMetadata: { invite_token: token } })
 
                 // Remove token from URL after processing for security reasons
                 setSearchParams((params) => {
