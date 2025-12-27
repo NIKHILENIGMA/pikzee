@@ -1,5 +1,4 @@
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { useNavigate } from 'react-router'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
@@ -14,8 +13,6 @@ export default function ProjectTable<TData extends { id: string }, TValue>({ col
         columns,
         getCoreRowModel: getCoreRowModel()
     })
-
-    const navigate = useNavigate()
 
     return (
         <div className="overflow-hidden rounded-md">
@@ -40,11 +37,7 @@ export default function ProjectTable<TData extends { id: string }, TValue>({ col
                         table.getRowModel().rows.map((row) => (
                             <TableRow
                                 key={row.id}
-                                data-state={row.getIsSelected() && 'selected'}
-                                onClick={() => {
-                                    const projectId = row.original.id
-                                    if (projectId) navigate(`/projects/${projectId}`)
-                                }}>
+                                data-state={row.getIsSelected() && 'selected'}>
                                 {row.getVisibleCells().map((cell) => (
                                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                                 ))}
