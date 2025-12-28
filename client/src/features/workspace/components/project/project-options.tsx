@@ -12,7 +12,15 @@ import { useUpdateProjectStatus } from '../../api/project/update-project-status'
 import type { ProjectStatus } from '../../types'
 import ProjectAccessDialog from '../project/project-access-dialog'
 
-const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: ProjectStatus }> = ({ children, projectId, status }) => {
+import ProjectSettings from './project-settings'
+
+const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: ProjectStatus; projectName: string; projectCoverImageUrl: string }> = ({
+    children,
+    projectId,
+    status,
+    projectName,
+    projectCoverImageUrl
+}) => {
     const updateProjectStatusMutation = useUpdateProjectStatus()
     const deleteProjectMutation = useDeleteProject()
 
@@ -41,14 +49,16 @@ const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: Proje
                     <div className="border-b border-border pb-2.5">
                         <p className="text-sm text-start px-2.5 pt-0.5 font-medium text-foreground/70">Project Options</p>
                     </div>
-                    <Button
-                        variant={'ghost'}
-                        size={'sm'}
-                        className="text-start hover:bg-secondary rounded-sm justify-start gap-2">
-                        <>
-                            <Settings2Icon className="w-4 h-4" /> Project Settings
-                        </>
-                    </Button>
+                    <ProjectSettings project={{ projectId, projectName, projectCoverImageUrl }}>
+                        <Button
+                            variant={'ghost'}
+                            size={'sm'}
+                            className="text-start hover:bg-secondary rounded-sm justify-start gap-2">
+                            <>
+                                <Settings2Icon className="w-4 h-4" /> Project Settings
+                            </>
+                        </Button>
+                    </ProjectSettings>
                     <ProjectAccessDialog />
                     <Button
                         variant={'ghost'}
@@ -68,7 +78,7 @@ const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: Proje
                     <Separator />
                     <ConfirmActionDialog
                         title="Delete Project"
-                        description="Are you sure you want to delete this project? This action cannot be undone."
+                        description="Are you sure you want to delete this project? All the data will be permanently lost and this action cannot be undone. Please make sure you want to proceed."
                         confirmText="Delete"
                         cancelText="Cancel"
                         variant="destructive"
@@ -76,7 +86,7 @@ const ProjectOptions: FC<{ children: ReactNode; projectId: string; status: Proje
                         onConfirm={() => handleProjectDeletion(projectId)}
                         trigger={
                             <Button
-                                size={'sm'}
+                                size="default"
                                 className="w-full text-start border border-destructive/30 rounded-lg bg-destructive/20 text-foreground justify-start hover:bg-destructive hover:text-white">
                                 <Trash2 className="w-4 h-4 mr-2" /> Delete Project
                             </Button>

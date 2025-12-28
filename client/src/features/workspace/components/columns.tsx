@@ -64,7 +64,9 @@ export const columns: ColumnDef<ProjectDTO>[] = [
         cell: ({ row }) => (
             <ProjectOptions
                 projectId={row.original.id}
-                status={row.original.status}>
+                status={row.original.status}
+                projectName={row.original.projectName}
+                projectCoverImageUrl={row.original.projectCoverImageUrl || '/placeholder.svg'}>
                 <button
                     type="button"
                     aria-label={`row actions ${row.original.id}`}

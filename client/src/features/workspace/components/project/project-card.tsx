@@ -85,7 +85,9 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStat
                 <span className="font-medium">{calculateFileSize(fileSize)}</span>
                 <ProjectOptions
                     projectId={projectId}
-                    status={projectStatus}>
+                    status={projectStatus}
+                    projectName={projectName}
+                    projectCoverImageUrl={projectCover}>
                     <button className="px-2 py-1 rounded-sm cursor-pointer">
                         <Ellipsis />
                     </button>
