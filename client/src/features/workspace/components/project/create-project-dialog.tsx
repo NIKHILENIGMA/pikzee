@@ -25,6 +25,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
         coverImage: null,
         previewUrl: ''
     })
+    const [error, setError] = useState<string | null>(null)
 
     const { id } = useWorkspaceContext()
     const createProjectMutation = useCreateProject()
@@ -45,20 +46,24 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     }
 
     const handleCreateProject = async () => {
-        await createProjectMutation.mutateAsync({
-            projectName: createProjectData.title,
-            workspaceId: id,
-            projectCoverImageUrl: createProjectData.previewUrl || undefined
-        })
+        try {
+            await createProjectMutation.mutateAsync({
+                projectName: createProjectData.title,
+                workspaceId: id,
+                projectCoverImageUrl: createProjectData.previewUrl || undefined
+            })
 
-        setOpen(false)
-        setCreateProjectData({
-            title: '',
-            coverImage: null,
-            previewUrl: ''
-        })
+            setOpen(false)
+            setCreateProjectData({
+                title: '',
+                coverImage: null,
+                previewUrl: ''
+            })
 
-        toast.success('Project created successfully')
+            toast.success('Project created successfully')
+        } catch (error) {
+            setError(`${(error as Error).message}`)
+        }
     }
 
     return (
@@ -161,6 +166,8 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                             Create Project
                         </Button>
                     </div>
+
+                    {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
             </DialogContent>
         </Dialog>

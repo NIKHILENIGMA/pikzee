@@ -1,5 +1,4 @@
-import { useUser } from '@clerk/clerk-react'
-import { ChevronDown, Plus, Users } from 'lucide-react'
+import { Building2Icon, ChevronDown, Plus, Users } from 'lucide-react'
 
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -11,7 +10,6 @@ import { CreateProjectDialog } from './project/create-project-dialog'
 import Switcher from './switcher'
 
 export function Header() {
-    const { user } = useUser()
     const { name, logoUrl } = useWorkspaceContext()
 
     return (
@@ -27,7 +25,7 @@ export function Header() {
                                 className="w-12 h-12 object-cover rounded-full"
                             />
                         ) : (
-                            <div className="text-xl">{name ? name.charAt(0).toUpperCase() : user?.firstName?.charAt(0).toUpperCase()}</div>
+                            <Building2Icon className="h-6 w-6" />
                         )}
                     </Avatar>
                     <h1 className="text-2xl font-semibold text-foreground">{name}</h1>
