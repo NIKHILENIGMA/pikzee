@@ -12,7 +12,7 @@ router
 router
     .route('/:projectId')
     .get(clerkMiddleware, projectController.getById)
-    .patch(clerkMiddleware, projectController.rename)
+    .patch(clerkMiddleware, projectController.update)
     .delete(clerkMiddleware, projectController.delete)
 
 router.route('/:projectId/status').patch(clerkMiddleware, projectController.changeStatus)
