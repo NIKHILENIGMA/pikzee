@@ -1,68 +1,12 @@
+import { MoreHorizontal } from 'lucide-react'
 import type { FC } from 'react'
 
-import { AssetCard } from '@/features/dashboard/components/project/asset-card'
-import { FolderCard } from '@/features/dashboard/components/project/folder-card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { SidebarNav } from '@/features/dashboard/components/project/sidebar-nav'
 import { ToolbarChips } from '@/features/dashboard/components/project/toolbar-chips'
 import { Topbar } from '@/features/dashboard/components/project/topbar'
 
-type Folder = {
-    id: string
-    title: string
-    items: number
-    preview?: string[]
-    locked?: boolean
-}
-
-type Asset = {
-    id: string
-    title: string
-    duration: string
-    thumb: string
-}
-
-const folders: Folder[] = [
-    { id: 'f1', title: 'private', items: 0, locked: true },
-    { id: 'f2', title: 'untitled folder', items: 0 },
-    { id: 'f3', title: 'Graphics', items: 6 },
-    { id: 'f4', title: 'Sound Effects', items: 9 },
-    { id: 'f5', title: 'Footage', items: 19 }
-]
-
-const assets: Asset[] = [
-    {
-        id: 'a1',
-        title: 'DRYP_30_FINAL_9x16.mp4',
-        duration: '00:34',
-        thumb: '/city-silhouette-at-dusk.jpg'
-    },
-    {
-        id: 'a2',
-        title: 'DRYP_30_FINAL_4x5.mp4',
-        duration: '00:34',
-        thumb: '/closeup-eye-macro.jpg'
-    },
-    {
-        id: 'a3',
-        title: 'DRYP_30_4K_H265_Final.mp4',
-        duration: '00:34',
-        thumb: '/logo-on-black-background.jpg'
-    },
-    {
-        id: 'a4',
-        title: 'DRYP_15_FINAL_9x16.mp4',
-        duration: '00:15',
-        thumb: '/pool-scene-night.jpg'
-    },
-    {
-        id: 'a5',
-        title: 'DRYP_15_FINAL_4x5.mp4',
-        duration: '00:15',
-        thumb: '/cinematic-bokeh.jpg'
-    }
-]
-
-const Projects: FC = () => {
+const ProjectAssetsManagement: FC = () => {
     return (
         <div className="h-screen w-full bg-background text-foreground minimal-scrollbar">
             <Topbar />
@@ -73,48 +17,48 @@ const Projects: FC = () => {
                         <ToolbarChips />
                     </div>
 
-                    {/* Folders Section */}
-                    <section className="px-6 py-6">
-                        <div className="mb-3 flex items-center gap-3 text-sm text-muted-foreground">
-                            <input
-                                aria-label="Select folders"
-                                type="checkbox"
-                                className="size-4 rounded-sm border-input bg-background"
-                            />
-                            <span>5 Folders · 1.13 GB</span>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                            {folders.map((f) => (
-                                <FolderCard
-                                    key={f.id}
-                                    title={f.title}
-                                    items={f.items}
-                                    locked={f.locked}
-                                />
-                            ))}
-                        </div>
-                    </section>
+                    <div className="px-14 py-2 flex items-center">
+                        <Checkbox /> <span className="ml-2 text-sm text-foreground/80">5 Folders</span>
+                    </div>
+                    {/* Folder Section */}
+                    <section className="px-14 py-10 grid gap-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                            <div
+                                className="relative w-full aspect-[627/470] rounded-b-md"
+                                key={index}>
+                                {/* Outer Folder Border */}
+                                <svg
+                                    className="w-full h-full block text-secondary/45 fill-current"
+                                    viewBox="0 0 627 452"
+                                    preserveAspectRatio="xMidYMid meet"
+                                    role="img"
+                                    aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        fill="currentColor"
+                                        strokeWidth="8"
+                                        strokeLinejoin="round"
+                                        d="M161.338 0C167.364 0 172.923 2.96731 177.081 7.32871C190.985 21.9122 210.602 31 232.342 31H608C618.493 31 627 39.5066 627 50V433C627 443.493 618.493 452 608 452H19C8.50657 452 0 443.493 0 433V19C0 8.50659 8.50659 0 19 0H161.338Z"
+                                    />
+                                </svg>
 
-                    {/* Assets Section */}
-                    <section className="px-6 pb-8">
-                        <div className="mb-3 flex items-center gap-3 text-sm text-muted-foreground">
-                            <input
-                                aria-label="Select assets"
-                                type="checkbox"
-                                className="size-4 rounded-sm border-input bg-background"
-                            />
-                            <span>6 Assets · 237 MB</span>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                            {assets.map((a) => (
-                                <AssetCard
-                                    key={a.id}
-                                    title={a.title}
-                                    duration={a.duration}
-                                    thumb={a.thumb}
-                                />
-                            ))}
-                        </div>
+                                {/* Inner Folder Content */}
+                                <div className="folder-content absolute inset-0 top-4.5 w-full h-full bg-secondary rounded-md shadow-2xl flex flex-col justify-between text-foreground">
+                                    <div className="p-4 text-sm font-medium">
+                                        <Checkbox className="peer" />
+                                    </div>
+                                    <div className="w-full mt-auto">
+                                        <div className="w-full font-semibold px-4">
+                                            <p className="text-md">Folder Name</p>
+                                        </div>
+                                        <div className="w-full flex justify-between items-center px-4 py-1.5">
+                                            <p className="text-sm font-medium text-foreground/60">No Items 15</p>
+                                            <MoreHorizontal />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </section>
                 </main>
             </div>
@@ -122,4 +66,15 @@ const Projects: FC = () => {
     )
 }
 
-export default Projects
+export default ProjectAssetsManagement
+
+{
+    /* <div className="relative w-[16rem] h-48 rounded-b-2xl overflow-hidden">
+    <div className="folder-extended"></div>
+    <div className="folder-content absolute top-4.5 left-0 z-30 bg-accent px-2 py-1 rounded-md w-full h-full shadow-xl inset-shadow-sm"></div>
+</div> */
+}
+{
+    /* <div className="folder-content absolute top-4.5 left-0.5 z-
+                            30 bg-secondary px-2 py-1 rounded-md w-full h-full shadow-background shadow-lg"></div> */
+}

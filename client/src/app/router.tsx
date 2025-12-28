@@ -35,7 +35,7 @@ const router = createBrowserRouter([
             },
             {
                 path: 'projects/:projectId',
-                lazy: () => import('./routes/workspace/project-management').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/projects/project-assets-management').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'settings',
