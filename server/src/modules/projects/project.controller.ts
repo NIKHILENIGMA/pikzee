@@ -138,6 +138,25 @@ export class ProjectController extends BaseController {
         })
     }
 
+    softDeletion = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id 
+            if (!userId) {
+                throw new UnauthorizedError('User not authenticated')
+            }
+
+            const params = ValidationService.validateParams(req.params, ProjectIdParamSchema)
+
+            await this.projectService.softDelete(params.projectId, userId)
+
+            return this.createResponse<null>({
+                statusCode: STATUS_CODE.OK,
+                message: 'Project deleted successfully',
+                data: null
+            })
+        })
+    }
+
     getById = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(
             req,

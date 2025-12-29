@@ -13,6 +13,7 @@ export interface IProjectService {
     create(data: CreateProjectDTO): Promise<ProjectDTO>
     update(projectId: string, userId: string, data: UpdateProjectDTO): Promise<void>
     delete(projectId: string, userId: string): Promise<void>
+    softDelete(projectId: string, userId: string): Promise<void>
     renameProject(data: { projectId: string; userId: string; newName: string }): Promise<void>
     changeStatus(data: ChangeProjectStatusDTO): Promise<void>
     getById(projectId: string): Promise<ProjectDTO>
@@ -105,6 +106,21 @@ export class ProjectService implements IProjectService {
             projectId: data.projectId,
             status: data.status
         })
+    }
+
+    async softDelete(projectId: string, userId: string): Promise<void> {
+        const deletedProject = await this.projectRepository.softDelete(projectId, userId)
+
+        // Project not found or user does not have permission
+        if (!deletedProject) {
+            const existingProject = await this.projectRepository.getById(projectId)
+            if (!existingProject) {
+                throw new NotFoundError('Project not found', 'SOFT_DELETE_PROJECT_NOT_FOUND')
+            }
+            throw new ForbiddenError('User does not have permission to delete the project')
+        }
+
+        
     }
 
     //----------------------------------------------------------------------------

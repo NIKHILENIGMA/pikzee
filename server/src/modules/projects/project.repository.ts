@@ -7,6 +7,7 @@ export interface IProjectRepository {
     create(data: NewProjectRecord): Promise<ProjectRecord>
     update(projectId: string, data: Partial<ProjectRecord>): Promise<ProjectRecord | null>
     delete(projectId: string, userId: string): Promise<ProjectRecord | null>
+    softDelete(projectId: string, userId: string): Promise<ProjectRecord | null>
     updateName(record: {
         projectId: string
         userId: string
@@ -57,6 +58,21 @@ export class ProjectRepository implements IProjectRepository {
         return deletedProject || null
     }
 
+    async softDelete(projectId: string, userId: string): Promise<ProjectRecord | null> {
+        const updatedRecord = await this.db
+            .update(projects)
+            .set({ isDeleted: true })
+            .where(
+                and(
+                    eq(projects.id, projectId),
+                    eq(projects.projectOwnerId, userId),
+                    eq(projects.isDeleted, false)
+                )
+            )
+            .returning()
+        return updatedRecord.length > 0 ? updatedRecord[0] : null
+    }
+
     async updateName(record: {
         projectId: string
         userId: string
@@ -90,7 +106,12 @@ export class ProjectRepository implements IProjectRepository {
         const project = await this.db
             .select()
             .from(projects)
-            .where(eq(projects.id, projectId))
+            .where(
+                and(
+                    eq(projects.id, projectId),
+                    eq(projects.isDeleted, false)
+                )
+            )
             .limit(1)
 
         return project.length > 0 ? project[0] : null
