@@ -11,7 +11,7 @@ interface ProjectCardProps {
     projectCover: string
     fileSize: number
     projectStatus: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
-    onProjectCardClick?: () => void
+    onProjectCardClick: () => void
 }
 
 function truncateText(text: string, maxLength: number = 17): string {
@@ -36,10 +36,11 @@ const calculateFileSize = (sizeInBytes: number): string => {
 const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStatus, projectCover, fileSize = 0, onProjectCardClick }) => {
     return (
         <div className="w-full h-62 rounded-xl bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-            <button
-                type="button"
-                className="card-content w-full h-[90%] p-1.5 rounded-lg cursor-pointer "
-                onClick={onProjectCardClick}>
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={onProjectCardClick}
+                className="card-content w-full h-[90%] p-1.5 rounded-lg cursor-pointer">
                 {projectCover !== '' ? (
                     <div className="relative w-full h-full hover:opacity-85 transition-opacity">
                         <img
@@ -80,15 +81,19 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStat
                         </div>
                     </div>
                 )}
-            </button>
-            <div className="card-footer h-[10%] flex justify-between items-center px-5 py-3 rounded-b-xl text-foreground/40">
+            </div>
+            <div className="card-footer h-[10%] flex justify-between items-center px-5 py-3 rounded-b-xl text-foreground/40 z-40">
                 <span className="font-medium">{calculateFileSize(fileSize)}</span>
+
                 <ProjectOptions
                     projectId={projectId}
                     status={projectStatus}
                     projectName={projectName}
                     projectCoverImageUrl={projectCover}>
-                    <button className="px-2 py-1 rounded-sm cursor-pointer">
+                    <button
+                        type="button"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-1 rounded-sm cursor-pointer hover:bg-gray-700/30 transition-colors">
                         <Ellipsis />
                     </button>
                 </ProjectOptions>

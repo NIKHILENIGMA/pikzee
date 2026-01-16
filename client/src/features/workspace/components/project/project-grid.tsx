@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useWorkspaceContext } from '../../hooks/use-workspace-context'
 import type { ProjectDTO, ProjectView } from '../../types'
 import { columns } from '../columns'
@@ -13,6 +13,7 @@ interface ProjectGridProps {
 
 export const ProjectGrid = ({ view }: ProjectGridProps) => {
     const { projects } = useWorkspaceContext()
+    const navigate = useNavigate()
 
     return (
         <div className="w-full px-8">
@@ -20,18 +21,15 @@ export const ProjectGrid = ({ view }: ProjectGridProps) => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-8">
                     {projects &&
                         projects.map((project) => (
-                            <Link
-                                to={`/workspace/projects/${project.id}`}
-                                className="block">
-                                <ProjectCard
-                                    key={project.id}
-                                    projectId={project.id}
-                                    projectCover={project.projectCoverImageUrl || ''}
-                                    projectName={project.projectName}
-                                    projectStatus={project.status}
-                                    fileSize={project.storageUsed}
-                                />
-                            </Link>
+                            <ProjectCard
+                                key={project.id}
+                                projectId={project.id}
+                                projectCover={project.projectCoverImageUrl || ''}
+                                projectName={project.projectName}
+                                projectStatus={project.status}
+                                fileSize={project.storageUsed}
+                                onProjectCardClick={() => navigate(`/projects/${project.id}`)}
+                            />
                         ))}
 
                     <NewProjectCard />

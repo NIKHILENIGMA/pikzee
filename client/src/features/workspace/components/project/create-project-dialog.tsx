@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -74,6 +74,9 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
             <DialogContent className="bg-background border-border text-foreground max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">Create New Project</DialogTitle>
+                    <DialogDescription>
+                        Fill in the details below to create a new project.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
