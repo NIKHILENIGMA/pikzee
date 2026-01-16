@@ -7,7 +7,7 @@ export const PORT: number = parseInt(process.env.PORT!) || 3000
 export const NODE_ENV: string = process.env.NODE_ENV! || 'development'
 export const IS_PRODUCTION: boolean = NODE_ENV === 'production'
 export const IS_DEVELOPMENT: boolean = NODE_ENV === 'development'
-export const FRONTEND_BASE_URL: string = process.env.FRONTEND_BASE_URL || 'http://localhost:3000'
+export const FRONTEND_BASE_URL: string = 'http://localhost:8080'
 
 // Cors Configuration
 export const CORS_ORIGIN: string = process.env.CORS_ORIGIN || 'http://localhost:3000'

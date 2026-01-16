@@ -1,0 +1,2 @@
+export const UPLOAD_MULTIPART_MIN_SIZE = 5 * 1024 * 1024 // 5 MB
+export const MULTIPART_UPLOAD_PART_SIZE = 5 * 1024 * 1024 // 5 MB
