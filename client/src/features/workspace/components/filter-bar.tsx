@@ -17,19 +17,19 @@ interface FilterBarProps {
 
 const FilterBar: FC<FilterBarProps> = ({ view, onViewChange, filters, onFiltersChange }) => {
     return (
-        <div className="flex items-center justify-start space-x-4 border-b border-border pb-5 flex-shrink-0 px-8">
+        <div className="flex items-center justify-start space-x-4 border-b border-border pb-3 flex-shrink-0 px-8">
             <Tabs
                 value={view}
                 onValueChange={(value) => onViewChange(value as ProjectView)}>
-                <TabsList className="bg-card border-0 p-1">
+                <TabsList className="bg-card border-1 ">
                     <TabsTrigger
                         value="GRID"
-                        className=" h-8 px-3">
+                        className="px-2 shadow-none">
                         <Grid className="h-4 w-4" />
                     </TabsTrigger>
                     <TabsTrigger
                         value="LIST"
-                        className=" h-8 px-3">
+                        className="px-2 shadow-none">
                         <List className="h-4 w-4" />
                     </TabsTrigger>
                 </TabsList>

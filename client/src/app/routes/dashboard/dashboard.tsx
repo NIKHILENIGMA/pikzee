@@ -60,7 +60,7 @@ export default function DashboardPage() {
             <WorkspaceProvider workspace={workspaceQuery.data?.data ?? null}>
                 <main className="flex-1">
                     <Header />
-                    <div className="py-8">
+                    <div className="py-3">
                         <FilterBar
                             view={view}
                             onViewChange={setView}

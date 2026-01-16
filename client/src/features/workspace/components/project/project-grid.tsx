@@ -6,13 +6,14 @@ import type { ProjectDTO, ProjectView } from '../../types'
 import { NewProjectCard } from './new-project-card'
 import ProjectCard from './project-card'
 import ProjectTable from './project-table'
+import type { FC } from 'react'
 
 interface ProjectGridProps {
-    projects?: ProjectDTO[]
     view: ProjectView
+    projects?: ProjectDTO[]
 }
 
-export const ProjectGrid = ({ projects, view }: ProjectGridProps) => {
+export const ProjectGrid: FC<ProjectGridProps> = ({ projects, view }) => {
     const navigate = useNavigate()
 
     return (

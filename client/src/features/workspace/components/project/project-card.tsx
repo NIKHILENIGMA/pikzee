@@ -4,6 +4,7 @@ import { type FC } from 'react'
 import { Badge } from '@/components/ui/badge'
 
 import ProjectOptions from './project-options'
+import { GRADIENTS } from '@/shared/constants/gradients'
 
 interface ProjectCardProps {
     projectId: string
@@ -63,7 +64,7 @@ const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStat
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-gradient-to-l from-yellow-500 to-indigo-600 w-full h-full flex items-center justify-center rounded-lg">
+                    <div className={`${GRADIENTS[3].backgroundColor} w-full h-full flex items-center justify-center rounded-lg`}>
                         <div className="relative w-full h-full hover:opacity-85 transition-opacity">
                             <div className="bg-gradient-to-t from-black/50 to-transparent w-full h-full rounded-lg" />
                             <div className="w-full">
