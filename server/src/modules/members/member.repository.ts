@@ -23,6 +23,7 @@ export interface IMemberRepository {
     getMemberDetails(memberId: string): Promise<MemberDetailRecord | null>
     getByWorkspaceIdAndEmail(workspaceId: string, email: string): Promise<MemberRecord | null>
     getPermissionByUserId(userId: string): Promise<MemberPermission | null>
+    getByWorkspaceIdAndUserId(workspaceId: string, userId: string): Promise<MemberDTO | null>
 }
 
 export class MemberRepository implements IMemberRepository {
@@ -165,5 +166,19 @@ export class MemberRepository implements IMemberRepository {
             .where(eq(workspaceMembers.userId, userId))
             .limit(1)
         return member ? member.permission : null
+    }
+
+    async getByWorkspaceIdAndUserId(
+        workspaceId: string,
+        userId: string)
+    : Promise<MemberRecord | null> {
+        const [member] = await this.db
+            .select()
+            .from(workspaceMembers)
+            .innerJoin(users, eq(users.id, workspaceMembers.userId))
+            .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
+            .limit(1)
+            
+        return member ? member.workspace_members : null
     }
 }

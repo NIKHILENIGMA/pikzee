@@ -17,6 +17,7 @@ export interface IMemberService {
     getById(memberId: string): Promise<MemberDTO>
     listAll(workspaceId: string): Promise<MemberDTO[]>
     isMemberOfWorkspace(workspaceId: string, email: string): Promise<boolean>
+    getMemberByUserId(workspaceId: string, userId: string): Promise<MemberDTO | null>
 }
 
 export class MemberService implements IMemberService {
@@ -101,5 +102,13 @@ export class MemberService implements IMemberService {
     async isMemberOfWorkspace(workspaceId: string, email: string): Promise<boolean> {
         const member = await this.memberRepository.getByWorkspaceIdAndEmail(workspaceId, email)
         return member ? true : false
+    }
+
+    async getMemberByUserId(workspaceId: string, userId: string): Promise<MemberDTO | null> {
+        const member = await this.memberRepository.getByWorkspaceIdAndUserId(workspaceId, userId)
+        if (!member) {
+            return null
+        }
+        return member
     }
 }
