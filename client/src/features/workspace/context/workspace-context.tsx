@@ -1,13 +1,13 @@
 import { type FC, type ReactNode } from 'react'
 
 import { WorkspaceContext } from '../hooks/use-workspace-context'
-import type { Project, WorkspaceDTO } from '../types'
+import type { ProjectDTO, WorkspaceDTO } from '../types'
 
 type WorkspaceContextType = {
     id: string
     name: string
     logoUrl: string | null
-    projects?: Project[]
+    projects?: ProjectDTO[]
 }
 
 const initialWorkspaceState: WorkspaceContextType = {
