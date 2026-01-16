@@ -1,15 +1,21 @@
 import { Grid, List, Filter, ArrowUpDown } from 'lucide-react'
+import { type FC } from 'react'
 
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-import type { ProjectView } from '../types'
+import type { Filters, ProjectView } from '../types'
+
+import StatusFilter from './status-filter'
+import SortFilter from './sort-filter'
 
 interface FilterBarProps {
     view: ProjectView
+    filters: Filters
     onViewChange: (view: ProjectView) => void
+    onFiltersChange: (filters: Filters) => void
 }
 
-export function FilterBar({ view, onViewChange }: FilterBarProps) {
+const FilterBar: FC<FilterBarProps> = ({ view, onViewChange, filters, onFiltersChange }) => {
     return (
         <div className="flex items-center justify-start space-x-4 border-b border-border pb-5 flex-shrink-0 px-8">
             <Tabs
@@ -30,18 +36,27 @@ export function FilterBar({ view, onViewChange }: FilterBarProps) {
             </Tabs>
 
             {/* Filter */}
-            <div className="flex items-center gap-2 text-sm text-gray-300">
-                <Filter className="h-4 w-4" />
-                <span className="text-gray-400">Filtered by</span>
-                <span className="text-white font-medium">Active Projects</span>
-            </div>
-
+            <StatusFilter
+                status={filters.status}
+                onStatusChange={(status) => onFiltersChange({ ...filters, status })}>
+                <div className="ml-2 flex items-center px-2.5 py-1.5 rounded-sm gap-2 text-foreground hover:bg-accent cursor-pointer text-sm">
+                    <Filter className="h-4 w-4" />
+                    <div className="text-foreground/80">Filtered by</div>
+                    <p className='font-medium'>{filters.status.toUpperCase()}</p>
+                </div>
+            </StatusFilter>
             {/* Sort */}
-            <div className="flex items-center gap-2 text-sm text-gray-300">
-                <ArrowUpDown className="h-4 w-4" />
-                <span className="text-gray-400">Sorted by</span>
-                <span className="text-white font-medium">Name</span>
-            </div>
+            <SortFilter
+                order={filters.sortOrder}
+                onOrderChange={(sortOrder) => onFiltersChange({ ...filters, sortOrder })}>
+                <div className="ml-2 flex items-center px-2.5 py-1.5 rounded-sm gap-2 text-sm text-foreground hover:bg-accent cursor-pointer">
+                    <ArrowUpDown className="h-4 w-4" />
+                    <div className="text-foreground/80">Sorted by</div>
+                    <p className='font-medium'>{filters.sortOrder === 'asc' ? 'A - Z' : 'Z - A'}</p>
+                </div>
+            </SortFilter>
         </div>
     )
 }
+
+export { FilterBar }

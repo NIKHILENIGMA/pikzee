@@ -15,3 +15,11 @@ export interface ProjectDTO {
     createdAt: Date
     updatedAt: Date
 }
+
+export type Status = 'all' | 'active' | 'inactive'
+export type SortOrder = 'asc' | 'desc'
+
+export interface Filters {
+    status: Status
+    sortOrder: SortOrder
+}

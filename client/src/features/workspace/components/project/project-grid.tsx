@@ -1,18 +1,18 @@
 import { useNavigate } from 'react-router'
-import { useWorkspaceContext } from '../../hooks/use-workspace-context'
-import type { ProjectDTO, ProjectView } from '../../types'
+
 import { columns } from '../columns'
+import type { ProjectDTO, ProjectView } from '../../types'
 
 import { NewProjectCard } from './new-project-card'
 import ProjectCard from './project-card'
 import ProjectTable from './project-table'
 
 interface ProjectGridProps {
+    projects?: ProjectDTO[]
     view: ProjectView
 }
 
-export const ProjectGrid = ({ view }: ProjectGridProps) => {
-    const { projects } = useWorkspaceContext()
+export const ProjectGrid = ({ projects, view }: ProjectGridProps) => {
     const navigate = useNavigate()
 
     return (
