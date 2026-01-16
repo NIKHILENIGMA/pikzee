@@ -15,25 +15,25 @@ export default function ActiveDevicesSection() {
     const devices: Device[] = [
         {
             id: '1',
-            name: 'MacBook Pro',
-            location: 'San Francisco, CA',
+            name: 'Lenovo ThinkPad X1 Carbon',
+            location: 'Bhayander, India',
             lastActive: 'Active now',
             type: 'desktop'
         },
-        {
-            id: '2',
-            name: 'iPhone 14',
-            location: 'San Francisco, CA',
-            lastActive: '2 hours ago',
-            type: 'phone'
-        },
-        {
-            id: '3',
-            name: 'iPad Air',
-            location: 'San Francisco, CA',
-            lastActive: '1 day ago',
-            type: 'tablet'
-        }
+        // {
+        //     id: '2',
+        //     name: 'iPhone 14',
+        //     location: 'San Francisco, CA',
+        //     lastActive: '2 hours ago',
+        //     type: 'phone'
+        // },
+        // {
+        //     id: '3',
+        //     name: 'iPad Air',
+        //     location: 'San Francisco, CA',
+        //     lastActive: '1 day ago',
+        //     type: 'tablet'
+        // }
     ]
 
     const getDeviceIcon = (type: Device['type']) => {
