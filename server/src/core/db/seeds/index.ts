@@ -7,7 +7,7 @@ export const runAllSeeds = async () => {
     logger.info('🌱 Starting database seeding...')
 
     try {
-        // await seedTiers() // Insert the tiers first
+        await seedTiers() // Insert the tiers first
         await seedUsers()
         await seedWorkspaces()
         // Add calls to other seed functions here as needed, e.g.:

@@ -1,73 +1,50 @@
 import { logger } from '@/config/logger'
-// import { db } from '../drizzle'
+import { db } from '../drizzle'
+import { subscriptions, Subscription } from '../schema/subscription.schema'
 
-// import { tiers } from '../schema/subscription.schema'
-
-// interface TierData {
-//     name: 'FREE' | 'PRO' | 'ENTERPRISE'
-//     monthlyPrice: number // in cents
-//     yearlyPrice: number // in cents
-//     storageLimitBytes: number
-//     fileUploadLimitBytes: number
-//     membersPerWorkspaceLimit: number // -1 for unlimited
-//     projectsPerWorkspaceLimit: number // -1 for unlimited
-//     docsPerWorkspaceLimit: number // -1 for unlimited
-//     draftsPerDocLimit: number
-// }
-
-// const tierData: TierData[] = [
-//     {
-//         name: 'FREE' as const,
-//         monthlyPrice: 0,
-//         yearlyPrice: 0,
-//         storageLimitBytes: 1024 * 1024 * 100, // 100 MB
-//         fileUploadLimitBytes: 1024 * 1024 * 10, // 10 MB per file
-//         membersPerWorkspaceLimit: 3,
-//         projectsPerWorkspaceLimit: 2,
-//         docsPerWorkspaceLimit: 10,
-//         draftsPerDocLimit: 5
-//     },
-//     {
-//         name: 'PRO' as const,
-//         monthlyPrice: 1999, // $19.99 in cents
-//         yearlyPrice: 19999, // $199.99 in cents
-//         storageLimitBytes: 1024 * 1024 * 1024 * 10, // 10 GB
-//         fileUploadLimitBytes: 1024 * 1024 * 500, // 500 MB per file
-//         membersPerWorkspaceLimit: 25,
-//         projectsPerWorkspaceLimit: 50,
-//         docsPerWorkspaceLimit: 500,
-//         draftsPerDocLimit: 20
-//     },
-//     {
-//         name: 'ENTERPRISE' as const,
-//         monthlyPrice: 4999, // $49.99 in cents
-//         yearlyPrice: 49999, // $499.99 in cents
-//         storageLimitBytes: 1024 * 1024 * 1024 * 100, // 100 GB
-//         fileUploadLimitBytes: 1024 * 1024 * 1024 * 500, // 5GB per file
-//         membersPerWorkspaceLimit: -1, // Unlimited
-//         projectsPerWorkspaceLimit: -1, // Unlimited
-//         docsPerWorkspaceLimit: -1, // Unlimited
-//         draftsPerDocLimit: 50
-//     }
-// ]
+const subscriptionData: Omit<Subscription, 'plan'>[] = [
+    {
+        workspaces: 1,
+        projectsPerWorkspace: 2,
+        membersPerWorkspace: 2,
+        bandwidth: 1073741824, // 1 GB
+        storage: 524288000, // 500 MB
+        docsPerWorkspace: 10,
+        socialPlatforms: ['youtube']
+    },
+    {
+        workspaces: 1,
+        projectsPerWorkspace: 5,
+        membersPerWorkspace: 5,
+        bandwidth: 16106127360, // 15 GB
+        storage: 10737418240, // 10 GB
+        docsPerWorkspace: 25,
+        socialPlatforms: ['youtube', 'linkedin', 'twitter']
+    },
+    {
+        workspaces: 5,
+        projectsPerWorkspace: 10,
+        membersPerWorkspace: 10,
+        bandwidth: 42949672960, // 40 GB
+        storage: 26843545600, // 25 GB
+        docsPerWorkspace: -1, // Unlimited
+        socialPlatforms: ['all']
+    }
+]
 
 export const seedTiers = async () => {
     logger.info('🌱 Seeding subscription tiers...')
 
     try {
-        // Clear existing tiers (optional)
-        // await db.delete(tiers)
-        logger.info('🗑️  Cleared existing tiers')
-        await Promise.resolve() // placeholder for async operations
-        // Insert new tiers
-        // const insertedTiers = await db.insert(tiers).values(tierData).returning()
-
-        logger.info('✅ Successfully seeded tiers:')
-        // insertedTiers.forEach((tier) => {
-        // logger.info(`- ${tier.name}: $${tier.monthlyPrice / 100}/month`)
-        // })
-
-        // return insertedTiers
+        await db.delete(subscriptions)
+        logger.info('🗑️ Cleared existing tiers')
+        subscriptionData.forEach(async (data, index) => {
+            const plan = index === 0 ? 'FREE' : index === 1 ? 'CREATOR' : 'TEAM'
+            await db.insert(subscriptions).values({ plan, ...data })
+            logger.info(`✅ Seeded ${plan} tier`)
+        })
+        logger.info('🌱 Successfully seeded all subscription tiers')
+        
     } catch (error) {
         logger.error(`❌ Error seeding tiers: ${(error as Error).message}`)
         throw error
