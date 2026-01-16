@@ -1,8 +1,10 @@
-import { Edit2, Save, X, Trash2, Shield, LogOut } from 'lucide-react'
-import { type FC, useState } from 'react'
+import { Edit2, Save, X, Trash2, Shield, LogOut, Building2Icon } from 'lucide-react'
+import { type FC, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { useDefaultWorkspace } from '@/features'
+
 
 const members = [
     {
@@ -33,8 +35,31 @@ const members = [
 
 const WorkspaceSettings: FC = () => {
     const [isEditing, setIsEditing] = useState<boolean>(false)
-    const [workspaceName, setWorkspaceName] = useState('Acme Co — Design')
+    const [workspaceDetails, setWorkspaceDetails] = useState({
+        name: '',
+        logoUrl: ''
+    })
+    
+    const workspaceQuery = useDefaultWorkspace({
+        queryConfig: {
+            staleTime: 10 * 60 * 1000, // 10 minutes
+            gcTime: 15 * 60 * 1000 // 15 minutes
+        }
+    })
+    const workspaceData = workspaceQuery.data?.data
 
+    useEffect(() => {
+        if (!workspaceData) return
+
+        setWorkspaceDetails({
+            name: workspaceData.name,
+            logoUrl: workspaceData.logoUrl || ''
+        })
+    }, [workspaceData])
+
+    if (workspaceQuery.isPending) {
+        return <div>Loading...</div>
+    }
     return (
         <div className="max-w-3xl mx-auto">
             {/* Header */}
@@ -78,11 +103,15 @@ const WorkspaceSettings: FC = () => {
                             <div className="flex-shrink-0">
                                 <label className="block text-sm font-medium text-foreground mb-3">Workspace Logo</label>
                                 <div className="w-24 h-24 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent/50 transition-colors">
-                                    <img
-                                        src="/workspace-logo.png"
-                                        alt="Workspace logo"
-                                        className="w-full h-full object-cover"
-                                    />
+                                    {!!workspaceDetails.logoUrl ? (
+                                        <img
+                                            src={workspaceDetails.logoUrl || '/workspace-logo.png'}
+                                            alt="Workspace logo"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <Building2Icon />
+                                    )}
                                 </div>
                             </div>
 
@@ -97,8 +126,8 @@ const WorkspaceSettings: FC = () => {
                                     <input
                                         id="workspace-name"
                                         type="text"
-                                        value={workspaceName}
-                                        onChange={(e) => setWorkspaceName(e.target.value)}
+                                        value={workspaceDetails.name}
+                                        onChange={(e) => setWorkspaceDetails({ ...workspaceDetails, name: e.target.value })}
                                         className="w-full border border-border rounded-lg p-2.5 text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                                     />
                                 </div>
@@ -122,15 +151,19 @@ const WorkspaceSettings: FC = () => {
                 {!isEditing && (
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <img
-                                src="/workspace-logo.png"
-                                alt="Workspace logo"
-                                className="w-full h-full object-cover"
-                            />
+                            {!!workspaceDetails.logoUrl ? (
+                                <img
+                                    src={workspaceDetails.logoUrl || '/workspace-logo.png'}
+                                    alt="Workspace logo"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <Building2Icon />
+                            )}
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">Name</p>
-                            <p className="font-medium text-foreground">{workspaceName}</p>
+                            <p className="font-medium text-foreground">{workspaceDetails.name}</p>
                         </div>
                     </div>
                 )}
