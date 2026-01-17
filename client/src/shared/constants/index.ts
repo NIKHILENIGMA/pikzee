@@ -14,6 +14,28 @@ interface FileItem {
     fileSize?: number // in MB
 }
 
+export interface SidebarItem {
+    id: string
+    name: string
+    icon: string
+    children?: SidebarItem[]
+}
+
+export const sidebarItems: SidebarItem[] = [
+        {
+            id: 'youtube',
+            name: 'Youtube Video',
+            icon: '📹',
+            children: [
+                { id: 'footage', name: 'Footage', icon: '🎬' },
+                { id: 'graphicssa', name: 'Graphicssa', icon: '🎨' },
+                { id: 'private', name: 'private', icon: '🔒' },
+                { id: 'something', name: 'some thing different', icon: '📁' },
+                { id: 'sound', name: 'Sound Effects', icon: '🔊' }
+            ]
+        }
+    ]
+
 export const assets: FileItem[] = [
     { id: '1', name: 'some thing different', type: 'folder', items: 1, fileSize: 245 },
     { id: '2', name: 'private', type: 'folder', items: 0, fileSize: 0 },
