@@ -5,8 +5,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import type { Filters, ProjectView } from '../types'
 
-import StatusFilter from './status-filter'
 import SortFilter from './sort-filter'
+import StatusFilter from './status-filter'
 
 interface FilterBarProps {
     view: ProjectView

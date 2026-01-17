@@ -2,6 +2,7 @@ import type { FC, ReactNode } from 'react'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import type { SortOrder } from '../types'
 
 interface SortFilterProps {
