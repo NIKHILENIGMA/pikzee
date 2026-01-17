@@ -1,12 +1,12 @@
+import type { FC } from 'react'
 import { useNavigate } from 'react-router'
 
-import { columns } from '../columns'
 import type { ProjectDTO, ProjectView } from '../../types'
+import { columns } from '../columns'
 
 import { NewProjectCard } from './new-project-card'
 import ProjectCard from './project-card'
 import ProjectTable from './project-table'
-import type { FC } from 'react'
 
 interface ProjectGridProps {
     view: ProjectView

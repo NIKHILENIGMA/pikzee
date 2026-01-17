@@ -1,10 +1,11 @@
 import { useState, type FC } from 'react'
 
+import { assets } from '@/shared/constants'
+
 import AssetActionbar from './asset-actionbar'
 import AssetBreadcrumb from './asset-breadcrumb'
 import AssetFilters from './asset-filters'
 import AssetGrid from './asset-grid'
-import { assets } from '@/shared/constants'
 
 interface FileItem {
     id: string
