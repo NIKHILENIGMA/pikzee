@@ -1,12 +1,11 @@
+import { useClerk } from '@clerk/clerk-react'
 import { useState, type ChangeEvent } from 'react'
-// import { BsGithub } from 'react-icons/bs'
 import { FcGoogle } from 'react-icons/fc'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { useClerk } from '@clerk/clerk-react'
 
 export default function SecuritySection() {
     const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)

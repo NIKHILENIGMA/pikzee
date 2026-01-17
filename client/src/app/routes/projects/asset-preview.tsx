@@ -1,7 +1,8 @@
-import { assets } from '@/shared/constants'
 import { ChevronLeft, PanelRight } from 'lucide-react'
 import { type FC } from 'react'
 import { useNavigate, useParams } from 'react-router'
+
+import { assets } from '@/shared/constants'
 
 const AssetPreview: FC = () => {
     const params = useParams<{ assetId: string }>()

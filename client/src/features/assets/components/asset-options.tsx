@@ -1,8 +1,9 @@
+import { File, Folder, FolderPlus } from 'lucide-react'
+import { type FC, type ReactNode } from 'react'
+
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
-import { File, Folder, FolderPlus } from 'lucide-react'
-import { type FC, type ReactNode } from 'react'
 
 interface AssetOptionsProps {
     children: ReactNode

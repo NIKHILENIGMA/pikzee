@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useDefaultWorkspace } from '@/features'
 
-
 const members = [
     {
         id: 1,
@@ -39,7 +38,7 @@ const WorkspaceSettings: FC = () => {
         name: '',
         logoUrl: ''
     })
-    
+
     const workspaceQuery = useDefaultWorkspace({
         queryConfig: {
             staleTime: 10 * 60 * 1000, // 10 minutes
@@ -103,7 +102,7 @@ const WorkspaceSettings: FC = () => {
                             <div className="flex-shrink-0">
                                 <label className="block text-sm font-medium text-foreground mb-3">Workspace Logo</label>
                                 <div className="w-24 h-24 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:bg-accent/50 transition-colors">
-                                    {!!workspaceDetails.logoUrl ? (
+                                    {workspaceDetails.logoUrl ? (
                                         <img
                                             src={workspaceDetails.logoUrl || '/workspace-logo.png'}
                                             alt="Workspace logo"
@@ -151,7 +150,7 @@ const WorkspaceSettings: FC = () => {
                 {!isEditing && (
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {!!workspaceDetails.logoUrl ? (
+                            {workspaceDetails.logoUrl ? (
                                 <img
                                     src={workspaceDetails.logoUrl || '/workspace-logo.png'}
                                     alt="Workspace logo"

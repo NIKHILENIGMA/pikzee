@@ -2,9 +2,9 @@ import { Ellipsis } from 'lucide-react'
 import { type FC } from 'react'
 
 import { Badge } from '@/components/ui/badge'
+import { GRADIENTS } from '@/shared/constants/gradients'
 
 import ProjectOptions from './project-options'
-import { GRADIENTS } from '@/shared/constants/gradients'
 
 interface ProjectCardProps {
     projectId: string

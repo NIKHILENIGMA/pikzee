@@ -1,21 +1,14 @@
-'use client'
-
-import { useState } from 'react'
 import { ChevronRight, Folder } from 'lucide-react'
-import AssetSidebar from '@/features/assets/components/asset-sidebar'
-import AssetContent from '@/features/assets/components/asset-content'
+import { useState } from 'react'
 
-interface SidebarItem {
-    id: string
-    name: string
-    icon: string
-    children?: SidebarItem[]
-}
+import AssetContent from '@/features/assets/components/asset-content'
+import AssetSidebar from '@/features/assets/components/asset-sidebar'
+import { sidebarItems, type SidebarItem } from '@/shared/constants'
 
 export default function AssetManagement() {
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['root']))
 
-    const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [sidebarOpen, setSidebarOpen] = useState<boolean>(true)
 
     const toggleFolder = (folderId: string) => {
         const newExpanded = new Set(expandedFolders)
@@ -59,21 +52,6 @@ export default function AssetManagement() {
             )
         })
     }
-
-    const sidebarItems: SidebarItem[] = [
-        {
-            id: 'youtube',
-            name: 'Youtube Video',
-            icon: '📹',
-            children: [
-                { id: 'footage', name: 'Footage', icon: '🎬' },
-                { id: 'graphicssa', name: 'Graphicssa', icon: '🎨' },
-                { id: 'private', name: 'private', icon: '🔒' },
-                { id: 'something', name: 'some thing different', icon: '📁' },
-                { id: 'sound', name: 'Sound Effects', icon: '🔊' }
-            ]
-        }
-    ]
 
     return (
         <div className="flex h-screen bg-background text-foreground">
