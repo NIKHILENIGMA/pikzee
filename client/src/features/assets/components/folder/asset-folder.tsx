@@ -3,26 +3,31 @@ import { type FC, type FocusEvent } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 
 import AssetContextOptions from '../asset-context-options'
+import type { AssetContextType } from '../../types/assets'
+import { useNavigate, useParams } from 'react-router'
 
 interface AssetFolderProps {
     selected?: boolean
-    item: {
-        id: string
-        name: string
-        type: 'file' | 'folder'
-        fileSize?: number
-        items?: number
-    }
+    item: AssetContextType
 }
 
 const AssetFolder: FC<AssetFolderProps> = ({ selected, item }) => {
+    const navigate = useNavigate()
+    const { projectId } = useParams<{ projectId: string }>()
     const handleBlur = (e: FocusEvent<HTMLParagraphElement, Element>) => {
         // Here you can handle the updated name, e.g., send it to a server or update state
         console.log('Updated folder name:', e.target.innerText)
     }
+
+    const handleDoubleClick = (id: string) => {
+        navigate(`/projects/${projectId}/${id}`)
+    }
+
     return (
         <AssetContextOptions>
-            <div className="relative w-full aspect-[627/600] rounded-md overflow-hidden transition-colors cursor-pointer group">
+            <div
+                className="relative w-full aspect-[627/600] rounded-md overflow-hidden transition-colors cursor-pointer group"
+                onDoubleClick={() => handleDoubleClick(item.id)}>
                 {/* SVG OUTER FOLDER */}
                 <svg
                     className="absolute inset-0 w-full h-full"
@@ -59,16 +64,16 @@ const AssetFolder: FC<AssetFolderProps> = ({ selected, item }) => {
 
                     <div className="mt-auto px-4 pb-3">
                         <p
-                            className="text-md font-semibold"
+                            className="text-sm font-semibold"
                             contentEditable
                             suppressContentEditableWarning={true}
                             onBlur={handleBlur}>
-                            {item.name}
+                            {item.assetName}
                         </p>
-                        <div className="flex justify-between items-center text-sm text-foreground/60">
-                            <span>{item.items} Items</span>
+                        {/* <div className="flex justify-between items-center text-sm text-foreground/60">
+                            <span>{item.} Items</span>
                             <span>⋮</span>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

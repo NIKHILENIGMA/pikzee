@@ -3,17 +3,10 @@ import { Checkbox } from '@radix-ui/react-checkbox'
 import { type FC } from 'react'
 import { useNavigate } from 'react-router'
 import AssetContextOptions from '../asset-context-options'
+import type { AssetContextType } from '../../types/assets'
 
 interface AssetFileProps {
-    item: {
-        id: string
-        name: string
-        type: 'file' | 'folder'
-        fileSize?: number
-        thumbnail?: string
-        assetUrl?: string
-        items?: number
-    }
+    item: AssetContextType
     selectedItems: Set<string>
 }
 
@@ -31,10 +24,10 @@ const AssetFile: FC<AssetFileProps> = ({ item, selectedItems }) => {
                     <Checkbox className="data-[state=checked]:border-border data-[state=checked]:bg-primary data-[state=checked]:text-foreground dark:data-[state=checked]:border-border dark:data-[state=checked]:bg-primary dark:data-[state=checked]:text-foreground" />
                 </div>
                 <div className="aspect-square relative overflow-hidden flex items-center justify-center bg-slate-900">
-                    {item.thumbnail ? (
+                    {item.thumbnailPath ? (
                         <img
-                            src={item.thumbnail}
-                            alt={item.name}
+                            src={item.thumbnailPath}
+                            alt={item.assetName}
                             className="w-full h-full object-cover"
                         />
                     ) : (
@@ -43,7 +36,7 @@ const AssetFile: FC<AssetFileProps> = ({ item, selectedItems }) => {
                     <span className="absolute top-2 right-2 bg-slate-900 text-white text-xs px-2 py-1 rounded">00:34</span>
                 </div>
                 <div className="p-3">
-                    <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{item.assetName}</p>
                     <p className="text-xs text-foreground/65 truncate">Nikhil Harmalkar • Sep 21</p>
                 </div>
                 <div className="px-3 pb-2 flex items-center justify-between">

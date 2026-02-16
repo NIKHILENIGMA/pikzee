@@ -1,21 +1,53 @@
 import { ChevronRight, Search, PanelLeft } from 'lucide-react'
-import { type FC } from 'react'
+import { useState, type FC } from 'react'
 
 import { Input } from '@/components/ui/input'
+import type { AssetContextType } from '../types/assets'
+import { useParams } from 'react-router'
 
 interface AssetBreadcrumbProps {
     sidebarOpen: boolean
     onSidebarToggle: () => void
+    items: AssetContextType[]
 }
 
-const AssetBreadcrumb: FC<AssetBreadcrumbProps> = ({ sidebarOpen, onSidebarToggle }) => {
+const AssetBreadcrumb: FC<AssetBreadcrumbProps> = ({ sidebarOpen, onSidebarToggle, items }) => {
+    // const { assetId } = useParams<{ projectId: string; assetId: string }>()
+    const [breadCrumbItems, setBreadcrumbItems] = useState<string[]>([])
+
+    const buildBreadcrumbs = (assetId: string | undefined) => {
+        if (!assetId) {
+            setBreadcrumbItems(['Home'])
+            return
+        }
+
+        const path: string[] = []
+        let currentAsset = items.find((item) => item.id === assetId)
+
+        while (currentAsset) {
+            path.unshift(currentAsset.assetName)
+            if (currentAsset.parentAssetId) {
+                currentAsset = items.find((item) => item.id === currentAsset?.parentAssetId)
+            } else {
+                currentAsset = undefined
+            }
+        }
+
+        setBreadcrumbItems(['Home', ...path])
+    }
+
     return (
         <header className=" border-b border-secondary px-6 py-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-foreground/85">
-                    <span>All Projects</span>
-                    <ChevronRight size={16} />
-                    <span>Youtube Video</span>
+                    {breadCrumbItems.map((item, index) => (
+                        <span
+                            key={index}
+                            className="flex items-center gap-2">
+                            <span>{item}</span>
+                            {index < breadCrumbItems.length - 1 && <ChevronRight size={12} />}
+                        </span>
+                    ))}
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="relative">

@@ -44,7 +44,7 @@ export function Header() {
                     </MembersDialog>
 
                     <CreateProjectDialog>
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                             <Plus className="h-4 w-4 mr-2" />
                             New Project
                         </Button>

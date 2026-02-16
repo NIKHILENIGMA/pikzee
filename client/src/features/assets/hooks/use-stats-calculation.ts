@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
+import type { AssetContextType } from '../types/assets'
 
-export const useStatsCalculation = (fileItems: any[]) => {
+export const useStatsCalculation = (fileItems: AssetContextType[]) => {
     const { totalFiles, totalFolders, folderStats, fileStats } = useMemo(() => {
-        const totalFolders = fileItems.filter((item) => item.type === 'folder')
-        const totalFiles = fileItems.filter((item) => item.type === 'file')
 
-        const size = (items: typeof fileItems) => items.reduce((acc, curr) => acc + (curr.fileSize || 0), 0)
+        const totalFolders = fileItems.filter((item) => item.type === 'FOLDER')
+        const totalFiles = fileItems.filter((item) => item.type === 'FILE')
 
+        const size = (items: typeof fileItems) => items.reduce((acc, curr) => acc + (curr.fileSizeBytes || 0), 0)
+        
         return {
             totalFolders,
             totalFiles,

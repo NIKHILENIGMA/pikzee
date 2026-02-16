@@ -5,15 +5,13 @@ import { cn } from '@/shared/lib/utils'
 
 interface AssetSidebarProps {
     sidebarOpen: boolean
-    renderSidebarItems: (items: any[]) => React.ReactNode
-    sidebarItems: any[]
 }
 
-const AssetSidebar: FC<AssetSidebarProps> = ({ sidebarOpen, renderSidebarItems, sidebarItems }) => {
+const AssetSidebar: FC<AssetSidebarProps> = ({ sidebarOpen }) => {
     return (
         <aside
             className={cn(
-                'w-64 border-r border-secondary overflow-y-auto flex flex-col transition-all  ease-in-out',
+                'sticky w-64 h-full border-r border-secondary overflow-y-auto flex flex-col transition-all  ease-in-out',
                 !sidebarOpen ? '-translate-x-full absolute ' : 'relative'
             )}>
             <div className="p-4 border-b border-secondary">
@@ -23,7 +21,6 @@ const AssetSidebar: FC<AssetSidebarProps> = ({ sidebarOpen, renderSidebarItems, 
                         <Plus size={16} />
                     </button>
                 </div>
-                {sidebarOpen && renderSidebarItems(sidebarItems)}
             </div>
         </aside>
     )

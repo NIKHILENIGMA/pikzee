@@ -1,59 +1,52 @@
 import { useState, type FC } from 'react'
 
-import { assets } from '@/shared/constants'
-
-import AssetActionbar from './asset-actionbar'
+// import AssetActionbar from './asset-actionbar'
 import AssetBreadcrumb from './asset-breadcrumb'
 import AssetFilters from './asset-filters'
 import AssetGrid from './asset-grid'
-
-interface FileItem {
-    id: string
-    name: string
-    type: 'folder' | 'file'
-    items?: number
-    size?: string
-    thumbnail?: string
-    assetUrl?: string
-    lastModified?: string
-    fileSize?: number // in MB
-}
+import type { AssetContextType } from '../types/assets'
+import AssetSidebar from './asset-sidebar'
 
 interface AssetContentProps {
     sidebarOpen: boolean
     onSidebarToggle: () => void
+    assets: AssetContextType[]
 }
 
-const AssetContent: FC<AssetContentProps> = ({ sidebarOpen, onSidebarToggle }) => {
+const AssetContent: FC<AssetContentProps> = ({ sidebarOpen, onSidebarToggle, assets }) => {
     const [activeFilter, setActiveFilter] = useState('All')
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
-    const fileItems: FileItem[] = assets
 
     return (
         <main className="flex-1 flex flex-col">
             <AssetBreadcrumb
                 sidebarOpen={sidebarOpen}
                 onSidebarToggle={onSidebarToggle}
+                items={assets}
             />
+
             <AssetFilters
                 activeFilter={activeFilter}
                 setActiveFilter={setActiveFilter}
             />
+            <div className="flex flex-1 overflow-hidden">
+                <AssetSidebar sidebarOpen={sidebarOpen} />
 
-            <AssetGrid
-                selectedItems={selectedItems}
-                setSelectedItems={setSelectedItems}
-                fileItems={fileItems}
-            />
+                <AssetGrid
+                    selectedItems={selectedItems}
+                    setSelectedItems={setSelectedItems}
+                    assets={assets}
+                />
+            </div>
 
-            {selectedItems.size > 0 && (
+            {/* {selectedItems.size > 0 && (
                 <AssetActionbar
                     selectedItems={selectedItems}
-                    fileItems={fileItems}
+                    fileItems={assets}
                     sidebarOpen={sidebarOpen}
                     setSelectedItems={setSelectedItems}
                 />
-            )}
+            )} */}
         </main>
     )
 }

@@ -81,8 +81,8 @@ const MembersDialog: FC<MembersDialogProps> = ({ children }) => {
             <DialogContent className="sm:max-w-lg bg-card border border-border/50 shadow-lg">
                 <DialogHeader className="space-y-2.5 pb-4 border-b border-border/40">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-blue-500/10 rounded-lg">
-                            <Users className="w-5 h-5 text-blue-600" />
+                        <div className="p-2 bg-background rounded-lg">
+                            <Users className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                             <DialogTitle className="text-lg font-semibold">Invite Members</DialogTitle>

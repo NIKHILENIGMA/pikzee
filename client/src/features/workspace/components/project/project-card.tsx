@@ -36,7 +36,7 @@ const calculateFileSize = (sizeInBytes: number): string => {
 
 const ProjectCard: FC<ProjectCardProps> = ({ projectId, projectName, projectStatus, projectCover, fileSize = 0, onProjectCardClick }) => {
     return (
-        <div className="w-full h-62 rounded-xl bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+        <div className="w-full h-62 rounded-xl bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border border-border">
             <div
                 role="button"
                 tabIndex={0}
