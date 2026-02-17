@@ -23,4 +23,4 @@ const workspaceService = new WorkspaceService(
 const workspaceController = new WorkspaceController(workspaceService)
 
 // Export the instances for use in other parts of the application
-export { workspaceService, IWorkspaceService, workspaceController }
+export { workspaceService, workspaceRepository, IWorkspaceService, workspaceController }
