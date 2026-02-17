@@ -34,4 +34,3 @@ export class Uploader<T extends StorageProvider = StorageProvider> {
         return this.provider
     }
 }
-

@@ -19,4 +19,3 @@ router.route('/batch/delete')
 // .post(assetController.deleteAssets) // To be implemented
 
 export default router
-

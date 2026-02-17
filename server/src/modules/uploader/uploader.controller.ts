@@ -57,4 +57,3 @@ export class UploaderController extends BaseController {
         })
     }
 }
-

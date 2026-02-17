@@ -48,5 +48,4 @@ export interface AssetDTO {
     createdBy: string
 }
 
-export type CreateAssetDTO = z.infer<typeof CreateAssetSchema> 
-
+export type CreateAssetDTO = z.infer<typeof CreateAssetSchema>

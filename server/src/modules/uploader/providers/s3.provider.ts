@@ -178,7 +178,9 @@ export class S3Provider implements StorageProvider {
         }
     }
 
-    async completeMultipartUpload(options: CompleteMultipartUploadOptions): Promise<CompleteMultipartUploadResponse> {
+    async completeMultipartUpload(
+        options: CompleteMultipartUploadOptions
+    ): Promise<CompleteMultipartUploadResponse> {
         const command = new CompleteMultipartUploadCommand({
             Bucket: this.bucket,
             Key: options.key,
@@ -206,4 +208,3 @@ export class S3Provider implements StorageProvider {
         return options.folder ? `${options.folder}/${fileName}` : fileName
     }
 }
-

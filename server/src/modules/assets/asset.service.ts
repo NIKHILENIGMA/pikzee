@@ -196,16 +196,19 @@ export class AssetService implements IAssetService {
             targetPath = target.path
             targetDepth = target.depth + 1
         }
-        
+
         // IMPLEMENTATION PENDING: Copying assets is a complex operation
         await this.assetRepository.transaction(async (tx) => {
             // PROCESS EACH ASSET TO COPY
             for (const assetId of data.assetIds) {
                 const sourceAsset = await this.assetRepository.getById(assetId)
-                if (!sourceAsset) continue; // Skip if source asset doesn't exist
+                if (!sourceAsset) continue // Skip if source asset doesn't exist
 
-                // CONTEXT: Calculate new root details 
-                const newRootPath = data.targetParentId !== null ? `${targetPath}/${sourceAsset.assetName}` : `/${sourceAsset.assetName}`
+                // CONTEXT: Calculate new root details
+                const newRootPath =
+                    data.targetParentId !== null
+                        ? `${targetPath}/${sourceAsset.assetName}`
+                        : `/${sourceAsset.assetName}`
                 const depthDiff = targetDepth - sourceAsset.depth
 
                 // Create new asset record as a copy of the source
@@ -222,14 +225,14 @@ export class AssetService implements IAssetService {
                 const childrens = await this.assetRepository.getChildrenByPath(sourceAsset.path)
 
                 if (childrens.length > 0) {
-                    childrens.map(child => ({
+                    childrens.map((child) => ({
                         ...child,
                         id: undefined, // New ID
                         path: child.path.replace(sourceAsset.path, newRootPath), // Update parent to new copied structure
                         depth: child.depth + depthDiff,
                         workspaceId: copiedAsset.workspaceId,
                         projectId: copiedAsset.projectId,
-                        createdBy: data.userId,
+                        createdBy: data.userId
                     }))
 
                     // Bulk create copied children
@@ -277,14 +280,17 @@ export class AssetService implements IAssetService {
         return asset
     }
 
-    private async assetPermissionCheck(data: { userId: string; projectId: string }): Promise<ProjectDTO> {
+    private async assetPermissionCheck(data: {
+        userId: string
+        projectId: string
+    }): Promise<ProjectDTO> {
         // FAST FAIL: Permission Check
         const project = await this.projectService.getById(data.projectId)
         if (!project) throw new NotFoundError('Project does not exist')
 
         const member = await this.memberService.getMemberByUserId(project.workspaceId, data.userId)
         this.validatePermissions(member)
-        
+
         return project
     }
 
@@ -331,4 +337,3 @@ export class AssetService implements IAssetService {
         return pathSegments.join('/')
     }
 }
-

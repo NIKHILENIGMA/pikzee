@@ -18,4 +18,3 @@ export const PlanUploadsRequestSchema = z.object({
     workspaceId: z.string().min(1, 'Workspace ID is required'),
     projectId: z.string().optional()
 })
-

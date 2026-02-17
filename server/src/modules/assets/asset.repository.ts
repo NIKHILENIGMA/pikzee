@@ -218,4 +218,3 @@ export class AssetRepository implements IAssetRepository {
             .where(like(assets.path, `${oldPath}/%`))
     }
 }
-

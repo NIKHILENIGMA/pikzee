@@ -44,7 +44,6 @@ export const seedTiers = async () => {
             logger.info(`✅ Seeded ${plan} tier`)
         })
         logger.info('🌱 Successfully seeded all subscription tiers')
-        
     } catch (error) {
         logger.error(`❌ Error seeding tiers: ${(error as Error).message}`)
         throw error

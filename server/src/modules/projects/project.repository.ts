@@ -34,12 +34,7 @@ export class ProjectRepository implements IProjectRepository {
         const updatedRecord = await this.db
             .update(projects)
             .set(data)
-            .where(
-                and(
-                    eq(projects.id, projectId),
-                    eq(projects.isDeleted, false)
-                )
-            )
+            .where(and(eq(projects.id, projectId), eq(projects.isDeleted, false)))
             .returning()
         return updatedRecord.length > 0 ? updatedRecord[0] : null
     }
@@ -106,12 +101,7 @@ export class ProjectRepository implements IProjectRepository {
         const project = await this.db
             .select()
             .from(projects)
-            .where(
-                and(
-                    eq(projects.id, projectId),
-                    eq(projects.isDeleted, false)
-                )
-            )
+            .where(and(eq(projects.id, projectId), eq(projects.isDeleted, false)))
             .limit(1)
 
         return project.length > 0 ? project[0] : null

@@ -211,4 +211,3 @@ export class AssetController extends BaseController {
         })
     }
 }
-

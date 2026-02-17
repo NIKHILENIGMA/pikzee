@@ -87,4 +87,3 @@ export interface StorageProvider {
     delete(identifier: string): Promise<boolean>
     getUrl(identifier: string): Promise<string>
 }
-

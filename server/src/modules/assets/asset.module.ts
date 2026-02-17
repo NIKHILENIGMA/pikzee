@@ -12,4 +12,3 @@ const assetService = new AssetService(assetRepository, projectService, memberSer
 const assetController = new AssetController(assetService)
 
 export { assetController, assetService, assetRepository }
-

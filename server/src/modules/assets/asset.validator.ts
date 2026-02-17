@@ -18,10 +18,11 @@ export const RenameAssetSchema = z.object({
 })
 
 export const AssetBatchOperationSchema = z.object({
-    assetIds: z.array(z.string().min(1, 'Asset ID is required')).min(1, 'At least one Asset ID is required'),
+    assetIds: z
+        .array(z.string().min(1, 'Asset ID is required'))
+        .min(1, 'At least one Asset ID is required'),
     targetParentId: z.string().nullable()
 })
-
 
 export const ListAssetsQuerySchema = z.object({
     parentAssetId: z.uuid({ message: 'Parent Asset ID must be a valid UUID' }).optional()
@@ -30,4 +31,3 @@ export const ListAssetsQuerySchema = z.object({
 export const AssetIdParamSchema = ProjectIdParamSchema.extend({
     assetId: z.uuid({ message: 'Asset ID must be a valid UUID' })
 })
-

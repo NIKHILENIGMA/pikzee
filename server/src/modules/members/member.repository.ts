@@ -170,15 +170,20 @@ export class MemberRepository implements IMemberRepository {
 
     async getByWorkspaceIdAndUserId(
         workspaceId: string,
-        userId: string)
-    : Promise<MemberRecord | null> {
+        userId: string
+    ): Promise<MemberRecord | null> {
         const [member] = await this.db
             .select()
             .from(workspaceMembers)
             .innerJoin(users, eq(users.id, workspaceMembers.userId))
-            .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
+            .where(
+                and(
+                    eq(workspaceMembers.workspaceId, workspaceId),
+                    eq(workspaceMembers.userId, userId)
+                )
+            )
             .limit(1)
-            
+
         return member ? member.workspace_members : null
     }
 }

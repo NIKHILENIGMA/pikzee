@@ -119,8 +119,6 @@ export class ProjectService implements IProjectService {
             }
             throw new ForbiddenError('User does not have permission to delete the project')
         }
-
-        
     }
 
     //----------------------------------------------------------------------------
