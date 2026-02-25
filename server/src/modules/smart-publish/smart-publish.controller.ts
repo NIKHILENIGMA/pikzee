@@ -5,9 +5,10 @@ import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 import { UnauthorizedError } from '@/util'
 
 import {
-    ConnectSocialAccountParamsSchema,
-    ListSocialAccountsBodySchema,
-    VerifySocialAccountTokenBodySchema
+    ListSocialAccountsQuerySchema,
+    SocialAccountTokenQuerySchema,
+    DisconnectSocialAccountParamsSchema,
+    SocialAccountParamsSchema
 } from './smart-publish.validator'
 import { smartPublishService } from './smart-publish.module'
 import { IPublishService } from './smart-publish.service'
@@ -31,7 +32,7 @@ export class SmartPublishController extends BaseController {
 
                 const params = ValidationService.validateParams(
                     req.params,
-                    ConnectSocialAccountParamsSchema
+                    SocialAccountParamsSchema
                 )
                 await Promise.resolve() // Placeholder for any async operations needed in the future
                 const url: string = smartPublishService.getAuthUrl(userId, params.platform)
@@ -46,25 +47,69 @@ export class SmartPublishController extends BaseController {
     }
 
     verifySocialAccountToken = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<
+                SuccessResponse<{
+                    success: boolean
+                }>
+            > => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+
+                // Validate query parameters
+                const query = ValidationService.validateQuery(
+                    req.query,
+                    SocialAccountTokenQuerySchema
+                )
+
+                // Verify the social account token and connect the account if valid
+                await smartPublishService.verifyYoutubeAccountCode(userId, query.code)
+
+                // Return success response
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Social account verified and connected successfully',
+                    data: { success: true }
+                })
             }
+        )
+    }
 
-            const body = ValidationService.validateBody(
-                req.body,
-                VerifySocialAccountTokenBodySchema
-            )
+    disconnectSocialAccount = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<null>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
 
-            await smartPublishService.verifyYoutubeAccountCode(userId, body.code)
+                // Validate path parameters
+                const params = ValidationService.validateParams(
+                    req.params,
+                    DisconnectSocialAccountParamsSchema
+                )
 
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Social account verified and connected successfully',
-                data: null
-            })
-        })
+                const body = ValidationService.validateBody(req.body, SocialAccountParamsSchema)
+
+                // Revoke the tokens and mark the social account as disconnected in the database
+                await smartPublishService.disconnectSocialAccount(params.accountId, body.platform)
+
+                // Return success response
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Social account disconnected successfully',
+                    data: null
+                })
+            }
+        )
     }
 
     list = async (req: Request, res: Response, next: NextFunction) => {
@@ -79,11 +124,14 @@ export class SmartPublishController extends BaseController {
                 }
 
                 // Validate body parameters
-                const body: ListSocialAccountsBody = ValidationService.validateBody(req.body, ListSocialAccountsBodySchema)
+                const query: ListSocialAccountsBody = ValidationService.validateQuery(
+                    req.query,
+                    ListSocialAccountsQuerySchema
+                )
 
                 // Fetch the list of connected social accounts for the workspace
                 const accounts: SocialAccountDTO[] = await this.service.listSocialAccounts(
-                    body.workspaceId
+                    query.workspaceId
                 )
 
                 // Return the list of accounts in the response

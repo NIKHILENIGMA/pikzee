@@ -7,6 +7,8 @@ import { IPublishRepository } from './smart-publish.repository'
 import { Platforms, SocialAccountDTO, SocialAccountRecord } from './smart-publish.types'
 
 import { IWorkspaceRepository } from '../workspace/workspace.repository'
+import { encrypt } from '@/lib/encrypt-decrypt'
+import { SECRETE_KEY } from '@/config'
 
 export interface IPublishService {
     getAuthUrl(userId: string, platform: Platforms): string
@@ -62,7 +64,7 @@ export class SmartPublishService implements IPublishService {
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client })
 
         const response = await youtube.channels.list({
-            part: ['snippet', 'contentDetails'],
+            part: ['snippet', 'contentDetails', 'brandingSettings'],
             mine: true // Fetch the authenticated user's channel
         })
 
@@ -76,20 +78,42 @@ export class SmartPublishService implements IPublishService {
             throw new DatabaseError('Active workspace not found for user', 'WORKSPACE_NOT_FOUND')
         }
 
+        // Encrypt the refresh token before storing it in the database
+        const encruptedRefreshToken = encrypt(tokens.refresh_token || '', SECRETE_KEY)
+
+        // Save the social account details and tokens in the database
         await this.smartPublishRepository.saveTokens({
             workspaceId: activeWorkspace.id,
             platform: 'YOUTUBE',
             platformUserId: channel.id ?? 'unknown-id',
-            platformAvatarUrl:
+            avatarUrl:
                 channel.snippet?.thumbnails?.high?.url ||
                 channel.snippet?.thumbnails?.default?.url ||
-                '',
+                null,
+            coverUrl: channel.brandingSettings?.image?.bannerExternalUrl || '',
             accountName: channel.snippet?.title ?? 'Unknown Channel',
             accessToken: tokens.access_token || '',
-            refreshToken: tokens.refresh_token || '',
-            accessTokenExpiresAt: tokens.expiry_date ? tokens.expiry_date : null,
-            createdBy: userId
+            refreshToken: encruptedRefreshToken,
+            accessTokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+            userId: userId
         })
+    }
+
+    async disconnectSocialAccount(id: string, platform: Platforms): Promise<void> {
+        switch (platform) {
+            case 'YOUTUBE': {
+                 await this.smartPublishRepository.revokeTokens(id, platform)
+                 return
+            }
+            // case 'TWITTER':
+            //     // Implement Twitter account disconnection logic here
+            //     return
+            // case 'LINKEDIN':
+            //     // Implement LinkedIn account disconnection logic here
+            //     return
+            default:
+                throw new BadRequestError('Unsupported platform', 'UNSUPPORTED_PLATFORM')
+        }
     }
 
     async listSocialAccounts(workspaceId: string): Promise<SocialAccountDTO[]> {
@@ -97,10 +121,11 @@ export class SmartPublishService implements IPublishService {
 
         return accounts.map((account: SocialAccountRecord) => ({
             id: account.id,
-            workspaceId: account.workspaceId,
             status: account.status,
             platform: account.platform,
             platformUserId: account.platformUserId,
+            avatarUrl: account.avatarUrl,
+            coverUrl: account.coverUrl,
             accountName: account.accountName,
             createdAt: account.createdAt
         }))

@@ -1,11 +1,12 @@
 import { socialAccounts } from '@/core'
 import { DatabaseConnection } from '@/core/db/service/database.service'
-import { CreateSocialAccountRecord, SocialAccountRecord } from './smart-publish.types'
+import { CreateSocialAccountRecord, Platforms, SocialAccountRecord } from './smart-publish.types'
 import { and, desc, eq } from 'drizzle-orm'
 
 export interface IPublishRepository {
     saveTokens(record: CreateSocialAccountRecord): Promise<void>
     listSocialAccounts(workspaceId: string): Promise<SocialAccountRecord[]>
+    revokeTokens(id: string, platform: Platforms): Promise<void>
 }
 
 export class SmartPublishRepository implements IPublishRepository {
@@ -20,7 +21,10 @@ export class SmartPublishRepository implements IPublishRepository {
             accessToken: record.accessToken,
             refreshToken: record.refreshToken,
             accessTokenExpiresAt: record.accessTokenExpiresAt,
-            createdBy: record.createdBy
+            userId: record.userId,
+            avatarUrl: record.avatarUrl,
+            coverUrl: record.coverUrl,
+            status: 'CONNECTED'
         })
     }
 
@@ -28,7 +32,16 @@ export class SmartPublishRepository implements IPublishRepository {
         return await this.db
             .select()
             .from(socialAccounts)
-            .where(and(eq(socialAccounts.workspaceId, workspaceId)))
+            .where(and(eq(socialAccounts.workspaceId, workspaceId), eq(socialAccounts.status, 'CONNECTED')))
             .orderBy(desc(socialAccounts.createdAt))
+    }
+
+    async revokeTokens(id: string, platform: Platforms): Promise<void> {
+        await this.db
+            .update(socialAccounts)
+            .set({
+                status: 'REVOKED'
+            })
+            .where(and(eq(socialAccounts.id, id), eq(socialAccounts.platform, platform)))
     }
 }
