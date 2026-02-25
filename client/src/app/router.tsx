@@ -30,8 +30,21 @@ const router = createBrowserRouter([
                 lazy: () => import('./routes/magic-editor/magic-editor').then((module) => ({ Component: module.default }))
             },
             {
-                path: 'media-scheduler',
-                lazy: () => import('./routes/uploader/media-scheduler').then((module) => ({ Component: module.default }))
+                path: 'media-manager',
+                children: [
+                    {
+                        path: '',
+                        lazy: () => import('./routes/uploader/media-dashboard').then((module) => ({ Component: module.default }))
+                    },
+                    {
+                        path: 'oauth/callback',
+                        lazy: () => import('./routes/uploader/oauth-integration').then((module) => ({ Component: module.default }))
+                    },
+                    {
+                        path: 'upload',
+                        lazy: () => import('./routes/uploader/media-scheduler').then((module) => ({ Component: module.default }))
+                    },
+                ]
             },
             {
                 path: 'projects/:projectId',
