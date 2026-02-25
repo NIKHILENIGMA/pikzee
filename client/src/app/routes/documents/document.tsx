@@ -92,15 +92,20 @@ const Document: FC = () => {
                         </div>
 
                         {/* Title */}
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">Social Media App Design</h1>
+                        <h1
+                            className="w-full text-4xl md:text-5xl font-bold text-white mb-6 border-none border-gray-600 p-2"
+                            contentEditable={true}
+                            suppressContentEditableWarning={true}>
+                            Untitled
+                        </h1>
 
                         {/* User Info */}
                         <div className="flex items-center gap-3 mb-8">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                                <AvatarFallback className="bg-blue-600 text-white text-xs">NH</AvatarFallback>
+                                <AvatarFallback className="bg-blue-600 text-white text-xs">AS</AvatarFallback>
                             </Avatar>
-                            <span className="text-sm text-gray-400">Nikhil Harmalkar</span>
+                            <span className="text-sm text-gray-400">Abhay Sharma</span>
                             <span className="text-sm text-gray-500">•</span>
                             <span className="text-sm text-gray-500">Last updated Today at 8:49 pm</span>
                         </div>

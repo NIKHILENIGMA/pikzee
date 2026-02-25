@@ -3,6 +3,7 @@ import type { AssetContextType } from '@/features/assets/types/assets'
 export const WORKSPACE_API_BASE = '/workspaces'
 export const INVITATIONS_API_BASE = '/invitations'
 export const PROJECTS_API_BASE = '/projects'
+export const SOCIAL_ACCOUNTS_API_BASE = '/social'
 
 
 export interface SidebarItem {

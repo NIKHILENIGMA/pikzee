@@ -25,7 +25,7 @@ export function Header() {
                                 className="w-12 h-12 object-cover rounded-full"
                             />
                         ) : (
-                            <Building2Icon className="h-6 w-6" />
+                            <Building2Icon className="h-6 w-6 text-black dark:text-white" />
                         )}
                     </Avatar>
                     <h1 className="text-2xl font-semibold text-foreground">{name}</h1>
