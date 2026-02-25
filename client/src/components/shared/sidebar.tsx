@@ -33,7 +33,7 @@ const NAV_LINKS: NavItem[] = [
         label: 'Magic Editor'
     },
     {
-        to: '/media-scheduler',
+        to: '/media-manager',
         icon: MagnetIcon,
         label: 'Integrations'
     }
