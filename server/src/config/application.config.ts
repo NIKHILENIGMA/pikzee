@@ -35,3 +35,5 @@ export const INVITATION_TOKEN_SECRET: string =
 export const NOVU_API_KEY: string = process.env.NOVU_SECRET_KEY || 'your_novu_api_key'
 
 export const RESEND_API_KEY: string = String(process.env.RESEND_API_KEY) || 'your_resend_api_key'
+
+export const SECRETE_KEY: string = process.env.ENCRYPTION_KEY || 'your_encryption_key'

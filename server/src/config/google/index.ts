@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import z from 'zod';
+import z from 'zod'
 
 dotenv.config()
 
@@ -21,4 +21,4 @@ export const googleConfig = {
             'https://www.googleapis.com/auth/youtube.upload'
         ]
     }
-} as const; // 'as const' makes it read-only and provides better TS types
+} as const // 'as const' makes it read-only and provides better TS types
