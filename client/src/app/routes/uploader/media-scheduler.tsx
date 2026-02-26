@@ -1,9 +1,8 @@
 import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
-// import { FaYoutube } from 'react-icons/fa'
 import { useDropzone } from 'react-dropzone'
 import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { toast, Toaster } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,17 +10,21 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { completeUpload, generateResumableUploadUrl } from '@/features/settings/apis/integrate-api'
+import { useAccounts } from '@/features/smart-publish/api/get-accounts'
+import { useInitiateVideoUpload, usePublishVideo } from '@/features/smart-publish/api/publish-video'
+import { useDefaultWorkspace } from '@/features/workspace/api/get-default-workspace'
 import { VideoIcon, UploadIcon, LibraryIcon } from '@/shared/assets/icons'
+import { useNavigate } from 'react-router'
 
 const platformLimits = {
-    youtube: { title: 100, description: 5000 }
+    YOUTUBE: { title: 100, description: 5000 }
 }
 
 type FormValues = {
     title: string
     description: string
-    visibility: 'public' | 'private'
+    visibility: 'PUBLIC' | 'PRIVATE' | 'UNLISTED'
+    socialAccountId: string
 }
 
 export default function MediaScheduler() {
@@ -30,6 +33,19 @@ export default function MediaScheduler() {
     const [error, setError] = useState<string | null>(null)
     const [uploadProgress, setUploadProgress] = useState(0)
     const [isUploading, setIsUploading] = useState(false)
+    const [platform] = useState<'YOUTUBE'>('YOUTUBE')
+
+    const { data: workspaceData } = useDefaultWorkspace({})
+    const workspaceId = workspaceData?.data?.id
+    const navigate = useNavigate()
+
+    const { data: accounts } = useAccounts({
+        workspaceId: workspaceId ?? '',
+        queryConfig: { enabled: !!workspaceId }
+    })
+
+    const initiateUploadMutation = useInitiateVideoUpload()
+    const publishMutation = usePublishVideo()
 
     // React Hook Form setup
     const {
@@ -41,7 +57,8 @@ export default function MediaScheduler() {
         defaultValues: {
             title: '',
             description: '',
-            visibility: 'public'
+            visibility: 'PUBLIC',
+            socialAccountId: ''
         }
     })
 
@@ -85,60 +102,59 @@ export default function MediaScheduler() {
                 return
             }
 
+            if (!workspaceId) {
+                setError('Workspace not found.')
+                return
+            }
+
             setIsUploading(true)
             setUploadProgress(0)
             setError(null)
 
-            // 1️⃣ Generate resumable upload URL
-            const { uploadUrl, uploadId } = await generateResumableUploadUrl({
-                title: values.title,
-                description: values.description,
-                privacy: values.visibility,
-                fileSize: file.size
+            // 1️⃣ Initiate upload process in backend to get S3 Presigned URL
+            const { url: uploadUrl, postId } = await initiateUploadMutation.mutateAsync({
+                platform,
+                data: {
+                    workspaceId,
+                    socialAccountId: values.socialAccountId,
+                    title: values.title,
+                    description: values.description,
+                    visibility: values.visibility,
+                    contentType: file.type
+                }
             })
-            if (!uploadUrl || !uploadId) {
-                throw new Error('Failed to generate upload URL.')
-            }
 
-            // 2️⃣ Upload the file (PUT)
-            const uploadResponse = await axios.put(uploadUrl, file, {
+            // 2️⃣ Upload the file directly to S3
+            await axios.put(uploadUrl, file, {
                 headers: {
-                    'Content-Type': file.type,
-                    'Content-Length': file.size
+                    'Content-Type': file.type
                 },
                 onUploadProgress: (progressEvent) => {
                     const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
                     setUploadProgress(percent)
-                },
-                withCredentials: true
+                }
             })
 
-            // 3️⃣ Extract YouTube video ID from header
-            const locationHeader = uploadResponse.headers['location'] || ''
-            const videoIdMatch = locationHeader.match(/v=([^&]+)/)
-            const youtubeVideoId = videoIdMatch ? videoIdMatch[1] : undefined
+            // 3️⃣ Tell backend to publish the video from S3 to the platform
+            await publishMutation.mutateAsync({
+                postId,
+                platform
+            })
 
-            // 4️⃣ Mark complete in backend
-            await completeUpload({ uploadId, videoId: youtubeVideoId })
-
-            toast.success('✅ Video uploaded successfully!')
-        } catch (err) {
-            //   console.error(err)
-            setError((err as Error).message || 'Upload failed.')
-
-            // update backend as failed
-            try {
-                await completeUpload({ uploadId: '', videoId: '', error: (err as Error).message })
-            } catch {
-                // ignore
-            }
+            toast.success('✅ Video upload initiated! It will be published shortly.')
+            setFile(null)
+            setUploadProgress(0)
+            navigate('media-manager')
+        } catch (err: any) {
+            setError(err?.response?.data?.message || err.message || 'Upload failed.')
+            toast.error(err.message || 'Upload failed.')
         } finally {
             setIsUploading(false)
         }
     }
 
-    const title = watch('title')
-    const description = watch('description')
+    const title = watch('title') || ''
+    const description = watch('description') || ''
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -147,10 +163,10 @@ export default function MediaScheduler() {
                 <div className="w-[70%] p-6 flex flex-col">
                     {error && <p className="w-full text-red-500 text-sm mt-3 text-center">{error}</p>}
                     <div className="mb-6">
-                        <Tabs value={'youtube'}>
+                        <Tabs value={platform}>
                             <TabsList className="grid w-full grid-cols-1 h-12">
                                 <TabsTrigger
-                                    value="youtube"
+                                    value="YOUTUBE"
                                     className="flex items-center gap-2 text-sm">
                                     <VideoIcon />
                                     YouTube
@@ -207,6 +223,36 @@ export default function MediaScheduler() {
                         <div className="space-y-4">
                             <h3 className="font-medium text-sm text-foreground/80">Content</h3>
 
+                            {/* Account Selection */}
+                            <div>
+                                <Label className="text-sm font-medium mb-2 block">Channel</Label>
+                                <Controller
+                                    name="socialAccountId"
+                                    control={control}
+                                    rules={{ required: 'Please select a channel' }}
+                                    render={({ field }) => (
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a channel" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {accounts?.filter(acc => acc.platform === platform).map((account) => (
+                                                    <SelectItem key={account.id} value={account.id}>
+                                                        {account.accountName}
+                                                    </SelectItem>
+                                                ))}
+                                                {!accounts?.length && (
+                                                    <SelectItem value="none" disabled>No channels connected</SelectItem>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                                {errors.socialAccountId && <p className="text-xs text-red-500 mt-1">{errors.socialAccountId.message}</p>}
+                            </div>
+
                             {/* Title */}
                             <div>
                                 <Label className="text-sm font-medium mb-2 block">Title</Label>
@@ -223,7 +269,7 @@ export default function MediaScheduler() {
                                 />
                                 {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title.message}</p>}
                                 <p className="text-xs text-foreground/60 mt-1">
-                                    {title.length}/{platformLimits.youtube.title}
+                                    {title.length}/{platformLimits[platform].title}
                                 </p>
                             </div>
 
@@ -241,7 +287,7 @@ export default function MediaScheduler() {
                                     )}
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {description.length}/{platformLimits.youtube.description}
+                                    {description.length}/{platformLimits[platform].description}
                                 </p>
                             </div>
 
@@ -259,8 +305,9 @@ export default function MediaScheduler() {
                                                 <SelectValue placeholder="Select visibility" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="public">Public</SelectItem>
-                                                <SelectItem value="private">Private</SelectItem>
+                                                <SelectItem value="PUBLIC">Public</SelectItem>
+                                                <SelectItem value="PRIVATE">Private</SelectItem>
+                                                <SelectItem value="UNLISTED">Unlisted</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     )}
@@ -271,7 +318,7 @@ export default function MediaScheduler() {
                         <div className="p-6 border-t border-muted-foreground bg-sidebar-accent flex flex-col gap-3">
                             <Button
                                 type="submit"
-                                disabled={isUploading}
+                                disabled={isUploading || !workspaceId}
                                 className="w-full">
                                 {isUploading ? 'Uploading...' : 'Upload Video'}
                             </Button>
@@ -287,6 +334,7 @@ export default function MediaScheduler() {
                     </form>
                 </div>
             </div>
+            <Toaster />
         </div>
     )
 }

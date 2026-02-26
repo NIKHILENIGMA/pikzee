@@ -51,7 +51,7 @@ const AccountSection: FC<AccountSectionProps> = ({ accounts, workspaceId }) => {
     const handleConnectAccount = async (platform: string) => {
         try {
             const response = await connectAccount(platform)
-
+            sessionStorage.setItem('oauth_platform', platform)
             window.open(response, '_blank')
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'An unknown error occurred while connecting the account.')

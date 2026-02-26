@@ -8,8 +8,8 @@ const OAuthIntegration: FC = () => {
     const navigate = useNavigate()
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-    const handleOAuthCallback = async (code: string, state: string): Promise<boolean> => {
-        const response = await client.post<{ success: boolean }, null>(`${SOCIAL_ACCOUNTS_API_BASE}/callback?code=${code}&state=${state}`, null)
+    const handleOAuthCallback = async (platform: string, code: string, state: string): Promise<boolean> => {
+        const response = await client.get<{ success: boolean }>(`${SOCIAL_ACCOUNTS_API_BASE}/callback/${platform}?code=${code}&state=${state}`)
         return response.data.success
     }
 
@@ -43,7 +43,8 @@ const OAuthIntegration: FC = () => {
         try {
             // handleOAuthCallback should POST code/state to your backend,
             // and the backend must exchange the code for tokens and validate state.
-            const success = await handleOAuthCallback(code, state)
+
+            const success = await handleOAuthCallback('YOUTUBE', code, state)
             // // Remove sensitive query params from URL
             // window.history.replaceState({}, document.title, window.location.pathname)
             if (success) {
