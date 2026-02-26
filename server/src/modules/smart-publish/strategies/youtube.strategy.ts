@@ -35,7 +35,7 @@ export class YouTubeStrategy extends BasePlatformStrategy {
 
     async verifyAuth(userId: string, code: string): Promise<void> {
         const oauth2Client = this.getOAuthClient()
-
+        // console.log(`Exchanging code for tokens for user ${userId} on YouTube`)
         const { tokens } = await oauth2Client.getToken(code)
         if (!tokens.access_token) {
             throw new InternalServerError('Token exchange failed', 'TOKEN_EXCHANGE_FAILED')
@@ -49,6 +49,8 @@ export class YouTubeStrategy extends BasePlatformStrategy {
             part: ['snippet', 'contentDetails', 'brandingSettings'],
             mine: true
         })
+
+        // console.log(`Fetched channel details for user ${userId} on YouTube: ${JSON.stringify(response.data)}`)
 
         const channel = response.data.items?.[0]
         if (!channel) {
@@ -77,6 +79,7 @@ export class YouTubeStrategy extends BasePlatformStrategy {
             accessTokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
             userId: userId
         })
+        // console.log(`Successfully connected YouTube account for user ${userId}, channel: ${channel.snippet?.title}`)
     }
 
     async publish(post: SocialPostRecord, account: SocialAccountRecord): Promise<string> {
@@ -90,13 +93,15 @@ export class YouTubeStrategy extends BasePlatformStrategy {
             requestBody: {
                 snippet: {
                     title: post.title,
-                    description: post.description || ''
+                    description: post.description || '',
+                    tags: (post.tags as string[]) || []
                 },
                 status: {
                     privacyStatus: post.visibility.toLowerCase()
                 }
             },
             media: {
+                mimeType: 'video/mp4',
                 body: streams
             }
         })
@@ -117,7 +122,7 @@ export class YouTubeStrategy extends BasePlatformStrategy {
 
         oauth2Client.setCredentials({
             access_token: account.accessToken,
-            refresh_token: decrypt(account.refreshToken, SECRETE_KEY)
+            refresh_token: account.refreshToken ? decrypt(account.refreshToken, SECRETE_KEY) : undefined,
         })
 
         // Check if token is expired or will expire in the next 5 minutes

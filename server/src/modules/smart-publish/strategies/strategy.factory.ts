@@ -10,9 +10,9 @@ export class StrategyFactory {
     private strategies: Map<Platforms, IPlatformStrategy>
 
     constructor(
-        private readonly smartPublishRepository: IPublishRepository,
-        private readonly workspaceRepository: IWorkspaceRepository,
-        private readonly config: typeof googleConfig
+        smartPublishRepository: IPublishRepository,
+        workspaceRepository: IWorkspaceRepository,
+        config: typeof googleConfig
     ) {
         this.strategies = new Map()
         this.strategies.set(
