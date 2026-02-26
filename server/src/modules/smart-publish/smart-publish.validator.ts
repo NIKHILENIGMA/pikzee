@@ -23,10 +23,12 @@ export const UploadVideoBodySchema = z.object({
     description: z.string().optional(),
     tags: z.array(z.string()).optional(),
     visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']).optional(),
-    scheduledAt: z.string().optional() // ISO date string for scheduling
+    scheduledAt: z.string().optional(), // ISO date string for scheduling
+    contentType: z.string().min(1, 'Content type is required') // Added contentType field
 })
 
 export const ConfirmUploadBodySchema = z.object({
     postId: z.string().nonempty('Post ID is required'),
     platform: z.enum(['YOUTUBE', 'TWITTER', 'LINKEDIN'])
 })
+

@@ -1,4 +1,4 @@
-import { socialAccounts, socialPosts } from '@/core'
+import { socialAccounts, socialPosts } from '@/core/db/schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import {
     CreateSocialAccountRecord,
@@ -27,19 +27,29 @@ export class SmartPublishRepository implements IPublishRepository {
     constructor(private readonly db: DatabaseConnection) {}
 
     async saveTokens(record: CreateSocialAccountRecord): Promise<void> {
-        await this.db.insert(socialAccounts).values({
-            workspaceId: record.workspaceId,
-            platform: record.platform,
-            platformUserId: record.platformUserId,
-            accountName: record.accountName,
-            accessToken: record.accessToken,
-            refreshToken: record.refreshToken,
-            accessTokenExpiresAt: record.accessTokenExpiresAt,
-            userId: record.userId,
-            avatarUrl: record.avatarUrl,
-            coverUrl: record.coverUrl,
-            status: 'CONNECTED'
-        })
+        await this.db
+            .insert(socialAccounts)
+            .values({
+                ...record,
+                status: 'CONNECTED'
+            })
+            .onConflictDoUpdate({
+                target: [
+                    socialAccounts.workspaceId,
+                    socialAccounts.platformUserId,
+                    socialAccounts.platform
+                ],
+                set: {
+                    accessToken: record.accessToken,
+                    refreshToken: record.refreshToken,
+                    accessTokenExpiresAt: record.accessTokenExpiresAt,
+                    accountName: record.accountName,
+                    avatarUrl: record.avatarUrl,
+                    coverUrl: record.coverUrl,
+                    status: 'CONNECTED',
+                    updatedAt: new Date()
+                }
+            })
     }
 
     async updateTokens(id: string, updates: Partial<SocialAccountRecord>): Promise<void> {
@@ -80,24 +90,14 @@ export class SmartPublishRepository implements IPublishRepository {
         const result = await this.db
             .insert(socialPosts)
             .values({
-                workspaceId: params.workspaceId,
-                platform: params.platform,
-                userId: params.userId,
-                socialAccountId: params.socialAccountId,
-                title: params.title,
-                visibility: params.visibility,
-                status: params.status
+                ...params
             })
             .returning()
-
         return result[0]
     }
 
     async getSocialPostById(postId: string): Promise<SocialPostRecord | null> {
-        const result = await this.db
-            .select()
-            .from(socialPosts)
-            .where(and(eq(socialPosts.id, postId), eq(socialPosts.status, 'DRAFT')))
+        const result = await this.db.select().from(socialPosts).where(eq(socialPosts.id, postId))
 
         return result[0] || null
     }

@@ -12,7 +12,7 @@ router.post(
     smartPublishController.disconnectSocialAccount
 )
 
-router.post('/callback', clerkMiddleware, smartPublishController.verifySocialAccountToken)
+router.get('/callback/:platform', clerkMiddleware, smartPublishController.verifySocialAccountToken)
 
 router.get('/list', clerkMiddleware, smartPublishController.list)
 

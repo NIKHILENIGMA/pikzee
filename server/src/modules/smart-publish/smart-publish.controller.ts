@@ -12,7 +12,7 @@ import {
     UploadVideoBodySchema,
     ConfirmUploadBodySchema
 } from './smart-publish.validator'
-import { smartPublishService } from './smart-publish.module'
+
 import { IPublishService } from './smart-publish.service'
 import { ListSocialAccountsBody, SocialAccountDTO } from './smart-publish.types'
 
@@ -37,7 +37,7 @@ export class SmartPublishController extends BaseController {
                     SocialAccountParamsSchema
                 )
                 await Promise.resolve() // Placeholder for any async operations needed in the future
-                const url: string = smartPublishService.getAuthUrl(userId, params.platform)
+                const url: string = this.service.getAuthUrl(userId, params.platform)
 
                 return this.createResponse({
                     statusCode: STATUS_CODE.OK,
@@ -67,6 +67,7 @@ export class SmartPublishController extends BaseController {
                     req.params,
                     SocialAccountParamsSchema
                 )
+                
 
                 // Validate query parameters
                 const query = ValidationService.validateQuery(

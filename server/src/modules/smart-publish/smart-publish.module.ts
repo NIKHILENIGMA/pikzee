@@ -1,12 +1,12 @@
-import { db } from '@/core'
+import { db } from '@/core/db'
 import { googleConfig } from '@/config'
 
 import { SmartPublishController } from './smart-publish.controller'
 import { SmartPublishService } from './smart-publish.service'
 import { SmartPublishRepository } from './smart-publish.repository'
 
-import { workspaceRepository } from '../workspace'
 import { StrategyFactory } from './strategies/strategy.factory'
+import { WorkspaceRepository } from '../workspace/workspace.repository'
 
 // Initialize repository with database connection
 const smartPublishRepository = new SmartPublishRepository(db)
@@ -14,7 +14,7 @@ const smartPublishRepository = new SmartPublishRepository(db)
 // Initialize Strategy Factory
 const strategyFactory = new StrategyFactory(
     smartPublishRepository,
-    workspaceRepository,
+    new WorkspaceRepository(db),
     googleConfig
 )
 

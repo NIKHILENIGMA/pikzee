@@ -11,6 +11,7 @@ import {
 import Uploader from '../uploader/uploader.service'
 import { videoPublishQueue } from '@/core/queue/video-publish.queue'
 import { StrategyFactory } from './strategies/strategy.factory'
+import { logger } from '@/config'
 
 export interface IPublishService {
     getAuthUrl(userId: string, platform: Platforms): string
@@ -74,7 +75,7 @@ export class SmartPublishService implements IPublishService {
         const { uploadUrl } = await Uploader('S3').getPresignedUrl({
             bucket: 'private',
             key,
-            contentType: 'video/mp4',
+            contentType: body.contentType,
             expiresIn: 900
         })
 
@@ -125,13 +126,20 @@ export class SmartPublishService implements IPublishService {
         }
 
         try {
+            logger.info(`Starting publish process for post ${videoPostId} on platform ${platform}`)
+            // Update status to UPLOADING before starting the publish process
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,
-                updates: { status: 'PUBLISHED' }
+                updates: {
+                    status: 'UPLOADING',
+                }
             })
-
+            
+            // Publish the video to the social media platform
             const platformPostId = await this.strategyFactory.get(platform).publish(post, account)
-
+            
+            logger.info(`Successfully published post ${videoPostId} to platform ${platform} with platform post ID ${platformPostId}`)
+            // Update the post record with the new status and platform post ID
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,
                 updates: {
