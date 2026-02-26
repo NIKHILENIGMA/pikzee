@@ -1,36 +1,23 @@
-import { StorageProvider, UploadOptions, UploadResult } from './uploader.types'
+import { S3Uploader } from './providers/s3.provider'
+import { IS3Uploader, IImageKitUploader, UploaderProvider } from './uploader.types'
 
-export class Uploader<T extends StorageProvider = StorageProvider> {
-    private provider: T
-    private static instance: Uploader
+const providers = {
+    S3: new S3Uploader()
+    //   imagekit: new ImageKitUploader()
+} as const
 
-    constructor(provider: T) {
-        this.provider = provider
+type ProviderMap = typeof providers
+export type ProviderName = keyof ProviderMap
+
+function Uploader<T extends ProviderName>(provider: T): ProviderMap[T] {
+    const resolved = providers[provider]
+
+    if (!resolved) {
+        throw new Error(`Unknown upload provider: ${provider}`)
     }
 
-    static getInstance(provider: StorageProvider): Uploader {
-        if (!Uploader.instance) {
-            Uploader.instance = new Uploader(provider)
-        }
-        return Uploader.instance
-    }
-
-    async upload(file: Buffer | string, options?: UploadOptions): Promise<UploadResult> {
-        return this.provider.upload(file, options)
-    }
-
-    async delete(identifier: string): Promise<boolean> {
-        return this.provider.delete(identifier)
-    }
-
-    async getUrl(identifier: string): Promise<string> {
-        return await this.provider.getUrl(identifier)
-    }
-
-    /**
-     * Get the underlying provider to access provider-specific methods
-     */
-    getProvider(): T {
-        return this.provider
-    }
+    return resolved
 }
+
+export default Uploader
+export type { IS3Uploader, IImageKitUploader, UploaderProvider }

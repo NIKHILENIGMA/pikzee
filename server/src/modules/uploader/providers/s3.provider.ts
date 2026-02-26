@@ -1,210 +1,114 @@
 import {
-    CompleteMultipartUploadCommand,
-    CreateMultipartUploadCommand,
-    DeleteObjectCommand,
-    GetObjectCommand,
-    HeadObjectCommand,
-    PutObjectCommand,
     S3Client,
-    UploadPartCommand
+    CreateMultipartUploadCommand,
+    PutObjectCommand,
+    GetObjectCommand,
+    DeleteObjectCommand
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
-import { logger } from '@/config'
+import { awsConfig } from '@/config'
 
 import {
-    CompleteMultipartUploadOptions,
-    CompleteMultipartUploadResponse,
-    GenerateUploadUrlResult,
-    InitiateMultipartUploadOptions,
-    MultipartUploadPart,
-    StorageProvider,
-    UploadOptions,
-    UploadResult
+    IS3Uploader,
+    PresignedUrlParams,
+    PresignedUrlResult,
+    MultipartParams,
+    MultipartResult
 } from '../uploader.types'
-import { InternalServerError } from '@/util'
 
-interface S3Config {
-    accessKeyId: string
-    secretAccessKey: string
-    region: string
-    bucket: string
-    endpoint?: string
-}
-
-export class S3Provider implements StorageProvider {
-    private bucket: string
+export class S3Uploader implements IS3Uploader {
+    public provider = 'S3' as const
     private client: S3Client
+    private buckets: Record<'public' | 'private', string>
 
-    constructor(config: S3Config) {
-        this.bucket = config.bucket
+    constructor() {
         this.client = new S3Client({
-            region: config.region,
+            region: awsConfig.s3.region,
             credentials: {
-                accessKeyId: config.accessKeyId,
-                secretAccessKey: config.secretAccessKey
-            },
-            ...(config.endpoint && { endpoint: config.endpoint })
-        })
-    }
-
-    async upload(file: Buffer | string, options: UploadOptions = {}): Promise<UploadResult> {
-        const buffer = typeof file === 'string' ? Buffer.from(file, 'base64') : file
-        const key = this.generateKey(options)
-
-        const command = new PutObjectCommand({
-            Bucket: this.bucket,
-            Key: key,
-            Body: buffer,
-            ACL: options.public ? 'public-read' : 'private',
-            Metadata: options.metadata
-        })
-
-        await this.client.send(command)
-
-        const url = options.public
-            ? `https://${this.bucket}.s3.amazonaws.com/${key}`
-            : await this.getUrl(key)
-
-        return {
-            url,
-            key,
-            provider: 'S3',
-            metadata: options.metadata
-        }
-    }
-
-    async delete(key: string): Promise<boolean> {
-        try {
-            const command = new DeleteObjectCommand({
-                Bucket: this.bucket,
-                Key: key
-            })
-            await this.client.send(command)
-            return true
-        } catch (error) {
-            console.error('S3 delete error:', error)
-            return false
-        }
-    }
-
-    async getUrl(key: string): Promise<string> {
-        const command = new GetObjectCommand({
-            Bucket: this.bucket,
-            Key: key
-        })
-        return getSignedUrl(this.client, command, { expiresIn: 3600 })
-    }
-
-    async generateUploadUrl(options: UploadOptions = {}): Promise<GenerateUploadUrlResult> {
-        const key = this.generateKey(options)
-        const command = new PutObjectCommand({
-            Bucket: this.bucket,
-            Key: key,
-            ACL: options.public ? 'public-read' : 'private',
-            Metadata: options.metadata
-        })
-        const uploadUrl = await getSignedUrl(this.client, command, {
-            expiresIn: options.expiredIn || 900
-        }) // default 15 minutes
-        return {
-            uploadUrl,
-            key
-        }
-    }
-
-    async finalizeUpload(key: string): Promise<UploadResult> {
-        try {
-            const command = new HeadObjectCommand({
-                Bucket: this.bucket,
-                Key: key
-            })
-            const result = await this.client.send(command)
-            const url = await this.getUrl(key)
-            return {
-                url,
-                key,
-                provider: 'S3',
-                metadata: result.Metadata
+                accessKeyId: awsConfig.s3.accessKeyId,
+                secretAccessKey: awsConfig.s3.secretAccessKey
             }
-        } catch (error) {
-            logger.error(`S3 finalize upload error: ${error}`)
-            throw new Error('Finalize upload failed')
+        })
+
+        this.buckets = {
+            public: awsConfig.s3.publicBucket,
+            private: awsConfig.s3.privateBucket
         }
     }
 
-    async initiateMultipartUpload(
-        key: string,
-        options: InitiateMultipartUploadOptions
-    ): Promise<GenerateUploadUrlResult> {
+    // Generates a pre-signed URL for direct browser upload
+    async getPresignedUrl(params: PresignedUrlParams): Promise<PresignedUrlResult> {
+        const { bucket, key, contentType, expiresIn = 900 } = params
+        const bucketName = this.resolveBucket(bucket)
+
+        const command = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+            ContentType: contentType
+        })
+
+        const uploadUrl = await getSignedUrl(this.client, command, { expiresIn })
+
+        // Public files get a direct URL, private files must use pre-signed GET later
+        const fileUrl =
+            bucket === 'public'
+                ? `https://${bucketName}.s3.${awsConfig.s3.region}.amazonaws.com/${key}`
+                : `private::${key}` // signal to caller this needs a pre-signed GET url
+
+        return { uploadUrl, fileUrl, expiresIn }
+    }
+
+    // For large files — splits into multipart upload
+    async generateMultipartUpload(params: MultipartParams): Promise<MultipartResult> {
+        const { bucket, key, contentType } = params
+        const bucketName = this.resolveBucket(bucket)
+
         const command = new CreateMultipartUploadCommand({
-            Bucket: this.bucket,
+            Bucket: bucketName,
             Key: key,
-            ACL: options.public ? 'public-read' : 'private',
-            Metadata: options.metadata
-        })
-        const result = await this.client.send(command)
-        if (!result.UploadId) {
-            throw new InternalServerError(
-                'Failed to initiate multipart upload',
-                'S3MultipartUploadError'
-            )
-        }
-
-        const response = {
-            uploadUrl: result.UploadId, // The upload URLs for each part will be generated separately
-            key
-        }
-        return response
-    }
-
-    async generateMultipartUploadPartUrls(
-        key: string,
-        uploadId: string,
-        partNumber: number
-    ): Promise<MultipartUploadPart> {
-        const command = new UploadPartCommand({
-            Bucket: this.bucket,
-            Key: key,
-            PartNumber: partNumber, // Placeholder, will be replaced in the loop
-            UploadId: uploadId
+            ContentType: contentType
         })
 
-        const uploadUrl = await getSignedUrl(this.client, command, { expiresIn: 900 }) // 15 minutes
+        const response = await this.client.send(command)
 
         return {
-            partNumber,
-            uploadUrl
+            uploadId: response.UploadId!,
+            key,
+            bucket: bucketName
         }
     }
 
-    async completeMultipartUpload(
-        options: CompleteMultipartUploadOptions
-    ): Promise<CompleteMultipartUploadResponse> {
-        const command = new CompleteMultipartUploadCommand({
-            Bucket: this.bucket,
-            Key: options.key,
-            UploadId: options.uploadId,
-            MultipartUpload: {
-                Parts: options.parts.map((part) => ({
-                    ETag: part.ETag,
-                    PartNumber: part.PartNumber
-                }))
-            }
+    async s3Stream(key: string): Promise<NodeJS.ReadableStream> {
+        const bucketName = this.resolveBucket('private')
+
+        const response = await this.client.send(
+            new GetObjectCommand({
+                Bucket: bucketName,
+                Key: key
+            })
+        )
+
+        return response.Body as NodeJS.ReadableStream
+    }
+
+    async deleteObjectFromS3(postId: string): Promise<boolean> {
+        const bucketName = this.resolveBucket('private')
+
+        const command = new DeleteObjectCommand({
+            Bucket: bucketName,
+            Key: postId
         })
+        const response = await this.client.send(command)
 
-        await this.client.send(command)
-
-        return {
-            success: true,
-            key: options.key
-        }
+        return response.$metadata.httpStatusCode === 204
     }
 
-    private generateKey(options: UploadOptions): string {
-        const timestamp = Date.now()
-        const random = Math.random().toString(36).substring(7)
-        const fileName = options.fileName || `file-${timestamp}-${random}`
-        return options.folder ? `${options.folder}/${fileName}` : fileName
+    private resolveBucket(bucket: 'public' | 'private'): string {
+        const resolved = this.buckets[bucket]
+        if (!resolved) {
+            throw new Error(`Bucket config missing for type: ${bucket}`)
+        }
+        return resolved
     }
 }

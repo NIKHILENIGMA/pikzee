@@ -1,89 +1,64 @@
-export interface UploadOptions {
-    folder?: string
-    fileName?: string
-    public?: boolean
-    metadata?: Record<string, string>
-    expiredIn?: number
+// Every provider must follow this base contract
+export interface IUploader {
+    provider: UploaderProvider
 }
 
-export interface InitiateMultipartUploadOptions {
-    public: boolean
-    metadata?: Record<string, string>
+// S3 specific contract
+export interface IS3Uploader extends IUploader {
+    getPresignedUrl(params: PresignedUrlParams): Promise<PresignedUrlResult>
+    generateMultipartUpload(params: MultipartParams): Promise<MultipartResult>
+    s3Stream(key: string): Promise<NodeJS.ReadableStream>
 }
 
-export interface UploadResult {
-    url: string
-    publicId?: string
-    key?: string
-    provider: string
-    metadata?: Record<string, any>
+// ImageKit specific contract
+export interface IImageKitUploader extends IUploader {
+    getImagekitTransformer(params: ImageKitParams): ImageKitResult
 }
 
-export interface GenerateUploadUrlResult {
-    uploadUrl: string
+// Provider names — add more here as you grow
+export type UploaderProvider = 'S3' | 'imagekit'
+
+// S3 Types
+export interface PresignedUrlParams {
+    bucket: 'public' | 'private' // forces you to be explicit
+    key: string // file path inside bucket
+    contentType: string // e.g. image/jpeg, application/pdf
+    expiresIn?: number // seconds, default 900 (15 mins)
+}
+
+export interface PresignedUrlResult {
+    uploadUrl: string // PUT to this URL
+    fileUrl: string // final public/access URL after upload
+    expiresIn: number
+}
+
+export interface MultipartParams {
+    bucket: 'public' | 'private'
     key: string
+    contentType: string
 }
 
-// Request for /v1/uploader/plan-uploads
-export interface FileToUpload {
-    name: string
-    size: number
-    type: string
-}
-
-export interface PlanUploadsRequest {
-    workspaceId: string
-    projectId?: string
-    files: FileToUpload[]
-}
-
-// Response for /v1/uploader/plan-uploads
-export type UploadJobType = 'direct' | 'multipart'
-
-export interface DirectUploadJob {
-    type: 'direct'
-    fileName: string
-    fileSize: number
-    uploadUrl: string
-    key: string // S3 object key
-}
-
-export interface MultipartUploadPart {
-    partNumber: number
-    uploadUrl: string // Pre-signed URL for this part
-}
-
-export interface MultipartUploadJob {
-    type: 'multipart'
-    fileName: string
-    fileSize: number
-    uploadId: string // S3 Upload ID
-    key: string // S3 object key
-    parts: MultipartUploadPart[]
-}
-
-export interface CompleteMultipartUploadOptions {
-    key: string
+export interface MultipartResult {
     uploadId: string
-    parts: {
-        ETag: string
-        PartNumber: number
-    }[]
-}
-
-export interface CompleteMultipartUploadResponse {
-    success: boolean
     key: string
+    bucket: string
 }
 
-export type UploadJob = DirectUploadJob | MultipartUploadJob
-
-export interface PlanUploadsResponse {
-    jobs: UploadJob[]
+// ImageKit Types
+export interface ImageKitParams {
+    src: string // original image URL
+    transformations: ImageKitTransformation[]
 }
 
-export interface StorageProvider {
-    upload(file: Buffer | string, options?: UploadOptions): Promise<UploadResult>
-    delete(identifier: string): Promise<boolean>
-    getUrl(identifier: string): Promise<string>
+export interface ImageKitTransformation {
+    width?: number
+    height?: number
+    quality?: number
+    format?: 'auto' | 'webp' | 'jpg' | 'png'
+    crop?: 'maintain_ratio' | 'force' | 'at_least'
+}
+
+export interface ImageKitResult {
+    url: string
+    transformations: ImageKitTransformation[]
 }
