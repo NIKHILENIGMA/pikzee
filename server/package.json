@@ -12,7 +12,7 @@
         "build": "tsc -p . && tsc-alias",
         "build:prod": "tsc -p . --sourceMap false && tsc-alias",
         "clean:dist": "rm -rf dist",
-        "worker": "ts-node src/core/worker/worker.ts",
+        "worker": "ts-node src/config/worker/worker.ts",
         "docker:build": "docker compose up --build",
         "docker:dev": "docker compose up -d --build",
         "docker:up": "docker compose up -d",
