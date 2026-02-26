@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm'
 
-import { memberPermissionEnum, workspaceMembers, workspaces } from '@/core'
+import { memberPermissionEnum, workspaceMembers, workspaces } from '@/core/db/schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import { DatabaseError } from '@/util'
 

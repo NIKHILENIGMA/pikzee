@@ -1,7 +1,7 @@
 import { Router } from 'express'
 
 import { clerkMiddleware } from '@/middlewares/clerk/clerk.middleware'
-import { membersRoutes } from '@/modules/members'
+import membersRoutes from '@/modules/members/member.routes'
 
 import { workspaceController } from './workspace.module'
 
