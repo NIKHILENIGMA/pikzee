@@ -1,4 +1,4 @@
-import { projects } from '@/core'
+import { projects } from '@/core/db/schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import { NewProjectRecord, ProjectRecord } from './project.types'
 import { and, desc, eq } from 'drizzle-orm'

@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 
 import { DatabaseConnection } from '@/core/db/service/database.service'
-import { workspaceMembers, users } from '@/core'
+import { workspaceMembers, users } from '@/core/db/schema'
 
 import {
     CreateMemberRecord,

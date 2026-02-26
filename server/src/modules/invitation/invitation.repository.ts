@@ -1,6 +1,7 @@
 import { and, eq, gt } from 'drizzle-orm'
 
-import { type CreateInvitation, type Invitation, invitations, workspaceMembers } from '@/core'
+import { invitations, workspaceMembers } from '@/core/db/schema'
+import { CreateInvitation, Invitation } from '@/core/db/schema/workspace.schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import { GetPendingInvitationRecord } from './invitation.types'
 import { MemberPermission } from '../members'

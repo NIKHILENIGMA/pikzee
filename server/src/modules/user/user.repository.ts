@@ -1,4 +1,5 @@
-import { CreateUser, User, users } from '@/core'
+import { users } from '@/core/db/schema'
+import { CreateUser, User } from '@/core/db/schema/users.schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import { DatabaseError } from '@/util'
 import { eq } from 'drizzle-orm/sql/expressions/conditions'
