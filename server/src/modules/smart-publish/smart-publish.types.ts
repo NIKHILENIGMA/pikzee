@@ -1,14 +1,15 @@
 import z from 'zod'
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
-import { socialAccounts } from '@/core'
-import { ListSocialAccountsQuerySchema } from './smart-publish.validator'
+import { socialAccounts, socialPosts } from '@/core'
+import { ListSocialAccountsQuerySchema, UploadVideoBodySchema } from './smart-publish.validator'
 
 export type CreateSocialAccountRecord = InferInsertModel<typeof socialAccounts>
 export type SocialAccountRecord = InferSelectModel<typeof socialAccounts>
+export type CreateSocialPostRecord = InferInsertModel<typeof socialPosts>
+export type SocialPostRecord = InferSelectModel<typeof socialPosts>
 
 export type Platforms = 'YOUTUBE' | 'TWITTER' | 'LINKEDIN'
-
 
 export type SocialAccountDTO = {
     id: string
@@ -22,3 +23,5 @@ export type SocialAccountDTO = {
 }
 
 export type ListSocialAccountsBody = z.infer<typeof ListSocialAccountsQuerySchema>
+
+export type UploadVideoBody = z.infer<typeof UploadVideoBodySchema>

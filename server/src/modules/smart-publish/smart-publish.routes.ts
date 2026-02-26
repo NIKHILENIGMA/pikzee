@@ -16,4 +16,13 @@ router.post('/callback', clerkMiddleware, smartPublishController.verifySocialAcc
 
 router.get('/list', clerkMiddleware, smartPublishController.list)
 
+router.post(
+    '/upload-video/:platform',
+    clerkMiddleware,
+    smartPublishController.initiateVideoUploadProcess
+)
+// router.get('/uploaded', clerkMiddleware, smartPublishController.listUploadedPosts)
+
+router.post('/publish', clerkMiddleware, smartPublishController.publishToSocialMedia)
+
 export default router
