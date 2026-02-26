@@ -24,9 +24,17 @@ services:
     networks:
       - pikzee-network
 
+  redis:
+    image: redis:7
+    container_name: pikzee-redis
+    ports:
+      - "6379:6379"
+    restart: always
+
 
 volumes:
   pgdata:
+  redisdata:
 
 networks:
   pikzee-network:
