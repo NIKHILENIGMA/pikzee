@@ -1,14 +1,19 @@
 import { Router } from 'express'
 
-import { workspace, admin, invitation, project, uploader, smartPublish } from '@/modules'
+import workspaceRouter from '@/modules/workspace/workspace.routes'
+import invitationRouter from '@/modules/invitation/invitation.routes'
+import adminRouter from '@/modules/admin/admin.routes'
+import projectRouter from '@/modules/projects/project.routes'
+import uploaderRouter from '@/modules/uploader/uploader.routes'
+import smartPublishRouter from '@/modules/smart-publish/smart-publish.routes'
 
 const router = Router()
 
-router.use('/invitations', invitation.invitationRouter)
-router.use('/workspaces', workspace.workspaceRouter)
-router.use('/admin', admin.adminRouter)
-router.use('/projects', project.projectRouter)
-router.use('/uploads', uploader.uploaderRouter)
-router.use('/social', smartPublish.smartPublishRouter)
+router.use('/invitations', invitationRouter)
+router.use('/workspaces', workspaceRouter)
+router.use('/admin', adminRouter)
+router.use('/projects', projectRouter)
+router.use('/uploads', uploaderRouter)
+router.use('/social', smartPublishRouter)
 
 export default router
