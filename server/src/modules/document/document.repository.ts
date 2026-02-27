@@ -64,4 +64,3 @@ export class DocRepository implements IDocRepository {
         await this.db.delete(docs).where(eq(docs.id, id))
     }
 }
-

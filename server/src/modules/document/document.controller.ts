@@ -122,4 +122,3 @@ export class DocumentController extends BaseController {
         })
     }
 }
-

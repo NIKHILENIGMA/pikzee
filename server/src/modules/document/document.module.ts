@@ -1,8 +1,7 @@
-import { db } from "@/core/db/connection";
-import { DocRepository } from "./document.repository";
-import { DocumentService } from "./document.service";
-import { DocumentController } from "./document.controller";
-
+import { db } from '@/core/db/connection'
+import { DocRepository } from './document.repository'
+import { DocumentService } from './document.service'
+import { DocumentController } from './document.controller'
 
 const documentRepository = new DocRepository(db)
 

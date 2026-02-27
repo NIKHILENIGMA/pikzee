@@ -2,6 +2,7 @@ import { Router } from 'express'
 
 import { clerkMiddleware } from '@/middlewares'
 import { documentController } from './document.module'
+import draftRouter from '../draft/draft.routes'
 
 const router = Router({ mergeParams: true }) // receives workspaceId from parent
 
@@ -17,6 +18,6 @@ router
     .delete(clerkMiddleware, documentController.delete)
 
 // Nest draft routes under a doc
-// router.use('/:id/drafts', draftRouter)
+router.use('/:docId/drafts', draftRouter)
 
-export { router as docRouter }
+export default router
