@@ -1,4 +1,4 @@
-import { CreateWorkspace } from '@/core'
+import { CreateWorkspace } from '@/core/db/schema/workspace.schema'
 import { DatabaseError, ForbiddenError, NotFoundError } from '@/util'
 
 import { IUserService } from '../user'
