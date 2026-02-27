@@ -31,4 +31,3 @@ export const ConfirmUploadBodySchema = z.object({
     postId: z.string().nonempty('Post ID is required'),
     platform: z.enum(['YOUTUBE', 'TWITTER', 'LINKEDIN'])
 })
-

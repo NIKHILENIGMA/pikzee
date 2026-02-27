@@ -12,4 +12,3 @@ const env = envSchema.parse(process.env) // Validate env vars at startup
 export const openaiConfig = {
     apiKey: env.OPENAI_API_KEY
 }
-

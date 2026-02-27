@@ -67,7 +67,6 @@ export class SmartPublishController extends BaseController {
                     req.params,
                     SocialAccountParamsSchema
                 )
-                
 
                 // Validate query parameters
                 const query = ValidationService.validateQuery(
