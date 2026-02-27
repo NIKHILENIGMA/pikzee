@@ -10,4 +10,3 @@ const draftService = new DraftService(draftRepository)
 const draftController = new DraftController(draftService)
 
 export { draftController, draftService, draftRepository }
-

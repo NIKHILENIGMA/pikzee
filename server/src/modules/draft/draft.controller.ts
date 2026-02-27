@@ -100,7 +100,7 @@ export class DraftController extends BaseController {
 
     delete = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const params  = ValidationService.validateParams(req.params, DraftByIdParamsSchema)
+            const params = ValidationService.validateParams(req.params, DraftByIdParamsSchema)
             await this.draftService.delete(params.id)
 
             return this.createResponse({
@@ -112,25 +112,29 @@ export class DraftController extends BaseController {
     }
 
     generateContent = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<string | null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new Error('User not authenticated')
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<string | null>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new Error('User not authenticated')
+                }
+
+                const { prompt } = ValidationService.validateBody(
+                    req.body,
+                    GenerateContentBodySchema
+                )
+
+                const content = await this.draftService.generateContent(prompt)
+
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Content generated successfully',
+                    data: content
+                })
             }
-
-            const { prompt } = ValidationService.validateBody(
-                req.body,
-                GenerateContentBodySchema
-            )
-
-            const content = await this.draftService.generateContent(prompt)
-
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Content generated successfully',
-                data: content
-            })
-        })
+        )
     }
 }
-

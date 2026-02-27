@@ -17,7 +17,7 @@ export class DraftService implements IDraftService {
     private readonly openai: OpenAI
     constructor(private readonly draftRepository: IDraftRepository) {
         this.openai = new OpenAI({
-            apiKey: openaiConfig.apiKey,
+            apiKey: openaiConfig.apiKey
         })
     }
 
@@ -54,4 +54,3 @@ export class DraftService implements IDraftService {
         return completion.choices[0].message.content
     }
 }
-
