@@ -8,7 +8,7 @@ import { clerkMiddleware } from '@clerk/express'
 import 'source-map-support/register'
 
 import { CORS_METHODS, CORS_ORIGIN, IS_PRODUCTION } from '@/config'
-import router from '@/core'
+import router from '@/core/http/router'
 import { errorHandler, notFound } from '@/middlewares'
 import { BASE_API_PATH } from './constants/app.constants'
 import WebhookRouter from './modules/webhooks/webhooks.routes'
