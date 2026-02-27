@@ -1,4 +1,4 @@
-import { type CreateUser, type User } from '@/core'
+import { type CreateUser, type User } from '@/core/db/schema/users.schema'
 import { ConflictError, DatabaseError } from '@/util/StandardError'
 
 import { IUserRepository } from './user.repository'

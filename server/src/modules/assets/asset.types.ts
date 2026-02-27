@@ -1,4 +1,4 @@
-import { assets } from '@/core'
+import { assets } from '@/core/db/schema/asset.schema'
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import z from 'zod'
 import { CreateAssetSchema } from './asset.validator'

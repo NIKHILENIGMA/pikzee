@@ -1,4 +1,4 @@
-import { db } from '@/core'
+import { db } from '@/core/db/connection'
 import { MemberRepository } from './member.repository'
 import { IMemberService, MemberService } from './member.service'
 import { MemberController } from './member.controller'

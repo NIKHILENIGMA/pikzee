@@ -1,4 +1,4 @@
-import { db } from '@/core'
+import { db } from '@/core/db/connection'
 
 import { AssetRepository } from './asset.repository'
 import { AssetService } from './asset.service'

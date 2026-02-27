@@ -1,7 +1,8 @@
 import crypto from 'node:crypto'
 
 import { FRONTEND_BASE_URL, INVITATION_TOKEN_SECRET, logger } from '@/config'
-import { invitationStatusEnum, type Invitation, INotificationService } from '@/core'
+import { invitationStatusEnum, type Invitation } from '@/core/db/schema/workspace.schema'
+import { INotificationService } from '@/core/notification/notification.service'
 import { BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError } from '@/util'
 
 import { IMemberService } from '../members'

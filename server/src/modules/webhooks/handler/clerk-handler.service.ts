@@ -1,4 +1,4 @@
-import { INotificationService } from '@/core'
+import { INotificationService } from '@/core/notification/notification.service'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 import { logger } from '@/config'
 import { UserRepository } from '@/modules/user/user.repository'

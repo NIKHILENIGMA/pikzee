@@ -1,7 +1,7 @@
 import { InferEnum, InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import z from 'zod'
 
-import { subscriptionPlanEnum, workspaces } from '@/core'
+import { subscriptionPlanEnum, workspaces } from '@/core/db/schema/workspace.schema'
 
 import { CreateWorkspaceSchema, UpdateWorkspaceSchema } from './workspace.validator'
 

@@ -1,6 +1,6 @@
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
-import { projects } from '@/core'
+import { projects } from '@/core/db/schema/project.schema'
 import z from 'zod'
 import {
     ChangeProjectStatusSchema,

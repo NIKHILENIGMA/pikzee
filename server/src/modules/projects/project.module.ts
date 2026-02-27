@@ -1,4 +1,4 @@
-import { db } from '@/core'
+import { db } from '@/core/db/connection'
 import { ProjectRepository } from './project.repository'
 import { ProjectService } from './project.service'
 import { ProjectController } from './project.controller'

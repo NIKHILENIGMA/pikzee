@@ -1,6 +1,6 @@
 import { InferEnum, InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { MemberPermission } from '../members/member.types'
-import { invitations, invitationStatusEnum } from '@/core'
+import { invitations, invitationStatusEnum } from '@/core/db/schema/workspace.schema'
 import z from 'zod'
 import { AcceptInvitationSchema, SendInvitationSchema } from './invitation.validator'
 

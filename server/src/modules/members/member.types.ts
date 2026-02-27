@@ -1,7 +1,7 @@
 import { InferEnum, InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import z from 'zod'
 
-import { memberPermissionEnum, workspaceMembers } from '@/core'
+import { memberPermissionEnum, workspaceMembers } from '@/core/db/schema/workspace.schema'
 
 import { AddMemberSchema, UpdateMemberPermissionSchema } from './member.validator'
 

@@ -9,7 +9,7 @@ import {
 } from './smart-publish.types'
 
 import Uploader from '../uploader/uploader.service'
-import { videoPublishQueue } from '@/core/queue/video-publish.queue'
+import { getVideoPublishQueue } from '@/core/queue/video-publish.queue'
 import { StrategyFactory } from './strategies/strategy.factory'
 import { logger } from '@/config'
 
@@ -96,7 +96,7 @@ export class SmartPublishService implements IPublishService {
     }
 
     public async publishVideoS3ToSocialMedia(postId: string, platform: Platforms): Promise<void> {
-        await videoPublishQueue.add(
+        await getVideoPublishQueue().add(
             'publish-video',
             {
                 videoPostId: postId,
@@ -131,14 +131,16 @@ export class SmartPublishService implements IPublishService {
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,
                 updates: {
-                    status: 'UPLOADING',
+                    status: 'UPLOADING'
                 }
             })
-            
+
             // Publish the video to the social media platform
             const platformPostId = await this.strategyFactory.get(platform).publish(post, account)
-            
-            logger.info(`Successfully published post ${videoPostId} to platform ${platform} with platform post ID ${platformPostId}`)
+
+            logger.info(
+                `Successfully published post ${videoPostId} to platform ${platform} with platform post ID ${platformPostId}`
+            )
             // Update the post record with the new status and platform post ID
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,

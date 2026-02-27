@@ -1,6 +1,6 @@
 import z from 'zod'
 
-import { memberPermissionEnum } from '@/core'
+import { memberPermissionEnum } from '@/core/db/schema/workspace.schema'
 import { WorkspaceIdSchema } from '@/modules/workspace/workspace.validator'
 
 export const AddMemberSchema = z.object({

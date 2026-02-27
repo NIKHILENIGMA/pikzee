@@ -1,6 +1,6 @@
 import { and, asc, eq, isNull, like, sql } from 'drizzle-orm'
 
-import { assets } from '@/core'
+import { assets } from '@/core/db/schema/asset.schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 
 import { AssetRecord, CreateAssetRecord } from './asset.types'

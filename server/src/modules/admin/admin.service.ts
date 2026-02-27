@@ -1,6 +1,6 @@
 import { clerkClient } from '@clerk/express'
 
-import { CreateUser, User } from '@/core'
+import { CreateUser, User } from '@/core/db/schema/users.schema'
 
 import { IUserService } from '../user'
 
