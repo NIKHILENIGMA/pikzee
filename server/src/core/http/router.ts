@@ -6,6 +6,8 @@ import adminRouter from '@/modules/admin/admin.routes'
 import projectRouter from '@/modules/projects/project.routes'
 import uploaderRouter from '@/modules/uploader/uploader.routes'
 import smartPublishRouter from '@/modules/smart-publish/smart-publish.routes'
+import documentRouter from '@/modules/document/document.routes'
+
 
 const router = Router()
 
@@ -15,5 +17,6 @@ router.use('/admin', adminRouter)
 router.use('/projects', projectRouter)
 router.use('/uploads', uploaderRouter)
 router.use('/social', smartPublishRouter)
+router.use('/documents', documentRouter)
 
 export default router
