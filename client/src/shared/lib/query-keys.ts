@@ -17,3 +17,9 @@ export const socialAccountKeys = {
     lists: (workspaceId: string) => [...socialAccountKeys.all(workspaceId), 'list'] as const,
     detail: (workspaceId: string, accountId: string) => [...socialAccountKeys.all(workspaceId), 'detail', accountId] as const
 }
+
+export const documentKeys = {
+    all: (workspaceId: string) => [...workspaceKeys.all(), 'documents', workspaceId] as const,
+    lists: (workspaceId: string) => [...documentKeys.all(workspaceId), 'list'] as const,
+    detail: (workspaceId: string, documentId: string) => [...documentKeys.all(workspaceId), 'detail', documentId] as const
+}
