@@ -1,7 +1,15 @@
 import { Queue } from 'bullmq'
 
-import { redisConnection } from '../../config/redis'
+import { createRedisConnection } from '@/config/redis'
 
-export const videoPublishQueue = new Queue('video-publish', {
-    connection: redisConnection
-})
+let videoPublishQueue: Queue | null = null
+
+export const getVideoPublishQueue = () => {
+    if (!videoPublishQueue) {
+        videoPublishQueue = new Queue('video-publish', {
+            connection: createRedisConnection('video-publish-queue')
+        })
+    }
+
+    return videoPublishQueue
+}

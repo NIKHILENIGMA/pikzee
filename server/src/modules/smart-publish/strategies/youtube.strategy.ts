@@ -88,29 +88,35 @@ export class YouTubeStrategy extends BasePlatformStrategy {
 
         const streams = await Uploader('S3').s3Stream(post.platformPostId!)
 
-        const response = await youtube.videos.insert({
-            part: ['snippet', 'status'],
-            requestBody: {
-                snippet: {
-                    title: post.title,
-                    description: post.description || '',
-                    tags: (post.tags as string[]) || []
+        try {
+            const response = await youtube.videos.insert({
+                part: ['snippet', 'status'],
+                requestBody: {
+                    snippet: {
+                        title: post.title,
+                        description: post.description || '',
+                        tags: (post.tags as string[]) || []
+                    },
+                    status: {
+                        privacyStatus: post.visibility.toLowerCase()
+                    }
                 },
-                status: {
-                    privacyStatus: post.visibility.toLowerCase()
+                media: {
+                    mimeType: 'video/mp4',
+                    body: streams
                 }
-            },
-            media: {
-                mimeType: 'video/mp4',
-                body: streams
+            })
+
+            if (!response.data.id) {
+                throw new InternalServerError('YouTube upload failed', 'YOUTUBE_UPLOAD_FAILED')
             }
-        })
 
-        if (!response.data.id) {
-            throw new InternalServerError('YouTube upload failed', 'YOUTUBE_UPLOAD_FAILED')
+            return response.data.id
+        } finally {
+            if (streams && typeof (streams as any).destroy === 'function') {
+                ;(streams as any).destroy()
+            }
         }
-
-        return response.data.id
     }
 
     async revoke(accountId: string): Promise<void> {
@@ -122,7 +128,9 @@ export class YouTubeStrategy extends BasePlatformStrategy {
 
         oauth2Client.setCredentials({
             access_token: account.accessToken,
-            refresh_token: account.refreshToken ? decrypt(account.refreshToken, SECRETE_KEY) : undefined,
+            refresh_token: account.refreshToken
+                ? decrypt(account.refreshToken, SECRETE_KEY)
+                : undefined
         })
 
         // Check if token is expired or will expire in the next 5 minutes
