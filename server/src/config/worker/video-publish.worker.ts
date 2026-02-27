@@ -1,6 +1,6 @@
 import { Platforms, smartPublishService } from '@/modules/smart-publish'
 import { Worker } from 'bullmq'
-import { redisConnection } from '@/config/redis'
+import { createRedisConnection } from '@/config/redis'
 // import { logger } from '@/config';
 
 export const worker = new Worker(
@@ -12,6 +12,5 @@ export const worker = new Worker(
 
         return true
     },
-    { connection: redisConnection }
+    { connection: createRedisConnection('video-publish-worker') }
 )
-
