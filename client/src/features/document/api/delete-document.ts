@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { WORKSPACE_API_BASE } from '@/shared/constants'
+import { DOCUMENT_API_BASE } from '@/shared/constants'
 import client from '@/shared/lib/api-client'
 import { documentKeys } from '@/shared/lib/query-keys'
 import type { MutationConfig } from '@/shared/lib/react-query'
@@ -11,23 +11,23 @@ export type DeleteDocumentParams = {
 }
 
 export const deleteDocument = async ({ workspaceId, documentId }: DeleteDocumentParams) => {
-    return await client.delete<null>(`${WORKSPACE_API_BASE}/${workspaceId}/documents/${documentId}`)
+    return await client.delete<null>(`${DOCUMENT_API_BASE}/${documentId}?workspaceId=${workspaceId}`)
 }
 
 type UseDeleteDocument = {
     mutationConfig?: MutationConfig<typeof deleteDocument>
 }
 
-export const useDeleteDocument = ({ mutationConfig }: UseDeleteDocument = {}) => {
+export const useDeleteDocument = ({ workspaceId, mutationConfig }: UseDeleteDocument & { workspaceId: string }) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
     return useMutation({
         ...restConfig,
         mutationFn: (params) => deleteDocument(params),
-        onSuccess: (_, variables) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: documentKeys.lists(variables.workspaceId)
+                queryKey: documentKeys.lists(workspaceId)
             })
         }
     })

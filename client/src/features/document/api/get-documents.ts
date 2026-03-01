@@ -1,14 +1,15 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-import { WORKSPACE_API_BASE } from '@/shared/constants'
+import { DOCUMENT_API_BASE } from '@/shared/constants'
 import client from '@/shared/lib/api-client'
 import { documentKeys } from '@/shared/lib/query-keys'
 import type { QueryConfig } from '@/shared/lib/react-query'
 
 import type { DocumentDTO } from '../types'
 
-export const getDocuments = async (workspaceId: string) => {
-    return await client.get<DocumentDTO[]>(`${WORKSPACE_API_BASE}/${workspaceId}/documents`)
+export const getDocuments = async (workspaceId: string): Promise<DocumentDTO[]> => {
+    const response =  await client.get<DocumentDTO[]>(`${DOCUMENT_API_BASE}?workspaceId=${workspaceId}`)
+    return response.data
 }
 
 export const getDocumentsQueryOptions = (workspaceId: string) => {
