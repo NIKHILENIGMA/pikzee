@@ -11,30 +11,36 @@ import { useCreateDocument } from '../api'
 interface CreateDocumentDialogProps {
     children: ReactNode
     workspaceId: string
-    createdBy: string
 }
 
-const CreateDocumentDialog: FC<CreateDocumentDialogProps> = ({ children, workspaceId, createdBy }) => {
+const CreateDocumentDialog: FC<CreateDocumentDialogProps> = ({ children, workspaceId }) => {
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState('')
+    const {
+        mutateAsync: createDocumentMutation,
+        isPending,
+        isError
+    } = useCreateDocument({
+        workspaceId
+    })
 
-    const createDocumentMutation = useCreateDocument()
-
-    const handleCreate = async () => {
+    const handleCreateDocument = async () => {
         const normalizedTitle = title.trim()
         if (!normalizedTitle) {
             return
         }
 
-        await createDocumentMutation.mutateAsync({
-            title: normalizedTitle,
-            workspaceId,
-            createdBy
-        })
-
-        toast.success('Document created successfully')
-        setTitle('')
-        setOpen(false)
+        try {
+            await createDocumentMutation({
+                title: normalizedTitle,
+                workspaceId
+            })
+            toast.success('Document created successfully')
+            setTitle('')
+            setOpen(false)
+        } catch (error) {
+            isError && toast.error(`${error instanceof Error ? error.message : 'An unexpected error occurred.'}`)
+        }
     }
 
     return (
@@ -65,9 +71,10 @@ const CreateDocumentDialog: FC<CreateDocumentDialogProps> = ({ children, workspa
                         Cancel
                     </Button>
                     <Button
-                        onClick={handleCreate}
-                        disabled={!title.trim() || createDocumentMutation.isPending}>
-                        Create
+                        size={'default'}
+                        onClick={handleCreateDocument}
+                        disabled={!title.trim() || isPending}>
+                        {isPending ? 'Creating...' : 'Create'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
