@@ -43,6 +43,7 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
 
 networks:
   pikzee-network:
