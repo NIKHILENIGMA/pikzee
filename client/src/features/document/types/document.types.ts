@@ -1,8 +1,9 @@
 export interface DocumentDTO {
     id: string
-    workspaceId: string
     title: string
     createdBy: string
-    createdAt: string
-    updatedAt: string
+    workspaceId: string
+    image: string | null
+    createdAt: Date
+    updatedAt: Date
 }
