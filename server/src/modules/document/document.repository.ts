@@ -1,9 +1,10 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 import { docs, drafts } from '@/core/db/schema/document'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 
 import { CreateDocument, Document } from './document.types'
+import { users } from '@/core'
 
 export interface IDocRepository {
     findAll(workspaceId: string): Promise<Document[]>
@@ -19,8 +20,16 @@ export class DocRepository implements IDocRepository {
 
     async findAll(workspaceId: string): Promise<Document[]> {
         return this.db
-            .select()
+            .select({
+                id: docs.id,
+                createdAt: docs.createdAt,
+                updatedAt: docs.updatedAt,
+                workspaceId: docs.workspaceId,
+                title: docs.title,
+                createdBy: sql<string>`${users.firstName} || ' ' || ${users.lastName}`
+            })
             .from(docs)
+            .innerJoin(users, eq(docs.createdBy, users.id))
             .where(eq(docs.workspaceId, workspaceId))
             .orderBy(docs.createdAt)
     }
