@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Suspense, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
+import { Toaster } from 'sonner'
 
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { queryConfig } from '@/shared/lib/react-query'
@@ -44,6 +45,7 @@ const AppProvider = ({ children }: AppProviderProps) => {
                     </QueryClientProvider>
                 </ClerkProvider>
             </ErrorBoundary>
+            <Toaster />
         </Suspense>
     )
 }
