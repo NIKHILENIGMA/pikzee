@@ -28,7 +28,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     const [error, setError] = useState<string | null>(null)
 
     const { id } = useWorkspaceContext()
-    const createProjectMutation = useCreateProject()
+    const {mutateAsync: createProjectMutation} = useCreateProject()
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -47,7 +47,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
 
     const handleCreateProject = async () => {
         try {
-            await createProjectMutation.mutateAsync({
+            await createProjectMutation({
                 projectName: createProjectData.title,
                 workspaceId: id,
                 projectCoverImageUrl: createProjectData.previewUrl || undefined
