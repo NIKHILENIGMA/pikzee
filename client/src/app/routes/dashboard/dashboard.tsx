@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Toaster } from 'sonner'
 
 import { Loader } from '@/components'
 import {
@@ -44,16 +43,15 @@ export default function DashboardPage() {
     const filteredProjects = useMemo(() => {
         const projects = workspaceQuery.data?.data?.projects || []
 
-        // Filter 
+        // Filter
         const filtered = projects.filter((project) => {
             // Filter by status
             return filters.status === 'all' || project.status.toLowerCase() === filters.status
         })
 
-        // Sort 
+        // Sort
         return sortFunction(filtered, filters.sortOrder)
     }, [filters, workspaceQuery.data])
-
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -78,7 +76,6 @@ export default function DashboardPage() {
                             />
                         ) : null}
                     </div>
-                    <Toaster />
                 </main>
             </WorkspaceProvider>
         </div>
