@@ -11,6 +11,7 @@ export interface IDraftRepository {
     create(input: CreateDraft): Promise<Draft>
     update(id: string, data: Partial<CreateDraft>): Promise<Draft>
     delete(id: string): Promise<void>
+    createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft>
 }
 
 export class DraftRepository implements IDraftRepository {
@@ -50,5 +51,10 @@ export class DraftRepository implements IDraftRepository {
 
     async delete(id: string): Promise<void> {
         await this.db.delete(drafts).where(eq(drafts.id, id))
+    }
+
+    async createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft> {
+        const [draft] = await tx.insert(drafts).values(input).returning()
+        return draft
     }
 }
