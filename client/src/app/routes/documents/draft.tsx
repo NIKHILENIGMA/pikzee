@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { EditorRoot } from '@/features/block/components/editor-root'
 
-const Document: FC = () => {
+const Draft: FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
 
     return (
@@ -119,4 +119,4 @@ const Document: FC = () => {
     )
 }
 
-export default Document
+export default Draft
