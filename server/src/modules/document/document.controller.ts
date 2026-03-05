@@ -11,8 +11,7 @@ import {
     DocumentQuerySchema,
     UpdateDocumentBodySchema
 } from './document.validator'
-import { Document } from './document.types'
-// import { logger } from '@/config'
+import { CreateDocumentDTO, Document } from './document.types'
 
 export class DocumentController extends BaseController {
     constructor(private service: IDocService) {
@@ -30,8 +29,10 @@ export class DocumentController extends BaseController {
                     throw new UnauthorizedError('User not authenticated', 'UNAUTHORIZED')
                 }
 
+                // Validate query parameters to ensure workspaceId is present and valid
                 const query = ValidationService.validateQuery(req.query, DocumentQuerySchema)
 
+                // Fetch documents for the specified workspace using the service layer, which will handle business logic and repository interactions
                 const documents = await this.service.findAll(query.workspaceId)
 
                 return this.createResponse({
@@ -64,28 +65,30 @@ export class DocumentController extends BaseController {
     }
 
     create = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<Document>> => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<CreateDocumentDTO>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new UnauthorizedError('User not authenticated', 'UNAUTHORIZED')
             }
 
-            //
+            // Validate query first to ensure workspaceId is present before validating body
             const query = ValidationService.validateQuery(req.query, DocumentQuerySchema)
 
-            //
+            //  Validate body after query to ensure workspaceId is available for any workspace-specific validation rules in the future
             const body = ValidationService.validateBody(req.body, CreateDocumentBodySchema)
 
-            const document = await this.service.create({
+            // Create the document using the service layer, which will handle business logic and repository interactions
+            const createdDocument: CreateDocumentDTO = await this.service.create({
                 title: body.title,
                 workspaceId: query.workspaceId,
                 createdBy: userId
             })
 
+            // Return the created document in the response, including the initial draft ID if needed
             return this.createResponse({
                 statusCode: STATUS_CODE.CREATED,
                 message: 'Document created successfully',
-                data: document
+                data: createdDocument
             })
         })
     }

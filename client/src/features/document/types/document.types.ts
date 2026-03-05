@@ -4,6 +4,7 @@ export interface DocumentDTO {
     createdBy: string
     workspaceId: string
     image: string | null
+    draftId: string
     createdAt: Date
     updatedAt: Date
 }

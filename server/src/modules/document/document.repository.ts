@@ -1,10 +1,11 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 
 import { docs, drafts } from '@/core/db/schema/document'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 
 import { CreateDocument, Document } from './document.types'
 import { users } from '@/core'
+import { Draft } from '../draft/draft.types'
 
 export interface IDocRepository {
     findAll(workspaceId: string): Promise<Document[]>
@@ -13,6 +14,8 @@ export interface IDocRepository {
     create(input: CreateDocument): Promise<Document>
     update(id: string, data: Partial<Document>): Promise<Document>
     delete(id: string): Promise<void>
+    transaction<T>(callback: (tx: DatabaseConnection) => Promise<T>): Promise<T>
+    createDocumentTransaction(tx: DatabaseConnection, input: CreateDocument): Promise<Document>
 }
 
 export class DocRepository implements IDocRepository {
@@ -26,21 +29,35 @@ export class DocRepository implements IDocRepository {
                 updatedAt: docs.updatedAt,
                 workspaceId: docs.workspaceId,
                 title: docs.title,
+                docImgUrl: docs.docImgUrl,
+                permission: docs.permission,
+                shareToken: docs.shareToken,
+                isArchived: docs.isArchived,
+                archivedAt: docs.archivedAt,
                 createdBy: sql<string>`${users.firstName} || ' ' || ${users.lastName}`
             })
             .from(docs)
             .innerJoin(users, eq(docs.createdBy, users.id))
-            .where(eq(docs.workspaceId, workspaceId))
-            .orderBy(docs.createdAt)
+            .where(and(eq(docs.workspaceId, workspaceId), eq(docs.isArchived, false)))
+            .orderBy(desc(docs.updatedAt))
     }
 
-    async findById(id: string, workspaceId: string): Promise<Document | null> {
-        const [doc] = await this.db
+    async findById(id: string, workspaceId: string): Promise<(Document & Draft) | null> {
+        const [result] = await this.db
             .select()
             .from(docs)
-            .where(and(eq(docs.id, id), eq(docs.workspaceId, workspaceId)))
+            .leftJoin(drafts, eq(docs.id, drafts.docId))
+            .where(
+                and(eq(docs.id, id), eq(docs.workspaceId, workspaceId), eq(docs.isArchived, false))
+            )
+            .orderBy(drafts.createdAt) // Ensure we get the earliest draft first
+            .limit(1) // We only need the document with its initial draft
 
-        return doc || null
+        if (!result) {
+            return null
+        }
+
+        return { ...result.docs, ...(result.drafts || {}) } as Document & Draft
     }
 
     async findWithDrafts(id: string, workspaceId: string) {
@@ -71,5 +88,18 @@ export class DocRepository implements IDocRepository {
 
     async delete(id: string): Promise<void> {
         await this.db.delete(docs).where(eq(docs.id, id))
+    }
+
+    async transaction<T>(callback: (tx: DatabaseConnection) => Promise<T>): Promise<T> {
+        return this.db.transaction(callback)
+    }
+
+    async createDocumentTransaction(
+        tx: DatabaseConnection,
+        input: CreateDocument
+    ): Promise<Document> {
+        const [doc] = await tx.insert(docs).values(input).returning()
+
+        return doc
     }
 }
