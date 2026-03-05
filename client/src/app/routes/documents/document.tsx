@@ -1,5 +1,6 @@
 import { FileText, Plus } from 'lucide-react'
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/features/document/components/empty-state'
@@ -10,6 +11,7 @@ import DocumentFilters from '@/features/document/components/document-filters'
 export default function DocumentsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'oldest'>('recent')
+    const navigate = useNavigate()
 
     const { data: workspaceResponse } = useDefaultWorkspace({
         queryConfig: {
@@ -94,6 +96,7 @@ export default function DocumentsPage() {
                                 key={doc.id}
                                 document={doc}
                                 workspaceId={workspaceId!}
+                                onDocumentClick={() => navigate(`${doc.id}/draft/${doc.draftId}`)}
                             />
                         ))}
                     </div>
