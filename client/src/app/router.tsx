@@ -23,7 +23,13 @@ const router = createBrowserRouter([
             },
             {
                 path: 'documents',
-                lazy: () => import('./routes/documents/document').then((module) => ({ Component: module.default }))
+                lazy: () => import('./routes/documents/document').then((module) => ({ Component: module.default })),
+                children: [
+                    {
+                        path: ':documentId/draft/:draftId',
+                        lazy: () => import('./routes/documents/draft').then((module) => ({ Component: module.default }))
+                    }
+                ]
             },
             {
                 path: 'magic-editor',
@@ -43,7 +49,7 @@ const router = createBrowserRouter([
                     {
                         path: 'upload',
                         lazy: () => import('./routes/uploader/media-scheduler').then((module) => ({ Component: module.default }))
-                    },
+                    }
                 ]
             },
             {
