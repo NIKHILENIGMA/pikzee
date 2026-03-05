@@ -46,7 +46,7 @@ export class ProjectService implements IProjectService {
 
         // Check if the user has permission to update the project
         if (!permission || (permission !== 'FULL_ACCESS' && permission !== 'EDIT')) {
-            throw new Error('User does not have permission to update the project')
+            throw new ForbiddenError('User does not have permission to update the project')
         }
 
         // Proceed to update the project
