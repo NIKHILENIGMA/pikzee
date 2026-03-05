@@ -36,6 +36,13 @@
       "when": 1772120189994,
       "tag": "0004_document_and_draft_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772733048627,
+      "tag": "0005_updated_docs_and_draft_schema",
+      "breakpoints": true
     }
   ]
 }
