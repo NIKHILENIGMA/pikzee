@@ -11,9 +11,10 @@ import { useDeleteDocument } from '../api'
 interface DocumentCardProps {
     document: DocumentDTO
     workspaceId: string
+    onDocumentClick: () => void
 }
 
-export default function DocumentCard({ document, workspaceId }: DocumentCardProps) {
+export default function DocumentCard({ document, workspaceId, onDocumentClick }: DocumentCardProps) {
     const { mutateAsync: deleteDocument, isPending } = useDeleteDocument({
         workspaceId
     })
@@ -38,7 +39,7 @@ export default function DocumentCard({ document, workspaceId }: DocumentCardProp
     }
 
     return (
-        <div className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer">
+        <div className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer" onClick={onDocumentClick}>
             {/* Image Container - 75% of space */}
             <div className="relative h-0 pb-[120%] overflow-hidden bg-primary/5">
                 {document.image ? (
