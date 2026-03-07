@@ -1,17 +1,32 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 
 import { drafts } from '@/core/db/schema/document'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 
-import { CreateDraft, Draft } from './draft.types'
+import { CreateDraft, Draft, DraftCoverImageType, DraftSettings } from './draft.types'
 
 export interface IDraftRepository {
     findAll(docId: string): Promise<Draft[]>
-    findById(id: string, docId: string): Promise<Draft | null>
-    create(input: CreateDraft): Promise<Draft>
+    findById(draftId: string, docId: string): Promise<Draft | null>
+    create(record: CreateDraft): Promise<Draft>
     update(id: string, data: Partial<CreateDraft>): Promise<Draft>
-    delete(id: string): Promise<void>
+    content(
+        draftId: string,
+        record: { docId: string; content: Partial<CreateDraft> }
+    ): Promise<void>
+    visual(
+        draftId: string,
+        record: {
+            icon: string | null
+            finalUrl: string | null
+            finalType: DraftCoverImageType
+            positionY?: number
+        }
+    ): Promise<Draft | null>
+    settings(draftId: string, newSettings: DraftSettings): Promise<DraftSettings | null>
+    delete(draftId: string): Promise<Draft | null>
     createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft>
+    markAsUpdated(draftId: string, userId: string): Promise<void>
 }
 
 export class DraftRepository implements IDraftRepository {
@@ -49,12 +64,81 @@ export class DraftRepository implements IDraftRepository {
         return updated
     }
 
-    async delete(id: string): Promise<void> {
-        await this.db.delete(drafts).where(eq(drafts.id, id))
+    async content(
+        draftId: string,
+        record: { docId: string; content: Partial<CreateDraft> }
+    ): Promise<void> {
+        await this.db
+            .update(drafts)
+            .set({
+                title: record.content.title,
+                content: record.content.content,
+                lastUpdatedBy: record.content.lastUpdatedBy,
+                updatedAt: record.content.updatedAt
+            })
+            .where(and(eq(drafts.id, draftId), eq(drafts.docId, record.docId)))
+    }
+
+    async visual(
+        draftId: string,
+        record: {
+            icon: string | null
+            finalUrl: string | null
+            finalType: DraftCoverImageType
+            positionY?: number
+        }
+    ): Promise<Draft | null> {
+        const [updatedDraft] = await this.db
+            .update(drafts)
+            .set({
+                icon: record.icon, // Only update icon if provided
+                coverImageUrl: record.finalUrl,
+                coverImageConfig: {
+                    type: record.finalType,
+                    positionY: record.positionY ?? 50, // Default to center
+                    focalPoint: { x: 50, y: record.positionY ?? 50 }
+                },
+                updatedAt: new Date()
+            })
+            .where(eq(drafts.id, draftId))
+            .returning()
+
+        return updatedDraft
+    }
+
+    async settings(draftId: string, newSettings: DraftSettings): Promise<DraftSettings | null> {
+        const [updatedDraft] = await this.db
+            .update(drafts)
+            .set({
+                settings: sql`${drafts.settings} || ${JSON.stringify(newSettings)}::jsonb`,
+                updatedAt: new Date()
+            })
+            .where(eq(drafts.id, draftId))
+            .returning({
+                settings: drafts.settings
+            })
+
+        return updatedDraft.settings ? (updatedDraft.settings as DraftSettings) : null
+    }
+
+    async delete(draftId: string): Promise<Draft | null> {
+        const [deletedDraft] = await this.db.delete(drafts).where(eq(drafts.id, draftId)).returning()
+
+        return deletedDraft ? deletedDraft : null
     }
 
     async createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft> {
         const [draft] = await tx.insert(drafts).values(input).returning()
         return draft
+    }
+
+    async markAsUpdated(draftId: string, userId: string): Promise<void> {
+        await this.db
+            .update(drafts)
+            .set({
+                lastUpdatedBy: userId,
+                updatedAt: new Date()
+            })
+            .where(and(eq(drafts.id, draftId), eq(drafts.lastUpdatedBy, userId)))
     }
 }

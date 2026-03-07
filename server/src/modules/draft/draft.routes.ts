@@ -4,19 +4,22 @@ import { clerkMiddleware } from '@/middlewares'
 
 import { draftController } from './draft.module'
 
-const router = Router()
-
-router.post('/drafts/generate-content', clerkMiddleware, draftController.generateContent)
+const router = Router({ mergeParams: true })
 
 router
-    .route('/documents/:docId/drafts')
+    .route('/')
     .post(clerkMiddleware, draftController.create)
     .get(clerkMiddleware, draftController.findALl)
 
 router
-    .route('/documents/:docId/drafts/:id')
+    .route('/:draftId')
     .get(clerkMiddleware, draftController.findById)
-    .put(clerkMiddleware, draftController.update)
     .delete(clerkMiddleware, draftController.delete)
+
+router.route('/:draftId/content').patch(clerkMiddleware, draftController.content)
+
+router.route('/:draftId/visual').patch(clerkMiddleware, draftController.visual)
+
+router.route('/:draftId/settings').patch(clerkMiddleware, draftController.delete)
 
 export default router
