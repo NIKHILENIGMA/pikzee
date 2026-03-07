@@ -24,6 +24,7 @@ export interface IMemberRepository {
     getByWorkspaceIdAndEmail(workspaceId: string, email: string): Promise<MemberRecord | null>
     getPermissionByUserId(userId: string): Promise<MemberPermission | null>
     getByWorkspaceIdAndUserId(workspaceId: string, userId: string): Promise<MemberDTO | null>
+    checkPermission(userId: string, workspaceId: string): Promise<MemberPermission | null>
 }
 
 export class MemberRepository implements IMemberRepository {
@@ -185,5 +186,20 @@ export class MemberRepository implements IMemberRepository {
             .limit(1)
 
         return member ? member.workspace_members : null
+    }
+
+    async checkPermission(userId: string, workspaceId: string): Promise<MemberPermission | null> {
+        const [memberPermission] = await this.db
+            .select()
+            .from(workspaceMembers)
+            .where(
+                and(
+                    eq(workspaceMembers.userId, userId),
+                    eq(workspaceMembers.workspaceId, workspaceId)
+                )
+            )
+            .limit(1)
+
+        return memberPermission ? memberPermission.permission : null
     }
 }
