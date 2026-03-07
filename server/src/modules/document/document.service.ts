@@ -1,16 +1,46 @@
-import { BadRequestError, ForbiddenError } from '@/util'
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/util'
+
 import { IDocRepository } from './document.repository'
-import { CreateDocumentDTO, CreateDocumentInput, Document } from './document.types'
+import {
+    CreateDocumentDTO,
+    CreateDocumentInput,
+    Document,
+    DocumentDTO,
+    DocumentVisibility,
+    ShareAction
+} from './document.types'
+
 import { IDraftRepository } from '../draft/draft.repository'
 import { IMemberRepository } from '../members/member.repository'
 import { MemberPermission } from '../members'
+import { generateToken } from '@/lib/encrypt-decrypt'
 
 export interface IDocService {
     create(input: CreateDocumentInput): Promise<CreateDocumentDTO>
-    update(id: string, workspaceId: string, data: Partial<Document>): Promise<Document>
     delete(id: string, workspaceId: string): Promise<void>
-    findById(id: string, workspaceId: string): Promise<Document>
-    findAll(workspaceId: string): Promise<Document[]>
+    findById(id: string, userId: string, workspaceId: string): Promise<DocumentDTO>
+    findAll(workspaceId: string, limit?: number, page?: number): Promise<Document[]>
+    archive(documentId: string, record: { userId: string; workspaceId: string }): Promise<void>
+    restore(documentId: string, record: { userId: string; workspaceId: string }): Promise<void>
+    share(
+        documentId: string,
+        record: {
+            userId: string
+            workspaceId: string
+            action: ShareAction
+        }
+    ): Promise<{
+        token: string | null
+    }>
+    changeVisibility(
+        id: string,
+        record: {
+            userId: string
+            workspaceId: string
+            visibility: DocumentVisibility
+        }
+    ): Promise<void>
+    getPublicDocument(id: string, options: { workspaceId: string; token: string }): Promise<any>
 }
 
 export class DocumentService implements IDocService {
@@ -52,48 +82,203 @@ export class DocumentService implements IDocService {
         return { ...doc, initialDraftId: draft.id } // Assuming draftId is the same as document id for the initial draft
     }
 
-    async update(id: string, workspaceId: string, data: Partial<Document>): Promise<Document> {
-        // Ensure document exists and belongs to workspace
-        const existingDoc = await this.existingDocCheck(id, workspaceId)
-        if (!existingDoc) {
-            throw new BadRequestError('Document not found', 'DOCUMENT_NOT_FOUND')
-        }
-
-        // Only title can be updated for now, but this can be extended in the future
-        const updated = await this.repository.update(id, data)
-        if (!updated) {
-            throw new BadRequestError('Failed to update document', 'DOCUMENT_UPDATE_FAILED')
-        }
-        return updated
-    }
-
     async delete(id: string, workspaceId: string): Promise<void> {
-        // Ensure document exists and belongs to workspace
-        await this.existingDocCheck(id, workspaceId)
+        const permissions = await this.memberRepository.checkPermission(id, workspaceId)
+        if (!permissions || (permissions !== 'FULL_ACCESS' && permissions !== 'EDIT')) {
+            throw new ForbiddenError('User does not have permission to delete this document')
+        }
 
-        // Perform deletion
-        await this.repository.delete(id)
+        const deletedDoc = await this.repository.delete(id)
+
+        if (!deletedDoc) {
+            const existingDoc = await this.repository.findDocById(id, workspaceId)
+            if (!existingDoc) {
+                throw new NotFoundError('Document not found', 'DOCUMENT_NOT_FOUND')
+            }
+            throw new ForbiddenError('User does not have permission to delete this document')
+        }
     }
 
-    async findById(id: string, workspaceId: string): Promise<Document> {
+    async findById(id: string, userId: string, workspaceId: string): Promise<DocumentDTO> {
         const document = await this.repository.findById(id, workspaceId)
 
         if (!document) {
-            throw new BadRequestError('Document not found', 'DOCUMENT_NOT_FOUND')
+            throw new NotFoundError('Document not found', 'DOCUMENT_NOT_FOUND')
         }
 
-        return document
+        if (document.docs.permission === 'private' && document.docs.createdBy !== userId) {
+            throw new ForbiddenError('User does not have permission to access this document')
+        }
+
+        return {
+            id: document.docs.id,
+            createdBy: document.docs.createdBy,
+            workspaceId: document.docs.workspaceId,
+            defaultDraftId: document.drafts ? document.drafts.id : ''
+        }
     }
 
     async findAll(workspaceId: string): Promise<Document[]> {
         return this.repository.findAll(workspaceId)
     }
 
-    private async existingDocCheck(id: string, workspaceId: string): Promise<Document> {
-        const existingDoc = await this.repository.findById(id, workspaceId)
-        if (!existingDoc) {
-            throw new BadRequestError('Document not found', 'DOCUMENT_NOT_FOUND')
+    async archive(
+        documentId: string,
+        record: { userId: string; workspaceId: string }
+    ): Promise<void> {
+        // Ensure the user has permission to archive the document
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['FULL_ACCESS', 'EDIT'],
+            'User does not have permission to archive this document'
+        )
+
+        // Archive the document by setting isArchived to true and archivedAt to current timestamp
+        const archivedDocument = await this.repository.update(documentId, {
+            isArchived: true,
+            archivedAt: new Date()
+        })
+
+        if (!archivedDocument) {
+            await this.ensureDocumentExists(documentId, record.workspaceId)
+
+            throw new ForbiddenError(
+                'User does not have permission to archive this document',
+                'DOCUMENT_ARCHIVE_FAILED'
+            )
         }
-        return existingDoc
+    }
+
+    async restore(
+        documentId: string,
+        record: { userId: string; workspaceId: string }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['FULL_ACCESS', 'EDIT'],
+            'User does not have permission to restore this document'
+        )
+
+        const archivedDocument = await this.repository.restore(documentId, record.workspaceId)
+
+        if (!archivedDocument) {
+            await this.ensureDocumentExists(documentId, record.workspaceId)
+
+            throw new ForbiddenError(
+                'User does not have permission to restore this document',
+                'DOCUMENT_RESTORE_FAILED'
+            )
+        }
+    }
+
+    async share(
+        documentId: string,
+        record: {
+            userId: string
+            workspaceId: string
+            action: ShareAction
+        }
+    ): Promise<{
+        token: string | null
+    }> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['FULL_ACCESS'],
+            'User does not have permission to share this document'
+        )
+
+        await this.ensureDocumentExists(documentId, record.workspaceId)
+
+        let newToken: string | null = null
+        if (record.action === 'generate') {
+            newToken = generateToken()
+
+            await this.repository.share(documentId, {
+                workspaceId: record.workspaceId,
+                token: newToken
+            })
+
+            return { token: newToken }
+        } else if (record.action === 'revoke') {
+            await this.repository.share(documentId, {
+                workspaceId: record.workspaceId,
+                token: newToken
+            })
+
+            return { token: newToken }
+        } else {
+            throw new BadRequestError('Invalid share action', 'INVALID_SHARE_ACTION')
+        }
+    }
+
+    async changeVisibility(
+        id: string,
+        record: {
+            userId: string
+            workspaceId: string
+            visibility: DocumentVisibility
+        }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['FULL_ACCESS'],
+            'User does not have permission to change visibility of this document'
+        )
+
+        const document = await this.repository.visibility(id, {
+            workspaceId: record.workspaceId,
+            visibility: record.visibility
+        })
+
+        if (document === null) {
+            // This will throw NotFoundError if document doesn't exist
+            await this.ensureDocumentExists(id, record.workspaceId)
+
+            throw new ForbiddenError(
+                'User does not have permission to change visibility of this document',
+                'CHANGE_DOCUMENT_VISIBILITY_FAILED'
+            )
+        }
+    }
+
+    async getPublicDocument(
+        id: string,
+        options: { workspaceId: string; token: string }
+    ): Promise<any> {
+        const document = await this.repository.getPublicDocument(id, options)
+
+        if (!document) {
+            throw new NotFoundError(
+                'Document not found or invalid share token',
+                'DOCUMENT_NOT_FOUND'
+            )
+        }
+
+        return document
+    }
+
+    private async ensurePermission(
+        userId: string,
+        workspaceId: string,
+        required: MemberPermission[],
+        errMessage = 'User does not have sufficient permissions to perform this action'
+    ) {
+        const permission = await this.memberRepository.checkPermission(userId, workspaceId)
+        // logger.info(
+        //     `Checking permissions for user ${userId} in workspace ${workspaceId}: ${permission}`
+        // )
+        if (!permission || !required.includes(permission)) {
+            throw new ForbiddenError(errMessage)
+        }
+    }
+
+    private async ensureDocumentExists(id: string, workspaceId: string) {
+        const doc = await this.repository.findDocById(id, workspaceId)
+        if (!doc) throw new NotFoundError('Document not found', 'DOCUMENT_NOT_FOUND')
+        return doc
     }
 }
