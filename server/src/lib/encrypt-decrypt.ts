@@ -31,3 +31,7 @@ export function decrypt(hash: string, secretKey: string): string {
 
     return decrypted
 }
+
+export function generateToken(): string {
+    return randomBytes(32).toString('hex')
+}
