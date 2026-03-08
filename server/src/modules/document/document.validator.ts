@@ -17,7 +17,10 @@ export const DocumentParamsSchema = z.object({
 
 // Body Schemas
 export const CreateDocumentBodySchema = z.object({
-    title: z.string().min(1, 'Title is required')
+    title: z.string().min(1, 'Title is required'),
+    visibility: z.enum(['private', 'workspace', 'public'], {
+        message: 'Visibility must be either "private", "workspace", or "public"'
+    }).optional()
 })
 
 export const UpdateDocumentBodySchema = z.object({

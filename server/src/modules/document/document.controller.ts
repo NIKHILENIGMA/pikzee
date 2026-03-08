@@ -128,7 +128,8 @@ export class DocumentController extends BaseController {
                 const createdDocument: CreateDocumentDTO = await this.service.create({
                     title: body.title,
                     workspaceId: query.workspaceId,
-                    createdBy: userId
+                    createdBy: userId,
+                    visibility: body.visibility || 'workspace' // Default to 'workspace' if not provided
                 })
 
                 // Return the created document in the response
