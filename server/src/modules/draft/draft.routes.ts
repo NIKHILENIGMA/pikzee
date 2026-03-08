@@ -20,6 +20,6 @@ router.route('/:draftId/content').patch(clerkMiddleware, draftController.content
 
 router.route('/:draftId/visual').patch(clerkMiddleware, draftController.visual)
 
-router.route('/:draftId/settings').patch(clerkMiddleware, draftController.delete)
+router.route('/:draftId/settings').patch(clerkMiddleware, draftController.settings)
 
 export default router
