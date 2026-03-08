@@ -3,8 +3,8 @@ import { BaseController, ValidationService } from '@/lib'
 
 import { IDraftService } from './draft.service'
 import {
-    CreateDraftBodySchema,
     DraftContentBodySchema,
+    DraftListParamsSchema,
     DraftParamsSchema,
     DraftQuerySchema,
     DraftSettingBodySchema,
@@ -32,9 +32,9 @@ export class DraftController extends BaseController {
                 throw new Error('User not authenticated')
             }
 
-            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            const params = ValidationService.validateParams(req.params, DraftListParamsSchema)
 
-            const drafts = await this.service.findAll(params.id)
+            const drafts = await this.service.findAll(params.docId)
 
             // Return standardized response
             return this.createResponse({
@@ -53,7 +53,7 @@ export class DraftController extends BaseController {
             }
             const params = ValidationService.validateParams(req.params, DraftParamsSchema)
 
-            const draft = await this.service.findById(params.id, params.id)
+            const draft = await this.service.findById(params.draftId, params.draftId)
 
             return this.createResponse({
                 statusCode: 200,
@@ -70,18 +70,16 @@ export class DraftController extends BaseController {
                 throw new Error('User not authenticated')
             }
 
-            // Validate request parameters, body, and query
-            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            // Validate request parameters, and query
+            const params = ValidationService.validateParams(req.params, DraftListParamsSchema)
 
             const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
 
-            const body = ValidationService.validateBody(req.body, CreateDraftBodySchema)
-
             // Call the service to create the draft
             const draft = await this.service.create(userId, query.workspaceId, {
-                ...body,
+                docId: params.docId,
                 ownerId: userId,
-                docId: params.id
+                lastUpdatedBy: userId
             })
 
             // Return standardized response
@@ -104,12 +102,12 @@ export class DraftController extends BaseController {
 
             await this.service.delete(params.draftId, {
                 userId,
-                docId: params.id,
-                workspaceId: query.workspaceId 
+                docId: params.docId,
+                workspaceId: query.workspaceId
             })
 
             return this.createResponse({
-                statusCode: 204,
+                statusCode: STATUS_CODE.NO_CONTENT,
                 message: 'Draft deleted successfully',
                 data: null
             })
@@ -132,7 +130,7 @@ export class DraftController extends BaseController {
             await this.service.content(params.draftId, {
                 userId,
                 workspaceId: query.workspaceId,
-                docId: params.id,
+                docId: params.docId,
                 content: {
                     title: body.title,
                     content: body.content,
