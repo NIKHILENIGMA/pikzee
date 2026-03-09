@@ -13,7 +13,7 @@ import {
 } from './draft.validator'
 import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
-import { Draft } from './draft.types'
+import { Draft, DraftSidebarDTO } from './draft.types'
 import { UnauthorizedError } from '@/util'
 import { IUnsplashService } from '@/config/unsplash/unsplash'
 
@@ -61,6 +61,36 @@ export class DraftController extends BaseController {
                 data: draft
             })
         })
+    }
+
+    getSidebar = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<DraftSidebarDTO[]>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+
+                const params = ValidationService.validateParams(req.params, DraftListParamsSchema)
+
+                const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+
+                const sidebarData = await this.service.getSidebar({
+                    userId,
+                    workspaceId: query.workspaceId,
+                    docId: params.docId
+                })
+
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Draft sidebar data retrieved successfully',
+                    data: sidebarData
+                })
+            }
+        )
     }
 
     create = async (req: Request, res: Response, next: NextFunction) => {

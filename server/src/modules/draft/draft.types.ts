@@ -13,3 +13,10 @@ export type DraftCoverImageType = 'S3' | 'URL' | 'unsplash'
 export const UpdateSettingsSchema = DraftSettingBodySchema.partial().strict();
 
 export type DraftSettings = z.infer<typeof DraftSettingBodySchema>;
+
+export type DraftSidebarDTO = {
+    id: string
+    title: string | null
+    icon: string | null
+    updatedAt: Date
+}

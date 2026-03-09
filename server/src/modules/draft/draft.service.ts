@@ -4,7 +4,13 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '@/util'
 import { openaiConfig } from '@/config/openai'
 
 import { IDraftRepository } from './draft.repository'
-import { CreateDraft, Draft, DraftCoverImageType, DraftSettings } from './draft.types'
+import {
+    CreateDraft,
+    Draft,
+    DraftCoverImageType,
+    DraftSettings,
+    DraftSidebarDTO
+} from './draft.types'
 
 import { MemberPermission } from '../members'
 import { IMemberRepository } from '../members/member.repository'
@@ -50,6 +56,11 @@ export interface IDraftService {
         },
         newSettings: DraftSettings
     ): Promise<void>
+    getSidebar(record: {
+        userId: string
+        workspaceId: string
+        docId: string
+    }): Promise<DraftSidebarDTO[]>
     generateContent(prompt: string): Promise<string | null>
 }
 
@@ -188,6 +199,23 @@ export class DraftService implements IDraftService {
         }
 
         // await this.repository.markAsUpdated(draftId, record.userId)
+    }
+
+    async getSidebar(record: {
+        userId: string
+        workspaceId: string
+        docId: string
+    }): Promise<DraftSidebarDTO[]> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['VIEW_ONLY', 'EDIT', 'FULL_ACCESS'],
+            'User does not have permission to view drafts'
+        )
+
+        const drafts = await this.repository.sidebar({ docId: record.docId })
+
+        return drafts
     }
 
     async generateContent(prompt: string): Promise<string | null> {

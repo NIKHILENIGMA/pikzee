@@ -1,9 +1,15 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 
 import { drafts } from '@/core/db/schema/document'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 
-import { CreateDraft, Draft, DraftCoverImageType, DraftSettings } from './draft.types'
+import {
+    CreateDraft,
+    Draft,
+    DraftCoverImageType,
+    DraftSettings,
+    DraftSidebarDTO
+} from './draft.types'
 
 export interface IDraftRepository {
     findAll(docId: string): Promise<Draft[]>
@@ -27,6 +33,7 @@ export interface IDraftRepository {
     delete(draftId: string): Promise<Draft | null>
     createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft>
     markAsUpdated(draftId: string, userId: string): Promise<void>
+    sidebar(record: { docId: string }): Promise<DraftSidebarDTO[]>
 }
 
 export class DraftRepository implements IDraftRepository {
@@ -122,7 +129,10 @@ export class DraftRepository implements IDraftRepository {
     }
 
     async delete(draftId: string): Promise<Draft | null> {
-        const [deletedDraft] = await this.db.delete(drafts).where(eq(drafts.id, draftId)).returning()
+        const [deletedDraft] = await this.db
+            .delete(drafts)
+            .where(eq(drafts.id, draftId))
+            .returning()
 
         return deletedDraft ? deletedDraft : null
     }
@@ -140,5 +150,20 @@ export class DraftRepository implements IDraftRepository {
                 updatedAt: new Date()
             })
             .where(and(eq(drafts.id, draftId), eq(drafts.lastUpdatedBy, userId)))
+    }
+
+    async sidebar(record: { docId: string }): Promise<DraftSidebarDTO[]> {
+        const sidebarDrafts = await this.db
+            .select({
+                id: drafts.id,
+                title: drafts.title ?? null,
+                icon: drafts.icon ?? null,
+                updatedAt: drafts.updatedAt
+            })
+            .from(drafts)
+            .where(eq(drafts.docId, record.docId))
+            .orderBy(desc(drafts.createdAt))
+
+        return sidebarDrafts
     }
 }

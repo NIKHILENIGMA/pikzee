@@ -11,6 +11,8 @@ router
     .post(clerkMiddleware, draftController.create)
     .get(clerkMiddleware, draftController.findALl)
 
+router.route('/sidebar').get(clerkMiddleware, draftController.getSidebar)
+
 router
     .route('/:draftId')
     .get(clerkMiddleware, draftController.findById)
