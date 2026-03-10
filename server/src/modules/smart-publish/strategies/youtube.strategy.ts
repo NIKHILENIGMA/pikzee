@@ -3,7 +3,7 @@ import { google } from 'googleapis'
 import { googleConfig } from '@/config/google'
 import { BadRequestError, DatabaseError, InternalServerError } from '@/util/StandardError'
 import { decrypt, encrypt } from '@/lib/encrypt-decrypt'
-import { SECRETE_KEY } from '@/config'
+import { logger, SECRETE_KEY } from '@/config'
 import Uploader from '../../uploader/uploader.service'
 
 import { SocialAccountRecord, SocialPostRecord } from '../smart-publish.types'
@@ -35,7 +35,6 @@ export class YouTubeStrategy extends BasePlatformStrategy {
 
     async verifyAuth(userId: string, code: string): Promise<void> {
         const oauth2Client = this.getOAuthClient()
-        // console.log(`Exchanging code for tokens for user ${userId} on YouTube`)
         const { tokens } = await oauth2Client.getToken(code)
         if (!tokens.access_token) {
             throw new InternalServerError('Token exchange failed', 'TOKEN_EXCHANGE_FAILED')
@@ -50,20 +49,18 @@ export class YouTubeStrategy extends BasePlatformStrategy {
             mine: true
         })
 
-        // console.log(`Fetched channel details for user ${userId} on YouTube: ${JSON.stringify(response.data)}`)
-
         const channel = response.data.items?.[0]
         if (!channel) {
             throw new BadRequestError('Channel not found', 'YOUTUBE_CHANNEL_FETCH_FAILED')
         }
-
+        // logger.info(`Successfully fetched channel ${channel.snippet?.title}`)
         const activeWorkspace = await this.workspaceRepository.getActiveWorkspace(userId)
         if (!activeWorkspace) {
             throw new DatabaseError('Active workspace not found for user', 'WORKSPACE_NOT_FOUND')
         }
-
+        // logger.info(`Found active workspace for user ${userId}, workspace ID: ${activeWorkspace.id}`)
         const encryptedRefreshToken = encrypt(tokens.refresh_token || '', SECRETE_KEY)
-
+        // logger.info(`Encrypted refresh token for user ${userId} on YouTube`)
         await this.smartPublishRepository.saveTokens({
             workspaceId: activeWorkspace.id,
             platform: 'YOUTUBE',
@@ -79,15 +76,17 @@ export class YouTubeStrategy extends BasePlatformStrategy {
             accessTokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
             userId: userId
         })
-        // console.log(`Successfully connected YouTube account for user ${userId}, channel: ${channel.snippet?.title}`)
+        // logger.info(
+        //     `Successfully connected YouTube account for user ${userId}, channel: ${channel.snippet?.title}`
+        // )
     }
 
     async publish(post: SocialPostRecord, account: SocialAccountRecord): Promise<string> {
         const oauth2Client = await this.getAuthenticatedClient(account)
+        // Create youtube client with authenticated OAuth2 client
         const youtube = google.youtube({ version: 'v3', auth: oauth2Client })
-
         const streams = await Uploader('S3').s3Stream(post.platformPostId!)
-
+        logger.info('Starting upload of video to YouTube')
         try {
             const response = await youtube.videos.insert({
                 part: ['snippet', 'status'],
@@ -110,7 +109,7 @@ export class YouTubeStrategy extends BasePlatformStrategy {
             if (!response.data.id) {
                 throw new InternalServerError('YouTube upload failed', 'YOUTUBE_UPLOAD_FAILED')
             }
-
+            logger.info('Successfully uploaded video to YouTube')
             return response.data.id
         } finally {
             if (streams && typeof (streams as any).destroy === 'function') {

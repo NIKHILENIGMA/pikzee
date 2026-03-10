@@ -15,6 +15,7 @@ import {
 
 import { IPublishService } from './smart-publish.service'
 import { ListSocialAccountsBody, SocialAccountDTO } from './smart-publish.types'
+// import { logger } from '@/config'
 
 export class SmartPublishController extends BaseController {
     constructor(private readonly service: IPublishService) {
@@ -36,9 +37,9 @@ export class SmartPublishController extends BaseController {
                     req.params,
                     SocialAccountParamsSchema
                 )
+                // logger.info(`Initiating social account connection for user ${userId} and platform ${params.platform}`)
                 await Promise.resolve() // Placeholder for any async operations needed in the future
                 const url: string = this.service.getAuthUrl(userId, params.platform)
-
                 return this.createResponse({
                     statusCode: STATUS_CODE.OK,
                     message: 'Social account connected successfully',
@@ -67,13 +68,13 @@ export class SmartPublishController extends BaseController {
                     req.params,
                     SocialAccountParamsSchema
                 )
-
+                // logger.info(`Verifying social account token for user ${userId} and platform ${params.platform}`)
                 // Validate query parameters
                 const query = ValidationService.validateQuery(
                     req.query,
                     SocialAccountTokenQuerySchema
                 )
-
+                // logger.info(`Received query parameters for token verification: ${JSON.stringify(query)}`)
                 // Verify the social account token and connect the account if valid
                 await this.service.verifySocialAccountToken(userId, params.platform, query.code)
 

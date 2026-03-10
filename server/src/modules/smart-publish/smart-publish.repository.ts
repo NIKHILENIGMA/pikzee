@@ -27,29 +27,10 @@ export class SmartPublishRepository implements IPublishRepository {
     constructor(private readonly db: DatabaseConnection) {}
 
     async saveTokens(record: CreateSocialAccountRecord): Promise<void> {
-        await this.db
-            .insert(socialAccounts)
-            .values({
-                ...record,
-                status: 'CONNECTED'
-            })
-            .onConflictDoUpdate({
-                target: [
-                    socialAccounts.workspaceId,
-                    socialAccounts.platformUserId,
-                    socialAccounts.platform
-                ],
-                set: {
-                    accessToken: record.accessToken,
-                    refreshToken: record.refreshToken,
-                    accessTokenExpiresAt: record.accessTokenExpiresAt,
-                    accountName: record.accountName,
-                    avatarUrl: record.avatarUrl,
-                    coverUrl: record.coverUrl,
-                    status: 'CONNECTED',
-                    updatedAt: new Date()
-                }
-            })
+        await this.db.insert(socialAccounts).values({
+            ...record,
+            status: 'CONNECTED'
+        })
     }
 
     async updateTokens(id: string, updates: Partial<SocialAccountRecord>): Promise<void> {
