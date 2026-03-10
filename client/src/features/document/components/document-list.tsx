@@ -10,7 +10,7 @@ interface DocumentListProps {
     workspaceId: string
 }
 
-const formatDate = (value: string) =>
+const formatDate = (value: string | Date) =>
     new Date(value).toLocaleDateString(undefined, {
         month: 'short',
         day: 'numeric',

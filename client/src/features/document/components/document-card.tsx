@@ -39,7 +39,7 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
     }
 
     return (
-        <div className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer" onClick={onDocumentClick}>
+        <div className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer">
             {/* Image Container - 75% of space */}
             <div className="relative h-0 pb-[120%] overflow-hidden bg-primary/5">
                 {document.image ? (
@@ -58,7 +58,9 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
             </div>
 
             {/* Content Container - 25% of space */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card via-card/95 to-transparent px-4 py-3">
+            <div
+                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card via-card/95 to-transparent px-4 py-3"
+                onClick={onDocumentClick}>
                 {/* Title */}
                 <h3 className="truncate text-sm font-semibold text-foreground line-clamp-2">{document.title}</h3>
 

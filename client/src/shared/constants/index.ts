@@ -5,6 +5,7 @@ export const INVITATIONS_API_BASE = '/invitations'
 export const PROJECTS_API_BASE = '/projects'
 export const SOCIAL_ACCOUNTS_API_BASE = '/social'
 export const DOCUMENT_API_BASE = '/documents'
+export const DRAFT_API_BASE = '/drafts'
 
 export interface SidebarItem {
     id: string

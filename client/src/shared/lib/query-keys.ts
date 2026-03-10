@@ -23,3 +23,9 @@ export const documentKeys = {
     lists: (workspaceId: string) => [...documentKeys.all(workspaceId), 'list'] as const,
     detail: (workspaceId: string, documentId: string) => [...documentKeys.all(workspaceId), 'detail', documentId] as const
 }
+
+export const draftKeys = {
+    all: (workspaceId: string) => [...workspaceKeys.all(), 'drafts', workspaceId] as const,
+    lists: (workspaceId: string) => [...draftKeys.all(workspaceId), 'list'] as const,
+    detail: (workspaceId: string, draftId: string) => [...draftKeys.all(workspaceId), 'detail', draftId] as const
+}
