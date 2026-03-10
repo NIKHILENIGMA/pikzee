@@ -11,13 +11,12 @@ import {
 import Uploader from '../uploader/uploader.service'
 import { getVideoPublishQueue } from '@/core/queue/video-publish.queue'
 import { StrategyFactory } from './strategies/strategy.factory'
-import { logger } from '@/config'
 
 export interface IPublishService {
     getAuthUrl(userId: string, platform: Platforms): string
     verifySocialAccountToken(userId: string, platform: Platforms, code: string): Promise<void>
     listSocialAccounts(workspaceId: string): Promise<SocialAccountDTO[]>
-    disconnectSocialAccount(id: string, platform: Platforms): Promise<void>
+    disconnectSocialAccount(accountId: string, platform: Platforms): Promise<void>
     prepareVideoForPlatform(
         userId: string,
         platform: Platforms,
@@ -27,17 +26,29 @@ export interface IPublishService {
     processVideoPublish(videoPostId: string, platform: Platforms): Promise<void>
 }
 
+/**
+ * Service for handling smart publishing to social platforms.
+ */
+
 export class SmartPublishService implements IPublishService {
     constructor(
         private readonly smartPublishRepository: IPublishRepository,
         private readonly strategyFactory: StrategyFactory
     ) {}
 
-    getAuthUrl(userId: string, platform: Platforms): string {
+    /**
+     * Returns the authentication URL for a given user and platform.
+     */
+
+    public getAuthUrl(userId: string, platform: Platforms): string {
         return this.strategyFactory.get(platform).getAuthUrl(userId)
     }
 
-    async verifySocialAccountToken(
+    /**
+     * Verifies the social account token for a user and platform.
+     */
+
+    public async verifySocialAccountToken(
         userId: string,
         platform: Platforms,
         code: string
@@ -45,11 +56,19 @@ export class SmartPublishService implements IPublishService {
         await this.strategyFactory.get(platform).verifyAuth(userId, code)
     }
 
-    async disconnectSocialAccount(id: string, platform: Platforms): Promise<void> {
-        await this.strategyFactory.get(platform).revoke(id)
+    /**
+     * Disconnects a social account from a platform.
+     */
+
+    public async disconnectSocialAccount(accountId: string, platform: Platforms): Promise<void> {
+        await this.strategyFactory.get(platform).revoke(accountId)
     }
 
-    async listSocialAccounts(workspaceId: string): Promise<SocialAccountDTO[]> {
+    /**
+     * Lists all social accounts for a workspace.
+     */
+
+    public async listSocialAccounts(workspaceId: string): Promise<SocialAccountDTO[]> {
         const accounts = await this.smartPublishRepository.listSocialAccounts(workspaceId)
 
         return accounts.map((account: SocialAccountRecord) => ({
@@ -64,6 +83,9 @@ export class SmartPublishService implements IPublishService {
         }))
     }
 
+    /**
+     * Prepares a video for upload to a social media platform by generating a presigned S3 URL and creating a database record for the upload.
+     */
     async prepareVideoForPlatform(
         userId: string,
         platform: Platforms,
@@ -95,6 +117,9 @@ export class SmartPublishService implements IPublishService {
         return { url: uploadUrl, postId: post.id }
     }
 
+    /**
+     * Publishes a video from S3 to the specified social media platform by adding a job to the video publish queue. The actual publishing logic is handled in the processVideoPublish method, which is executed by a worker consuming the queue. 
+     */
     public async publishVideoS3ToSocialMedia(postId: string, platform: Platforms): Promise<void> {
         await getVideoPublishQueue().add(
             'publish-video',
@@ -114,6 +139,10 @@ export class SmartPublishService implements IPublishService {
         )
     }
 
+    /**
+     * Processes the publishing of a video to a social media platform.
+     *  
+     */
     public async processVideoPublish(videoPostId: string, platform: Platforms): Promise<void> {
         const post = await this.smartPublishRepository.getSocialPostById(videoPostId)
         if (!post) {
@@ -126,7 +155,6 @@ export class SmartPublishService implements IPublishService {
         }
 
         try {
-            logger.info(`Starting publish process for post ${videoPostId} on platform ${platform}`)
             // Update status to UPLOADING before starting the publish process
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,
@@ -138,9 +166,6 @@ export class SmartPublishService implements IPublishService {
             // Publish the video to the social media platform
             const platformPostId = await this.strategyFactory.get(platform).publish(post, account)
 
-            logger.info(
-                `Successfully published post ${videoPostId} to platform ${platform} with platform post ID ${platformPostId}`
-            )
             // Update the post record with the new status and platform post ID
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,
@@ -149,15 +174,11 @@ export class SmartPublishService implements IPublishService {
                     platformPostId: platformPostId
                 }
             })
-
-            // Optional: Delete from S3 after successful publish
-            // await Uploader('S3').deleteObjectFromS3(post.platformPostId!)
         } catch (error) {
             await this.smartPublishRepository.updatePostUpload({
                 postId: videoPostId,
                 updates: {
                     status: 'FAILED'
-                    // Could add a 'failureReason' column to the DB
                 }
             })
             throw error // Re-throw for BullMQ retries
