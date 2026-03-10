@@ -5,6 +5,9 @@ import { MainLayout, DashboardLayout } from '@/components'
 import SettingsLayout from '@/components/layout/settings-layout'
 import ProtectedRoute from '@/components/shared/protected-route'
 import PublicRoute from '@/components/shared/public-route'
+// import Draft from './routes/documents/draft-layout'
+import DraftLayout from '@/components/layout/draft-layout'
+import DraftContent from '@/features/drafts/components/draft-content'
 
 const router = createBrowserRouter([
     // Protected Routes (Authenticated users only)
@@ -23,11 +26,15 @@ const router = createBrowserRouter([
             },
             {
                 path: 'documents',
-                lazy: () => import('./routes/documents/document').then((module) => ({ Component: module.default })),
+                lazy: () => import('./routes/documents/document').then((module) => ({ Component: module.default }))
+            },
+            {
+                path: '/documents/:documentId',
+                element: <DraftLayout />,
                 children: [
                     {
-                        path: ':documentId/draft/:draftId',
-                        lazy: () => import('./routes/documents/draft').then((module) => ({ Component: module.default }))
+                        path: 'pages/:pageId',
+                        element: <DraftContent />
                     }
                 ]
             },
