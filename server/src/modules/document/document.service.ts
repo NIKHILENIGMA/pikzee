@@ -17,7 +17,7 @@ import { generateToken } from '@/lib/encrypt-decrypt'
 
 export interface IDocService {
     create(input: CreateDocumentInput): Promise<CreateDocumentDTO>
-    delete(id: string, workspaceId: string): Promise<void>
+    delete(docId: string, record: { userId: string; workspaceId: string }): Promise<void>
     findById(id: string, userId: string, workspaceId: string): Promise<DocumentDTO>
     findAll(workspaceId: string, limit?: number, page?: number): Promise<Document[]>
     archive(documentId: string, record: { userId: string; workspaceId: string }): Promise<void>
@@ -63,7 +63,11 @@ export class DocumentService implements IDocService {
         // Use a transaction to ensure both document and initial draft are created successfully
         const [doc, draft] = await this.repository.transaction(async (tx) => {
             // Create the document
-            const createdDoc = await this.repository.createDocumentTransaction(tx, input)
+            const createdDoc = await this.repository.createDocumentTransaction(tx, {
+                ...input,
+                permission: input.visibility, 
+                createdAt: new Date(),
+            })
             if (!createdDoc) {
                 throw new BadRequestError('Failed to create document', 'DOCUMENT_CREATION_FAILED')
             }
@@ -82,16 +86,18 @@ export class DocumentService implements IDocService {
         return { ...doc, initialDraftId: draft.id } // Assuming draftId is the same as document id for the initial draft
     }
 
-    async delete(id: string, workspaceId: string): Promise<void> {
-        const permissions = await this.memberRepository.checkPermission(id, workspaceId)
-        if (!permissions || (permissions !== 'FULL_ACCESS' && permissions !== 'EDIT')) {
-            throw new ForbiddenError('User does not have permission to delete this document')
-        }
+    async delete(docId: string, record: { userId: string; workspaceId: string }): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['FULL_ACCESS'],
+            'User does not have permission to delete this document'
+        )
 
-        const deletedDoc = await this.repository.delete(id)
+        const deletedDoc = await this.repository.delete(docId)
 
         if (!deletedDoc) {
-            const existingDoc = await this.repository.findDocById(id, workspaceId)
+            const existingDoc = await this.repository.findDocById(docId, record.workspaceId)
             if (!existingDoc) {
                 throw new NotFoundError('Document not found', 'DOCUMENT_NOT_FOUND')
             }

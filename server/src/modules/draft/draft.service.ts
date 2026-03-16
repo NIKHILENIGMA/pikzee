@@ -17,7 +17,7 @@ import { IMemberRepository } from '../members/member.repository'
 
 export interface IDraftService {
     findAll(docId: string): Promise<Draft[]>
-    findById(id: string, docId: string): Promise<Draft>
+    findById(draftId: string, docId: string): Promise<Draft>
     create(userId: string, workspaceId: string, input: CreateDraft): Promise<Draft>
     update(id: string, data: Partial<CreateDraft>): Promise<Draft>
     delete(
@@ -79,8 +79,8 @@ export class DraftService implements IDraftService {
         return this.repository.findAll(docId)
     }
 
-    async findById(id: string, docId: string): Promise<Draft> {
-        const draft = await this.repository.findById(id, docId)
+    async findById(draftId: string, docId: string): Promise<Draft> {
+        const draft = await this.repository.findById(draftId, docId)
         if (!draft) {
             throw new BadRequestError('Draft not found')
         }

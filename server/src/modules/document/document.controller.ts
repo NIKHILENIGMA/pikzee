@@ -160,7 +160,10 @@ export class DocumentController extends BaseController {
             const query = ValidationService.validateQuery(req.query, DocumentQuerySchema)
 
             // Delete the document using the service layer
-            await this.service.delete(params.id, query.workspaceId)
+            await this.service.delete(params.id, {
+                userId,
+                workspaceId: query.workspaceId
+            })
 
             return this.createResponse({
                 statusCode: STATUS_CODE.OK,

@@ -53,7 +53,7 @@ export class DraftController extends BaseController {
             }
             const params = ValidationService.validateParams(req.params, DraftParamsSchema)
 
-            const draft = await this.service.findById(params.draftId, params.draftId)
+            const draft = await this.service.findById(params.draftId, params.docId)
 
             return this.createResponse({
                 statusCode: 200,
