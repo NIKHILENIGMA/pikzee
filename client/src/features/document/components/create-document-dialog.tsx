@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 import { useCreateDocument } from '../api'
-import { useNavigate } from 'react-router'
+// import { useNavigate } from 'react-router'
 
 interface CreateDocumentDialogProps {
     children: ReactNode
@@ -34,7 +34,7 @@ const CreateDocumentDialog: FC<CreateDocumentDialogProps> = ({ children, workspa
         workspaceId
     })
 
-    const navigate = useNavigate()
+    // const navigate = useNavigate()
 
     const handleCreateDocument = async () => {
         const normalizedTitle = formData.title.trim()
@@ -43,13 +43,13 @@ const CreateDocumentDialog: FC<CreateDocumentDialogProps> = ({ children, workspa
         }
 
         try {
-            const response = await createDocumentMutation({
+            await createDocumentMutation({
                 title: normalizedTitle,
                 workspaceId,
                 visibility: formData.visibility
             })
 
-            navigate(`/documents/${response.id}/drafts/${response.initialDraftId}`)
+            // navigate(`/documents/${response.id}/drafts/${response.initialDraftId}`)
             toast.success('Document created successfully')
             setFormData({
                 title: '',

@@ -1,12 +1,12 @@
 import { format } from 'date-fns'
-import { EllipsisVertical, FileText } from 'lucide-react'
+import { EllipsisVertical, FileText, Lock, Share2, ShieldHalf } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import DocumentMenu from './document-menu'
 
 import type { DocumentDTO } from '../types'
-import { useDeleteDocument } from '../api'
+import { useArchiveDocument } from '../api/archive-document'
 
 interface DocumentCardProps {
     document: DocumentDTO
@@ -15,7 +15,11 @@ interface DocumentCardProps {
 }
 
 export default function DocumentCard({ document, workspaceId, onDocumentClick }: DocumentCardProps) {
-    const { mutateAsync: deleteDocument, isPending } = useDeleteDocument({
+    const {
+        mutateAsync: archiveDocument,
+        isPending,
+        isError
+    } = useArchiveDocument({
         workspaceId
     })
 
@@ -25,15 +29,15 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
     // TODO: Add rename functionality - This will likely involve opening a dialog with an input field to enter the new name, and then calling an API to update the document title
     // const handleRenameDocument = () => {}
 
-    const handleDeleteDocument = async () => {
+    const handleArchiveDocument = async () => {
         try {
-            await deleteDocument({
+            await archiveDocument({
                 workspaceId,
                 documentId: document.id
             })
-            toast.success('Document deleted successfully.')
+            toast.success('Document archived successfully.')
         } catch (error) {
-            toast.error('Failed to delete document. Please try again.')
+            toast.error(isError ? `${(error as Error).message}` : 'Failed to archive document.')
             throw error
         }
     }
@@ -42,9 +46,9 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
         <div className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer">
             {/* Image Container - 75% of space */}
             <div className="relative h-0 pb-[120%] overflow-hidden bg-primary/5">
-                {document.image ? (
+                {document.docImgUrl ? (
                     <img
-                        src={document.image}
+                        src={document.docImgUrl}
                         alt={document.title}
                         className="absolute inset-0 h-full w-full object-cover"
                     />
@@ -55,6 +59,21 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
                 )}
                 {/* Overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute top-4 left-2.5">
+                    {document.permission === 'private' ? (
+                        <div className="text-sm text-muted-foreground/70 flex items-center space-x-1.5 bg-secondary px-1.5 py-0.5 rounded-sm">
+                            <Lock /> <span>private</span>
+                        </div>
+                    ) : document.permission === 'workspace' ? (
+                        <div className="text-sm text-muted-foreground/70 flex items-center space-x-1.5 bg-secondary px-1.5 py-0.5 rounded-sm">
+                            <Share2 /> <span>public</span>
+                        </div>
+                    ) : (
+                        <div className="text-sm text-muted-foreground/70 flex items-center space-x-1.5 bg-secondary px-1.5 py-0.5 rounded-sm">
+                            <ShieldHalf /> <span>workspace</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Content Container - 25% of space */}
@@ -73,8 +92,8 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
 
             {/* Menu Button */}
             <DocumentMenu
-                onDelete={handleDeleteDocument}
-                isDeleting={isPending}>
+                onArchive={handleArchiveDocument}
+                isArchive={isPending}>
                 <Button
                     variant={'ghost'}
                     size={'icon'}

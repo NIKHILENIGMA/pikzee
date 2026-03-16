@@ -1,4 +1,4 @@
-import { Edit2, Share2, Trash2 } from 'lucide-react'
+import { Edit2, LockKeyholeOpen, Share2, Trash2 } from 'lucide-react'
 import { type FC, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -7,11 +7,11 @@ import { Separator } from '@/components/ui/separator'
 
 interface DocumentMenuProps {
     children: ReactNode
-    onDelete?: () => void
-    isDeleting?: boolean
+    onArchive?: () => void
+    isArchive?: boolean
 }
 
-const DocumentMenu: FC<DocumentMenuProps> = ({ children, onDelete, isDeleting }) => {
+const DocumentMenu: FC<DocumentMenuProps> = ({ children, onArchive, isArchive }) => {
     return (
         <Popover>
             <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -31,14 +31,20 @@ const DocumentMenu: FC<DocumentMenuProps> = ({ children, onDelete, isDeleting })
                         <Edit2 className="h-4 w-4" />
                         Rename
                     </Button>
+                    <Button
+                        variant={'ghost'}
+                        className=" flex items-center justify-start gap-2">
+                        <LockKeyholeOpen className="h-4 w-4" />
+                        Visibility
+                    </Button>
                     <Separator className="my-0.5" />
                     <Button
                         variant={'ghost'}
                         className=" flex items-center justify-start gap-2"
-                        onClick={onDelete}
-                        disabled={isDeleting}>
+                        onClick={onArchive}
+                        disabled={isArchive}>
                         <Trash2 className="h-4 w-4" />
-                        {isDeleting ? 'Deleting...' : 'Delete'}
+                        {isArchive ? 'Archiving...' : 'Archive'}
                     </Button>
                 </div>
             </PopoverContent>
