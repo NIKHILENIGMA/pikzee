@@ -1,19 +1,17 @@
-import { type FC } from 'react'
-
-type Option = {
+type Option<T> = {
     label: string
-    value: string
+    value: T
     icon?: React.ReactNode
 }
 
-type SegmentGroupProps = {
+type SegmentGroupProps<T> = {
     title: string
-    options: Option[]
-    value: string
-    onChange: (v: string) => void
+    options: Option<T>[]
+    value: T
+    onChange: (v: T) => void
 }
 
-const SegmentGroup: FC<SegmentGroupProps> = ({ title, options, value, onChange }) => {
+const SegmentGroup = <T,>({ title, options, value, onChange }: SegmentGroupProps<T>) => {
     return (
         <div className="space-y-3">
             <p className="text-sm text-muted-foreground">{title}</p>
@@ -24,9 +22,9 @@ const SegmentGroup: FC<SegmentGroupProps> = ({ title, options, value, onChange }
 
                     return (
                         <button
-                            key={opt.value}
+                            key={opt.label}
                             onClick={() => onChange(opt.value)}
-                            className={`flex flex-col items-center justify-center rounded-xl px-3 py-3 text-sm font-medium transition w-full
+                            className={`flex flex-col items-center justify-center rounded-xl px-3 py-3 text-sm font-medium transition w-full cursor-pointer
               ${active ? 'bg-primary text-white' : 'bg-secondary text-foreground hover:bg-primary/10'}`}>
                             {opt.icon && <div className="text-lg">{opt.icon}</div>}
                             {opt.label}
