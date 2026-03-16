@@ -1,154 +1,154 @@
-import { useEffect, useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router'
 
-import { Button } from '@/components/ui/button'
+// import { useWorkspaceContext } from '@/features/workspace'
+import { cn } from '@/shared/lib/utils'
 
-import { mockDrafts } from '../constant'
 import { useDraftContext } from '../hooks/use-draft-context'
+// import { useGetDraft } from '../api/get-draft'
+
+import DraftContainer from './draft-container'
+import { DraftCover } from './draft-cover'
+import { DraftHeaderActions } from './draft-header-actions'
+import DraftMeta from './draft-meta'
+import DraftTitle from './draft-title'
+// import { EditorRoot } from '@/features/block/components/editor-root'
+import { mockDrafts } from '../constant'
+import type { DraftDTO, DraftSettingType } from '../types/draft.types'
 import { DraftSettings } from './draft-settings'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Image, ScanFace, Settings } from 'lucide-react'
+// import { toast } from 'sonner'
+// import { useUpdateDraftVisual } from '../api/update-visual'
+
+const DEFAULT_SETTINGS: DraftSettingType = {
+    fontStyle: 'sans',
+    fontSize: '25px',
+    isFullWidth: false,
+    showCover: true,
+    showIcon: true,
+    showOwner: true,
+    showLastModified: true
+}
 
 export default function DraftContent() {
+    // const { id: workspaceId } = useWorkspaceContext()
     const { draft, updateDraft } = useDraftContext()
-    const [settingsOpen, setSettingsOpen] = useState(false)
+    const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
     const { pageId } = useParams<{ documentId: string; pageId: string }>()
 
-    const data = mockDrafts.find((d) => d.id === pageId)
+    function getDraftDataById(pageId: string): DraftDTO {
+        const draftdetails = mockDrafts.find((draft) => draft.id === pageId)
+        if (!draftdetails) {
+            throw new Error('Draft not found')
+        }
 
-    useEffect(() => {
-        if (!data) return
-
-        updateDraft(data)
-    }, [data])
-
-    if (!data) return <div>Loading...</div>
-
-    const settings = draft.settings || {
-        fontStyle: 'mono',
-        fontSize: '16px',
-        isFullWidth: false,
-        showCover: true,
-        showOwner: true,
-        showIcon: true,
-        showLastModified: true
+        return draftdetails
     }
 
-    // Determine if icon is over the cover
-    const iconOverCover = settings.showCover && draft.coverImageUrl && settings.showIcon && draft.icon;
+    // const { data: draftData, isLoading } = useGetDraft({
+    //     workspaceId,
+    //     docId: documentId!,
+    //     draftId: pageId!
+    // })
+
+    // const {
+    //     mutateAsync: updateVisual,
+    //     isPending: visualLoading,
+    //     isError
+    // } = useUpdateDraftVisual({
+    //     workspaceId
+    // })
+
+    // const handleIconUpdate = async (icon: string) => {
+    //     try {
+    //         await updateVisual({
+    //             workspaceId,
+    //             docId: documentId!,
+    //             draftId: pageId!,
+    //             icon
+    //         })
+
+    //         toast.success('Icon updated successfully!')
+    //     } catch (error) {
+    //         toast.error(isError ? `${(error as Error)?.message}` : 'Failed to update icon')
+    //     }
+    // }
+
+    // useEffect(() => {
+    //     if (draftData && draft.id !== draftData.id && !isLoading) {
+    //         updateDraft(draftData)
+    //     }
+    // }, [draft.id, draftData, isLoading, updateDraft])
+
+    useEffect(() => {
+        if (draft.id !== pageId) {
+            // Optional: Add a check to prevent unnecessary updates
+            updateDraft(getDraftDataById(pageId!))
+        }
+    }, [draft.id, pageId, updateDraft])
+
+    // Merge default settings with draft settings
+    const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...(draft.settings || {}) }), [draft.settings])
+
+    // if (isLoading) {
+    //     return (
+    //         <div className="flex flex-col items-center justify-center h-full gap-4">
+    //             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    //             <p className="text-sm text-muted-foreground">Loading draft...</p>
+    //         </div>
+    //     )
+    // }
 
     return (
-        <div
-            style={{
-                fontFamily: settings.fontStyle,
-                fontSize: settings.fontSize
-            }}>
+        <DraftContainer settings={settings}>
             {/* Cover + Icon overlay */}
-            {settings.showCover && draft.coverImageUrl ? (
-                <div
-                    className="relative mb-6 h-52 w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${draft.coverImageUrl})` }}>
-                    {settings.showIcon && draft.icon && (
-                        <div
-                            className="absolute left-[15%] -bottom-10 z-10 flex items-center justify-center w-20 h-20 text-4xl"
-                        >
-                            {draft.icon}
-                        </div>
-                    )}
-                </div>
-            ) : null}
+            <DraftCover
+                draft={draft}
+                settings={settings}
+                // isIconLoading={visualLoading}
+                // handleIconUpdate={handleIconUpdate}
+            />
 
             <div
-                className={`pb-2 ` + (settings.isFullWidth ? 'px-16' : 'max-w-4xl mx-auto') + (iconOverCover ? ' ml-[15%]' : '')}
-            >
+                className={cn(
+                    'transition-[max-width,padding-left,padding-right] ease-in-out',
+                    !!settings.isFullWidth ? 'px-8 max-w-full' : 'max-w-4xl mx-auto px-4',
+                    settings.showIcon && draft.icon && 'pt-12'
+                )}
+                style={{
+                    transition: 'max-width 0.3s ease, padding-left 0.3s ease, padding-right 0.3s ease',
+                    
+                }}>
                 {/* Controls */}
-                <div className="flex gap-2 mt-5 mb-3">
-                    {settings.showIcon && !draft.icon && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => updateDraft({ icon: '🚀' })}>
-                            <ScanFace /> Add Icon
-                        </Button>
-                    )}
-
-                    {settings.showCover && !draft.coverImageUrl && (
-                        <Button
-                            variant="ghost"
-                            onClick={() =>
-                                updateDraft({
-                                    coverImageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb'
-                                })
-                            }>
-                            <Image />Add Cover
-                        </Button>
-                    )}
-
-                    <Button
-                        variant="ghost"
-                        onClick={() => setSettingsOpen(true)}>
-                        <Settings />Settings
-                    </Button>
-                </div>
-
-                {/* Icon (if no cover) */}
-                {(!settings.showCover || !draft.coverImageUrl) && settings.showIcon && draft.icon && (
-                    <div
-                        className="text-4xl mb-2"
-                        style={{ fontFamily: settings.fontStyle }}>
-                        {draft.icon}
-                    </div>
-                )}
-
-                {(settings.showOwner || settings.showLastModified) && (
-                    <div
-                        className="flex items-center gap-3 mb-8"
-                        style={{ fontFamily: settings.fontStyle }}>
-                        {settings.showOwner && (
-                            <>
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                                    <AvatarFallback className="bg-blue-600 text-white text-xs">AS</AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm text-gray-400">Abhay Sharma</span>
-                            </>
-                        )}
-                        {settings.showOwner && settings.showLastModified && <span className="text-sm text-gray-500">•</span>}
-                        {settings.showLastModified && <span className="text-sm text-gray-500">Last updated Today at 8:49 pm</span>}
-                    </div>
-                )}
-
-                {/* Title */}
-                <input
-                    className="w-full text-4xl font-bold outline-none"
-                    placeholder={'Untitled'}
-                    value={draft.title !== null ? draft.title : ''}
-                    onChange={(e) => updateDraft({ title: e.target.value })}
-                    style={{ fontFamily: settings.fontStyle, fontSize: settings.fontSize }}
+                <DraftHeaderActions
+                    draft={draft}
+                    settings={settings}
+                    onUpdateDraft={updateDraft}
+                    onOpenSettings={() => setSettingsOpen(true)}
                 />
 
-                {/* Editor Placeholder */}
-                <div className="mt-6 min-h-[400px] text-muted-foreground">Start writing your content...</div>
+                {/* Owner Details */}
+                <DraftMeta
+                    draft={draft}
+                    settings={settings}
+                />
 
+                {/* Title */}
+                <DraftTitle
+                    draft={draft}
+                    settings={settings}
+                />
+
+                {/* Editor */}
+                {/* <EditorRoot /> */}
+
+                {/* Settings Panel */}
                 <DraftSettings
                     isOpen={settingsOpen}
                     onClose={() => setSettingsOpen(false)}
                     settings={settings}
-                    onUpdate={(field, value) =>
-                        updateDraft({
-                            settings: {
-                                fontStyle: draft.settings?.fontStyle ?? 'inter',
-                                fontSize: draft.settings?.fontSize ?? '16px',
-                                isFullWidth: draft.settings?.isFullWidth ?? false,
-                                showCover: draft.settings?.showCover ?? true,
-                                showOwner: draft.settings?.showOwner ?? true,
-                                showIcon: draft.settings?.showIcon ?? true,
-                                showLastModified: draft.settings?.showLastModified ?? true,
-                                [field]: value
-                            }
-                        })
-                    }
+                    
                 />
             </div>
-        </div>
+        </DraftContainer>
     )
 }
