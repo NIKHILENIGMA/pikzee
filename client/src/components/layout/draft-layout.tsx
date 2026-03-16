@@ -1,18 +1,34 @@
-import { Outlet } from "react-router"
-import DraftSidebar from "../../features/drafts/components/draft-sidebar"
-import { DraftProvider } from "../../features/drafts/context/draft-context"
-
+import { Outlet } from 'react-router'
+import DraftSidebar from '../../features/drafts/components/draft-sidebar'
+import { DraftProvider } from '../../features/drafts/context/draft-context'
+import { useDefaultWorkspace, WorkspaceProvider } from '@/features'
 
 export default function DraftLayout() {
-  return (
-    <DraftProvider>
-      <div className="flex h-screen w-full">
-        <DraftSidebar />
+    const workspaceResponse = useDefaultWorkspace({
+        queryConfig: {
+            staleTime: 10 * 60 * 1000, // 10 minutes
+            gcTime: 15 * 60 * 1000 // 15 minutes
+        }
+    })
 
-        <main className="flex-1 overflow-y-auto minimal-scrollbar">
-          <Outlet />
-        </main>
-      </div>
-    </DraftProvider>
-  )
+    // Optional: handle loading and error states
+    if (workspaceResponse.isLoading) {
+        return <div className="flex items-center justify-center h-screen">Loading workspace...</div>
+    }
+    if (workspaceResponse.isError) {
+        return <div className="flex items-center justify-center h-screen text-red-500">Failed to load workspace.</div>
+    }
+
+    return (
+        <WorkspaceProvider workspace={workspaceResponse.data?.data ?? null}>
+            <DraftProvider>
+                <div className="flex h-screen w-full">
+                    <DraftSidebar />
+                    <main className="flex-1 overflow-y-auto p-2">
+                        <Outlet />
+                    </main>
+                </div>
+            </DraftProvider>
+        </WorkspaceProvider>
+    )
 }
