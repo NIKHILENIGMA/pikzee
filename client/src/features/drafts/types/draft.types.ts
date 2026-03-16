@@ -1,6 +1,10 @@
-export type DraftSettings = {
-    fontStyle: string
-    fontSize: string
+export type FontStyle = 'sans' | 'serif' | 'mono'
+export type FontSize = '16px' | '25px' | '36px'
+export type PageWidth = 'default' | 'full'
+
+export type DraftSettingType = {
+    fontStyle: FontStyle
+    fontSize: FontSize
     isFullWidth: boolean
     showCover: boolean
     showIcon: boolean
@@ -33,7 +37,7 @@ export type DraftDTO = {
     icon: string | null
     coverImageUrl: string | null
     coverImageConfig: DraftCoverImageConfig | null
-    settings: DraftSettings | null
+    settings: DraftSettingType | null
     lastUpdatedBy: string
     createdAt: Date
     updatedAt: Date
