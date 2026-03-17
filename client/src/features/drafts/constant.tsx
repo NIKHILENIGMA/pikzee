@@ -1,6 +1,6 @@
 import { Clock, Image, Smile, User } from 'lucide-react'
 
-import type { DraftDTO, DraftSettingType, DraftSidebarDTO, FontSize, FontStyle, PageWidth } from './types/draft.types'
+import type { DraftSettingType, DraftSidebarDTO, FontSize, FontStyle, PageWidth } from './types/draft.types'
 
 export const pages: DraftSidebarDTO[] = [
     {
@@ -17,66 +17,66 @@ export const pages: DraftSidebarDTO[] = [
     }
 ]
 
-export const mockDrafts: DraftDTO[] = [
-    {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        ownerId: '123e4567-e89b-12d3-a456-426614174000',
-        title: 'Some random title',
-        docId: '123e4567-e89b-12d3-a456-426614174001',
-        content: {},
-        icon: '❤️',
-        coverImageUrl: null,
-        coverImageConfig: {
-            type: 'S3',
-            positionY: 10,
-            focalPoint: {
-                x: 0,
-                y: 0
-            }
-        },
-        settings: {
-            fontStyle: 'serif',
-            fontSize: '25px',
-            isFullWidth: false,
-            showCover: true,
-            showOwner: true,
-            showIcon: true,
-            showLastModified: true
-        },
-        lastUpdatedBy: '',
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: '660e8400-e29b-41d4-a716-446655440001',
-        ownerId: '123e4567-e89b-12d3-a456-426614174000',
-        title: null,
-        docId: '123e4567-e89b-12d3-a456-426614174001',
-        content: {},
-        icon: '📄',
-        coverImageUrl: null,
-        coverImageConfig: {
-            type: 'S3',
-            positionY: 80,
-            focalPoint: {
-                x: 0,
-                y: 0
-            }
-        },
-        settings: {
-            fontStyle: 'mono',
-            fontSize: '25px',
-            isFullWidth: false,
-            showCover: true,
-            showOwner: true,
-            showIcon: true,
-            showLastModified: true
-        },
-        lastUpdatedBy: '',
-        createdAt: new Date(),
-        updatedAt: new Date()
-    }
-]
+// export const mockDrafts: DraftDTO[] = [
+//     {
+//         id: '550e8400-e29b-41d4-a716-446655440000',
+//         ownerId: '123e4567-e89b-12d3-a456-426614174000',
+//         title: 'Some random title',
+//         docId: '123e4567-e89b-12d3-a456-426614174001',
+//         content: {},
+//         icon: '❤️',
+//         coverImageUrl: null,
+//         coverImageConfig: {
+//             type: 'S3',
+//             positionY: 10,
+//             focalPoint: {
+//                 x: 0,
+//                 y: 0
+//             }
+//         },
+//         settings: {
+//             fontStyle: 'serif',
+//             fontSize: '25px',
+//             isFullWidth: false,
+//             showCover: true,
+//             showOwner: true,
+//             showIcon: true,
+//             showLastModified: true
+//         },
+//         lastUpdatedBy: '',
+//         createdAt: new Date(),
+//         updatedAt: new Date()
+//     },
+//     {
+//         id: '660e8400-e29b-41d4-a716-446655440001',
+//         ownerId: '123e4567-e89b-12d3-a456-426614174000',
+//         title: null,
+//         docId: '123e4567-e89b-12d3-a456-426614174001',
+//         content: {},
+//         icon: '📄',
+//         coverImageUrl: null,
+//         coverImageConfig: {
+//             type: 'S3',
+//             positionY: 80,
+//             focalPoint: {
+//                 x: 0,
+//                 y: 0
+//             }
+//         },
+//         settings: {
+//             fontStyle: 'mono',
+//             fontSize: '25px',
+//             isFullWidth: false,
+//             showCover: true,
+//             showOwner: true,
+//             showIcon: true,
+//             showLastModified: true
+//         },
+//         lastUpdatedBy: '',
+//         createdAt: new Date(),
+//         updatedAt: new Date()
+//     }
+// ]
 
 type Option<T> = {
     label: string
