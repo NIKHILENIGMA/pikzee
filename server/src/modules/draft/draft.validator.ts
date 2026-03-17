@@ -31,13 +31,13 @@ export const DraftEmojiBodySchema = z.object({
 
 export const DraftSettingBodySchema = z
     .object({
-        fontStyle: z.enum(['inter', 'serif', 'mono']).default('inter'),
-        fontSize: z.enum(['10px', '16px', '24px']).default('16px'),
-        isFullWidth: z.boolean().default(false),
-        showCover: z.boolean().default(true),
-        showIcon: z.boolean().default(true),
-        showOwner: z.boolean().default(true),
-        showLastModified: z.boolean().default(true)
+        fontStyle: z.enum(['sans', 'serif', 'mono']).optional(),
+        fontSize: z.enum(['16px', '25px', '36px']).optional(),
+        isFullWidth: z.boolean().optional(),
+        showCover: z.boolean().optional(),
+        showIcon: z.boolean().optional(),
+        showOwner: z.boolean().optional(),
+        showLastModified: z.boolean().optional()
     })
     .strict()
 

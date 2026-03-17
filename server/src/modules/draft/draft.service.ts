@@ -256,6 +256,7 @@ export class DraftService implements IDraftService {
 
         await this.repository.settings(draftId, newSettings)
 
+        // Mark draft as updated after changing settings
         await this.repository.markAsUpdated(draftId, record.userId)
     }
 
