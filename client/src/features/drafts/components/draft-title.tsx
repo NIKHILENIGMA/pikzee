@@ -1,22 +1,31 @@
-import type { FC } from 'react'
-import type { DraftDTO, DraftSettingType } from '../types/draft.types'
-import { useDraftContext } from '../hooks/use-draft-context'
+import { useRef, type FC } from 'react'
+import type { DraftSettingType } from '../types/draft.types'
 
 interface DraftTitleProps {
     settings: DraftSettingType
-    draft: DraftDTO
+    title: string
+    onTitleChange: (title: string) => void
 }
 
-const DraftTitle: FC<DraftTitleProps> = ({ settings, draft }) => {
-    const { updateDraft } = useDraftContext()
+const DraftTitle: FC<DraftTitleProps> = ({ settings, title, onTitleChange }) => {
+    const ref = useRef<HTMLInputElement>(null)
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            ref.current?.blur()
+        }
+    }
 
     return (
-        <div className='w-full'>
+        <div className="w-full">
             <input
+                ref={ref}
                 className="w-full text-4xl font-bold outline-none bg-transparent"
                 placeholder="Untitled"
-                value={draft.title ?? ''}
-                onChange={(e) => updateDraft({ title: e.target.value })}
+                value={title}
+                onChange={(e) => onTitleChange(e.target.value)}
+                onKeyDown={handleKeyDown}
                 style={{ fontFamily: `var(--font-${settings.fontStyle})`, fontSize: settings.fontSize }}
             />
         </div>

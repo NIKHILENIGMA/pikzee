@@ -1,23 +1,24 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router'
 
-// import { useWorkspaceContext } from '@/features/workspace'
 import { cn } from '@/shared/lib/utils'
+import { EditorRoot } from '@/features/block/components/editor-root'
+import { useWorkspaceContext } from '@/features/workspace'
 
 import { useDraftContext } from '../hooks/use-draft-context'
-// import { useGetDraft } from '../api/get-draft'
+import { useGetDraft } from '../api/get-draft'
 
 import DraftContainer from './draft-container'
 import { DraftCover } from './draft-cover'
 import { DraftHeaderActions } from './draft-header-actions'
 import DraftMeta from './draft-meta'
 import DraftTitle from './draft-title'
-// import { EditorRoot } from '@/features/block/components/editor-root'
-import { mockDrafts } from '../constant'
-import type { DraftDTO, DraftSettingType } from '../types/draft.types'
+import type { DraftSettingType } from '../types/draft.types'
 import { DraftSettings } from './draft-settings'
-// import { toast } from 'sonner'
-// import { useUpdateDraftVisual } from '../api/update-visual'
+import { X } from 'lucide-react'
+import { useDebounce } from '@/shared/hooks/useDebounce'
+import { useUpdateDraftContent } from '../api/update-content'
+// import { mockDrafts } from '../constant'
 
 const DEFAULT_SETTINGS: DraftSettingType = {
     fontStyle: 'sans',
@@ -30,82 +31,99 @@ const DEFAULT_SETTINGS: DraftSettingType = {
 }
 
 export default function DraftContent() {
-    // const { id: workspaceId } = useWorkspaceContext()
+    const { id: workspaceId } = useWorkspaceContext()
     const { draft, updateDraft } = useDraftContext()
     const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
-    const { pageId } = useParams<{ documentId: string; pageId: string }>()
+    const { pageId, documentId } = useParams<{ documentId: string; pageId: string }>()
+    const [error, setError] = useState<string | null>(null)
+    const [editorContent, setEditorContent] = useState<{
+        title: string
+        content: string
+    }>({
+        title: '',
+        content: ''
+    })
+    // Debounce title and content to avoid excessive API calls while typing
+    const debouncedTitle = useDebounce({
+        value: editorContent.title,
+        delay: 1000
+    })
 
-    function getDraftDataById(pageId: string): DraftDTO {
-        const draftdetails = mockDrafts.find((draft) => draft.id === pageId)
-        if (!draftdetails) {
-            throw new Error('Draft not found')
-        }
+    const debouncedContent = useDebounce({
+        value: editorContent.content,
+        delay: 1500
+    })
 
-        return draftdetails
+    const { data: draftData, isLoading: draftLoading } = useGetDraft({
+        workspaceId,
+        docId: documentId!,
+        draftId: pageId!
+    })
+
+    const { mutateAsync: updateDraftContent, isPending: isUpdatingDraftContent } = useUpdateDraftContent({
+        workspaceId,
+        draftId: pageId!
+    })
+
+    const handleClearErrorMsg = () => {
+        setError(null)
     }
 
-    // const { data: draftData, isLoading } = useGetDraft({
-    //     workspaceId,
-    //     docId: documentId!,
-    //     draftId: pageId!
-    // })
-
-    // const {
-    //     mutateAsync: updateVisual,
-    //     isPending: visualLoading,
-    //     isError
-    // } = useUpdateDraftVisual({
-    //     workspaceId
-    // })
-
-    // const handleIconUpdate = async (icon: string) => {
-    //     try {
-    //         await updateVisual({
-    //             workspaceId,
-    //             docId: documentId!,
-    //             draftId: pageId!,
-    //             icon
-    //         })
-
-    //         toast.success('Icon updated successfully!')
-    //     } catch (error) {
-    //         toast.error(isError ? `${(error as Error)?.message}` : 'Failed to update icon')
-    //     }
-    // }
-
-    // useEffect(() => {
-    //     if (draftData && draft.id !== draftData.id && !isLoading) {
-    //         updateDraft(draftData)
-    //     }
-    // }, [draft.id, draftData, isLoading, updateDraft])
+    useEffect(() => {
+        if (draftData && !draftLoading) {
+            const hasIdChanged = draft.id !== draftData.id
+            const hasIconChanged = draft.icon !== draftData.icon
+            const hasCoverChanged = draft.coverImageUrl !== draftData.coverImageUrl
+            const hasSettingsChanged = JSON.stringify(draft.settings) !== JSON.stringify(draftData.settings)
+            const hasCoverConfigChanged = JSON.stringify(draft.coverImageConfig) !== JSON.stringify(draftData.coverImageConfig)
+            if (hasIdChanged) {
+                updateDraft(draftData)
+            } else if (hasIconChanged || hasCoverChanged || hasSettingsChanged || hasCoverConfigChanged) {
+                updateDraft({
+                    icon: draftData.icon,
+                    coverImageUrl: draftData.coverImageUrl,
+                    coverImageConfig: draftData.coverImageConfig,
+                    settings: draftData.settings
+                })
+            }
+        }
+    }, [draft.id, draft.icon, draft.coverImageUrl, draft.settings, draftData, draftLoading, updateDraft])
 
     useEffect(() => {
-        if (draft.id !== pageId) {
-            // Optional: Add a check to prevent unnecessary updates
-            updateDraft(getDraftDataById(pageId!))
+        if (debouncedTitle && debouncedContent) {
+            updateDraftContent({
+                workspaceId,
+                docId: documentId!,
+                draftId: pageId!,
+                title: debouncedTitle,
+                content: debouncedContent
+            })
         }
-    }, [draft.id, pageId, updateDraft])
+    }, [debouncedTitle, debouncedContent, workspaceId, documentId, pageId])
 
     // Merge default settings with draft settings
     const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...(draft.settings || {}) }), [draft.settings])
 
-    // if (isLoading) {
-    //     return (
-    //         <div className="flex flex-col items-center justify-center h-full gap-4">
-    //             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    //             <p className="text-sm text-muted-foreground">Loading draft...</p>
-    //         </div>
-    //     )
-    // }
+    if (draftLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-sm text-muted-foreground">Loading draft content...</p>
+            </div>
+        )
+    }
 
     return (
         <DraftContainer settings={settings}>
+            {error && (
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4 flex items-center justify-between">
+                    <p className="text-sm">{error}</p> <X onClick={handleClearErrorMsg} />
+                </div>
+            )}
             {/* Cover + Icon overlay */}
             <DraftCover
                 draft={draft}
                 settings={settings}
-                // isIconLoading={visualLoading}
-                // handleIconUpdate={handleIconUpdate}
             />
 
             <div
@@ -115,15 +133,15 @@ export default function DraftContent() {
                     settings.showIcon && draft.icon && 'pt-12'
                 )}
                 style={{
-                    transition: 'max-width 0.3s ease, padding-left 0.3s ease, padding-right 0.3s ease',
-                    
+                    transition: 'max-width 0.3s ease, padding-left 0.3s ease, padding-right 0.3s ease'
                 }}>
                 {/* Controls */}
                 <DraftHeaderActions
                     draft={draft}
                     settings={settings}
-                    onUpdateDraft={updateDraft}
                     onOpenSettings={() => setSettingsOpen(true)}
+                    showError={(msg) => setError(msg)}
+                    isDraftUpdating={isUpdatingDraftContent}
                 />
 
                 {/* Owner Details */}
@@ -134,19 +152,22 @@ export default function DraftContent() {
 
                 {/* Title */}
                 <DraftTitle
-                    draft={draft}
+                    title={editorContent.title}
+                    onTitleChange={(title) => setEditorContent((prev) => ({ ...prev, title }))}
                     settings={settings}
                 />
 
                 {/* Editor */}
-                {/* <EditorRoot /> */}
+                <EditorRoot
+                    content={editorContent.content}
+                    onContentChange={(content) => setEditorContent((prev) => ({ ...prev, content }))}
+                />
 
                 {/* Settings Panel */}
                 <DraftSettings
                     isOpen={settingsOpen}
                     onClose={() => setSettingsOpen(false)}
                     settings={settings}
-                    
                 />
             </div>
         </DraftContainer>

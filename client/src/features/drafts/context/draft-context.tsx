@@ -10,9 +10,9 @@ export type DraftContextType = {
 const initialDraft: DraftDTO = {
     id: '',
     ownerId: '',
-    title: null,
+    title: '',
     docId: '',
-    content: null,
+    content: '',
     icon: null,
     coverImageUrl: null,
     coverImageConfig: null,

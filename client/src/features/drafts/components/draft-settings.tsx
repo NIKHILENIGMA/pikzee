@@ -1,30 +1,45 @@
-// components/editor/SettingsDrawer.tsx
+import { useParams } from 'react-router'
+import { toast } from 'sonner'
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import type { DraftSettingType, FontSize, FontStyle, PageWidth } from '../types/draft.types'
-import SegmentGroup from './segment-group'
-import { useDraftContext } from '../hooks/use-draft-context'
+import { useWorkspaceContext } from '@/features/workspace'
+
+import { useUpdateDraftSettings } from '../api/update-settings'
 import { fontSizeOptions, fontStyleOptions, pageWidthOptions, visibilityOptions } from '../constant'
+import type { DraftSettingType, FontSize, FontStyle, PageWidth } from '../types/draft.types'
+
+import SegmentGroup from './segment-group'
 
 interface SettingsProps {
     isOpen: boolean
     onClose: () => void
     settings: DraftSettingType
-    // onUpdate: (key: string, value: boolean) => void
 }
 
 export function DraftSettings({ isOpen, onClose, settings }: SettingsProps) {
-    const { fontStyle, fontSize, isFullWidth } = settings
-    const { updateDraft } = useDraftContext()
+    const { id: workspaceId } = useWorkspaceContext()
+    const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
+    
+    const { mutateAsync: updateDraftSettings } = useUpdateDraftSettings({
+        workspaceId: workspaceId,
+        draftId: pageId!
+    })
 
-    const onChangeView = (key: keyof DraftSettingType, value: FontStyle | FontSize | boolean) => {
-        updateDraft({ settings: { ...settings, [key]: value } })
-    }
-
-    const onChangeVisibility = (key: keyof DraftSettingType, value: boolean) => {
-        updateDraft({ settings: { ...settings, [key]: value } })
+    const handleUpdate = async (values: Partial<DraftSettingType>) => {
+        try {
+            await updateDraftSettings({
+                workspaceId,
+                docId: documentId!,
+                draftId: pageId!,
+                ...values
+            })
+            toast.success('Settings updated')
+        } catch (error) {
+            toast.error('Failed to update settings')
+        }
     }
 
     return (
@@ -37,28 +52,28 @@ export function DraftSettings({ isOpen, onClose, settings }: SettingsProps) {
                     <SheetDescription>Customize how this page looks.</SheetDescription>
                 </SheetHeader>
 
-                <div className="flex flex-col gap-6 py-1">
+                <div className="flex flex-col gap-6 py-6 ">
                     {/* Typography Section */}
-                    <div className="space-y-3">
-                        <div className="w-full space-y-6 rounded-2xl px-5">
+                    <div className="space-y-3 px-4.5">
+                        <div className="w-full space-y-6 rounded-2xl">
                             <SegmentGroup<FontStyle>
                                 title="Font style"
-                                value={fontStyle}
-                                onChange={(val: FontStyle) => onChangeView('fontStyle', val)}
+                                value={settings.fontStyle}
+                                onChange={(val) => handleUpdate({ fontStyle: val })}
                                 options={fontStyleOptions}
                             />
 
                             <SegmentGroup<FontSize>
                                 title="Font size"
-                                value={fontSize}
-                                onChange={(val: FontSize) => onChangeView('fontSize', val)}
+                                value={settings.fontSize}
+                                onChange={(val) => handleUpdate({ fontSize: val })}
                                 options={fontSizeOptions}
                             />
 
                             <SegmentGroup<PageWidth>
                                 title="Page width"
-                                value={isFullWidth ? 'full' : 'default'}
-                                onChange={(val: PageWidth) => onChangeView('isFullWidth', val === 'full')}
+                                value={settings.isFullWidth ? 'full' : 'default'}
+                                onChange={(val) => handleUpdate({ isFullWidth: val === 'full' })}
                                 options={pageWidthOptions}
                             />
                         </div>
@@ -67,27 +82,27 @@ export function DraftSettings({ isOpen, onClose, settings }: SettingsProps) {
                     <Separator />
 
                     {/* Visibility Section */}
-                    <div className="space-y-4 px-5">
-                        <h4 className="text-sm font-normal text-foreground/80 ">Visibility</h4>
-                        <>
+                    <div className="space-y-4 px-4.5">
+                        <h4 className="text-sm font-medium text-foreground/80">Visibility</h4>
+                        <div className="space-y-4">
                             {visibilityOptions.map((opt) => (
                                 <div
-                                    className="flex items-center justify-between space-x-2.5"
+                                    className="flex items-center justify-between space-x-2"
                                     key={opt.key}>
                                     <Label
-                                        htmlFor="show-cover"
-                                        className="text-sm font-normal text-start p-0.5 w-full">
-                                        {' '}
-                                        {opt.icon} {opt.label}{' '}
+                                        htmlFor={`show-${opt.key}`}
+                                        className="text-sm font-normal flex items-center gap-2 cursor-pointer w-full">
+                                        <span className="text-muted-foreground">{opt.icon}</span>
+                                        {opt.label}
                                     </Label>
                                     <Switch
                                         id={`show-${opt.key}`}
-                                        checked={Boolean(settings[opt.key])}
-                                        onCheckedChange={(val: boolean) => onChangeVisibility(opt.key, val)}
+                                        checked={!!settings[opt.key]}
+                                        onCheckedChange={(val) => handleUpdate({ [opt.key]: val })}
                                     />
                                 </div>
                             ))}
-                        </>
+                        </div>
                     </div>
                 </div>
             </SheetContent>

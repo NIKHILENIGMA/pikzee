@@ -1,14 +1,21 @@
-// import { Button } from '@/components/ui/button'
-import { cn } from '@/shared/lib/utils'
-import type { DraftDTO, DraftSettingType } from '../types/draft.types'
-import { useDraftContext } from '../hooks/use-draft-context'
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import ChangeCoverImage from './change-cover-image'
-import { toast } from 'sonner'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { useParams } from 'react-router'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/theme/theme-provider'
+import { useWorkspaceContext } from '@/features/workspace'
+import { cn } from '@/shared/lib/utils'
+
+import type { DraftDTO, DraftSettingType } from '../types/draft.types'
+
+import ChangeCoverImage from './change-cover-image'
+import { useRemoveCoverImage } from '../api/delete-cover'
+import { useAddEmoji } from '../api/add-emoji'
+import { useDeleteEmoji } from '../api/delete-emoji'
+import { useUpdateCoverImagePosition } from '../api/update-position'
 
 interface DraftCoverProps {
     draft: DraftDTO
@@ -16,7 +23,7 @@ interface DraftCoverProps {
     isIconLoading?: boolean
 }
 
-export function DraftCover({ draft, settings }: DraftCoverProps) {
+export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) {
     const [coverOptions, setCoverOptions] = useState<boolean>(false)
     const [iconPickerOpen, setIconPickerOpen] = useState<boolean>(false)
     const [repositioning, setRepositioning] = useState<'dragging' | 'show'>('show')
@@ -25,9 +32,27 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
     const dragStartY = useRef<number>(0)
     const dragStartPositionY = useRef<number>(0)
     const containerRef = useRef<HTMLDivElement>(null)
-    
+    const { id: workspaceId } = useWorkspaceContext()
+    const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
+    const { mutateAsync: removeCoverImage } = useRemoveCoverImage({
+        workspaceId: workspaceId,
+        draftId: pageId!
+    })
+    const { mutateAsync: addEmoji } = useAddEmoji({
+        workspaceId: workspaceId,
+        draftId: pageId!
+    })
+    const { mutateAsync: deleteEmoji } = useDeleteEmoji({
+        workspaceId: workspaceId,
+        draftId: pageId!
+    })
+
+    const { mutateAsync: updateCoverImagePosition } = useUpdateCoverImagePosition({
+        workspaceId: workspaceId,
+        draftId: pageId!
+    })
+
     const { theme } = useTheme()
-    const { updateDraft } = useDraftContext()
 
     const hasCover = settings.showCover && !!draft.coverImageUrl
 
@@ -38,40 +63,65 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
         }
     }, [draft.coverImageConfig?.positionY, repositioning])
 
-    const handleRemoveCover = () => {
-        updateDraft({
-            ...draft,
-            coverImageUrl: null
-        })
-        toast.success('Cover image removed successfully!')
+    // Handle removing cover image
+    const handleRemoveCover = async () => {
+        try {
+            await removeCoverImage({
+                workspaceId,
+                documentId: documentId!,
+                draftId: pageId!
+            })
+
+            toast.success('Cover image removed successfully!')
+        } catch (error) {
+            toast.error('Failed to remove cover image.')
+        }
     }
 
+    // Handle clicking the icon to open emoji picker
     const handleIconClick = () => {
         setIconPickerOpen((prev) => !prev)
     }
 
-    const handleRemoveIcon = () => {
-        updateDraft({
-            ...draft,
-            icon: null
-        })
-        toast.success('Icon removed successfully!')
-        setIconPickerOpen(false)
-    }
-
-    const handleEmojiSelect = async (icon: string | null) => {
-        if (!icon) return
-        const newIcon = draft.icon === icon ? null : icon
-        if (newIcon === null) {
+    // Handle removing icon
+    const handleRemoveIcon = async () => {
+        try {
+            await deleteEmoji({
+                workspaceId,
+                documentId: documentId!,
+                pageId: pageId!
+            })
+            setIconPickerOpen(false)
             toast.success('Icon removed successfully!')
-            setIconPickerOpen(false)
-        } else {
-            updateDraft({ ...draft, icon: newIcon })
-            toast.success('Icon updated successfully!')
-            setIconPickerOpen(false)
+        } catch (error) {
+            toast.error('Failed to remove icon.')
         }
     }
 
+    // Handle selecting an emoji from the picker
+    const handleEmojiSelect = async (icon: string | null) => {
+        if (!icon) return
+        const newIcon = draft.icon === icon ? null : icon
+        try {
+            if (newIcon === null) {
+                setIconPickerOpen(false)
+                return
+            } else {
+                await addEmoji({
+                    documentId: documentId!,
+                    workspaceId,
+                    draftId: pageId!,
+                    icon: newIcon
+                })
+                toast.success('Icon updated successfully!')
+                setIconPickerOpen(false)
+            }
+        } catch (error) {
+            toast.error('Failed to update icon.')
+        }
+    }
+
+    // Handle mouse down on cover image to start repositioning
     const handleMouseDown = (e: React.MouseEvent) => {
         if (repositioning !== 'dragging') return
         e.preventDefault()
@@ -80,19 +130,22 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
         dragStartPositionY.current = tempPositionY
     }
 
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (!isDragging || !containerRef.current) return
+    // Handle mouse move to update cover position
+    const handleMouseMove = useCallback(
+        (e: MouseEvent) => {
+            if (!isDragging || !containerRef.current) return
 
-        const deltaY = e.clientY - dragStartY.current
-        const containerHeight = containerRef.current.offsetHeight
-        
-        // Calculate the movement as a percentage of the container height
-        // Moving mouse down (positive deltaY) should decrease positionY to show more of the top
-        const movementPercentage = (deltaY / containerHeight) * 100
-        const newPositionY = Math.min(100, Math.max(0, dragStartPositionY.current - movementPercentage))
-        
-        setTempPositionY(newPositionY)
-    }, [isDragging])
+            const deltaY = e.clientY - dragStartY.current
+            const containerHeight = containerRef.current.offsetHeight
+
+            // SUGGESTION: Double-check direction matches your UX
+            const movementPercentage = (deltaY / containerHeight) * 100
+            const newPositionY = Math.min(100, Math.max(0, dragStartPositionY.current - movementPercentage))
+
+            setTempPositionY(newPositionY)
+        },
+        [isDragging]
+    )
 
     const handleMouseUp = useCallback(() => {
         setIsDragging(false)
@@ -112,16 +165,20 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
         }
     }, [isDragging, handleMouseMove, handleMouseUp])
 
-    const handleRepositionCover = () => {
-        updateDraft({
-            ...draft,
-            coverImageConfig: {
-                ...(draft.coverImageConfig || { type: 'URL', focalPoint: { x: 50, y: 50 } }),
+    // SUGGESTION: Await updateDraft and rollback on error
+    const handleRepositionCover = async () => {
+        try {
+            await updateCoverImagePosition({
+                workspaceId,
+                documentId: documentId!,
+                draftId: pageId!,
                 positionY: tempPositionY
-            }
-        })
-        toast.success('Cover position updated successfully!')
-        setRepositioning('show')
+            })
+            setRepositioning('show')
+            toast.success('Cover position updated successfully!')
+        } catch (error) {
+            toast.error('Failed to update cover position.')
+        }
     }
 
     return (
@@ -136,7 +193,7 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
                     alt="Draft Cover"
                     onMouseDown={handleMouseDown}
                     className={cn(
-                        "h-full w-full object-cover rounded-sm select-none",
+                        'h-full w-full object-cover rounded-sm select-none',
                         repositioning === 'dragging' && (isDragging ? 'cursor-grabbing' : 'cursor-grab'),
                         repositioning === 'dragging' && 'opacity-75'
                     )}
@@ -152,13 +209,15 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
                     <Button
                         size={'sm'}
                         variant="outline"
-                        onClick={() => setRepositioning('dragging')}>
+                        onClick={() => setRepositioning('dragging')}
+                        aria-label="Reposition cover image">
                         Reposition
                     </Button>
                     <ChangeCoverImage onRemoveCover={handleRemoveCover}>
                         <Button
                             size="sm"
-                            variant="outline">
+                            variant="outline"
+                            aria-label="Change cover image">
                             Change Cover
                         </Button>
                     </ChangeCoverImage>
@@ -170,7 +229,8 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
                     <Button
                         variant={'outline'}
                         size={'sm'}
-                        onClick={handleRepositionCover}>
+                        onClick={handleRepositionCover}
+                        aria-label="Save cover position">
                         Save Position
                     </Button>
                     <Button
@@ -179,7 +239,8 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
                         onClick={() => {
                             setRepositioning('show')
                             setTempPositionY(draft.coverImageConfig?.positionY ?? 50)
-                        }}>
+                        }}
+                        aria-label="Cancel cover reposition">
                         Cancel
                     </Button>
                 </div>
@@ -191,14 +252,16 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
                         <div className="relative inline-flex items-center justify-center text-7xl select-none">
                             <button
                                 className="hover:scale-105 transition-transform active:scale-95"
-                                onClick={handleIconClick}>
+                                onClick={handleIconClick}
+                                aria-label="Change draft icon"
+                                disabled={isIconLoading}>
                                 {draft.icon}
                             </button>
                             {iconPickerOpen && (
                                 <div className="flex absolute z-50 left-5 top-16 mt-2 ">
                                     <Picker
                                         data={data}
-                                        onEmojiSelect={(emoji: any) => handleEmojiSelect(emoji.native)}
+                                        onEmojiSelect={(emoji: { native: string }) => handleEmojiSelect(emoji.native)}
                                         theme={theme === 'dark' ? 'dark' : 'light'}
                                         set="native"
                                         previewPosition="none"
@@ -207,7 +270,8 @@ export function DraftCover({ draft, settings }: DraftCoverProps) {
                                     <button
                                         type="button"
                                         onClick={handleRemoveIcon}
-                                        className="cursor-pointer text-sm absolute right-1.5 -top-8 z-[9999] p-2">
+                                        className="cursor-pointer text-sm absolute right-1.5 -top-8 z-[9999] p-2"
+                                        aria-label="Remove icon">
                                         Remove
                                     </button>
                                 </div>

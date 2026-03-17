@@ -1,44 +1,44 @@
 import { Plus, PanelLeft, Loader, FileText, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useDefaultWorkspace } from '@/features'
+import { useWorkspaceContext } from '@/features'
+
 import { useSidebar } from '../api/get-sidebar-drafts'
-import type { DraftSidebarDTO } from '../types/draft.types'
-import { toast } from 'sonner'
 import { useCreateDraft } from '../api/create-draft'
 import { useDraftContext } from '../hooks/use-draft-context'
-
-// import { pages } from '../constant'
+import type { DraftSidebarDTO } from '../types/draft.types'
+import { useDeleteDraft } from '../api/delete-draft'
 
 export default function DraftSidebar() {
     const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
     const [collapsed, setCollapsed] = useState(false)
     const navigate = useNavigate()
-    const { data: workspaceResponse } = useDefaultWorkspace({
-        queryConfig: {
-            enabled: true
-        }
-    })
+    const { id: workspaceId } = useWorkspaceContext()
     const { updateDraft } = useDraftContext()
     const {
         data: pages,
         isLoading: isSidebarLoading,
         isError: sidebarError
     } = useSidebar({
-        workspaceId: workspaceResponse?.data.id!,
+        workspaceId: workspaceId,
         docId: documentId!
     })
 
     const { mutateAsync: createDraftMutation, isError: createDraftError } = useCreateDraft({
-        workspaceId: workspaceResponse?.data.id!
+        workspaceId: workspaceId
+    })
+
+    const { mutateAsync: deleteDraftMutation } = useDeleteDraft({
+        workspaceId: workspaceId
     })
 
     const handleNewDraft = async () => {
         try {
-            const newDraft = await createDraftMutation({ documentId: documentId!, workspaceId: workspaceResponse?.data.id! })
+            const newDraft = await createDraftMutation({ documentId: documentId!, workspaceId: workspaceId })
             toast.success('Draft created successfully')
             updateDraft(newDraft)
             navigate(`/documents/${documentId}/pages/${newDraft.id}`)
@@ -47,9 +47,18 @@ export default function DraftSidebar() {
         }
     }
 
-    const handleDeleteDraft = () => {
-        // Implement delete draft functionality here
-        toast.success('Draft deleted successfully!')
+    const handleDeleteDraft = async () => {
+        try {
+            if (pages?.length === 1) {
+                toast.error('Cannot delete the only draft. Please create a new draft before deleting this one.')
+                return
+            }
+            await deleteDraftMutation({ documentId: documentId!, workspaceId: workspaceId, pageId: pageId! })
+            navigate(`/documents/${documentId}/pages/${pages && pages.length > 0 ? pages[0].id : ''}`)
+            toast.success('Draft deleted successfully!')
+        } catch (error) {
+            toast.error('Failed to delete draft')
+        }
     }
 
     useEffect(() => {
@@ -57,6 +66,7 @@ export default function DraftSidebar() {
             navigate(`/documents/${documentId}/pages/${pages[0].id}`)
         }
     }, [])
+
 
     if (isSidebarLoading) {
         return <Loader className="animate-spin" />
@@ -81,7 +91,7 @@ export default function DraftSidebar() {
                             Docs
                         </button>
                         <Button
-                            onClick={() => {}}
+                            onClick={handleNewDraft}
                             size="icon"
                             variant="ghost">
                             <Plus size={18} />
