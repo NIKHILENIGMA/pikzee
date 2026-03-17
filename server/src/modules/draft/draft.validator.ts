@@ -16,17 +16,17 @@ export const DraftQuerySchema = z.object({
 })
 
 // Body schema
+export const DraftUpdateCoverImageBodySchema = z.object({
+    coverImageUrl: z.url({ message: 'Invalid cover image URL' }),
+    type: z.enum(['S3', 'URL', 'unsplash'])
+})
 
-export const DraftVisualBodySchema = z.object({
-    icon: z.string().optional(),
-    type: z.enum(['S3', 'URL', 'unsplash']).optional(),
-    coverImageUrl: z.url({ message: 'Invalid cover image URL' }).optional(),
-    coverImageConfig: z
-        .object({
-            x: z.number().optional(),
-            y: z.number().optional()
-        })
-        .optional()
+export const DraftRepositionBodySchema = z.object({
+    positionY: z.number().min(0).max(100)
+})
+
+export const DraftEmojiBodySchema = z.object({
+    icon: z.string({ message: 'Invalid emoji or icon' })
 })
 
 export const DraftSettingBodySchema = z

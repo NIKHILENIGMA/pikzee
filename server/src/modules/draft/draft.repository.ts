@@ -1,4 +1,5 @@
 import { and, desc, eq, sql } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 
 import { drafts } from '@/core/db/schema/document'
 import { DatabaseConnection } from '@/core/db/service/database.service'
@@ -7,13 +8,15 @@ import {
     CreateDraft,
     Draft,
     DraftCoverImageType,
+    DraftDTO,
     DraftSettings,
     DraftSidebarDTO
 } from './draft.types'
+import { users } from '@/core'
 
 export interface IDraftRepository {
     findAll(docId: string): Promise<Draft[]>
-    findById(draftId: string, docId: string): Promise<Draft | null>
+    findById(draftId: string, docId: string): Promise<DraftDTO | null>
     create(record: CreateDraft): Promise<Draft>
     update(id: string, data: Partial<CreateDraft>): Promise<Draft>
     content(
@@ -29,6 +32,15 @@ export interface IDraftRepository {
             positionY?: number
         }
     ): Promise<Draft | null>
+    addCoverImage(draftId: string, record: { imageUrl: string }): Promise<void>
+    updateCoverImage(
+        draftId: string,
+        record: { imageUrl: string; type: DraftCoverImageType }
+    ): Promise<void>
+    updateCoverImagePosition(draftId: string, positionY: number): Promise<void>
+    removeCoverImage(draftId: string): Promise<void>
+    addOrUpdateIcon(draftId: string, record: { icon: string }): Promise<void>
+    removeIcon(draftId: string): Promise<void>
     settings(draftId: string, newSettings: DraftSettings): Promise<DraftSettings | null>
     delete(draftId: string): Promise<Draft | null>
     createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft>
@@ -47,13 +59,42 @@ export class DraftRepository implements IDraftRepository {
             .orderBy(drafts.createdAt)
     }
 
-    async findById(id: string, docId: string): Promise<Draft | null> {
-        const [draft] = await this.db
-            .select()
-            .from(drafts)
-            .where(and(eq(drafts.id, id), eq(drafts.docId, docId)))
+    async findById(id: string, docId: string): Promise<DraftDTO | null> {
+        const owner = alias(users, 'owner') // We need to alias the users table for the lastUpdatedBy join to avoid conflicts
+        const lastUpdatedBy = alias(users, 'lastUpdatedBy')
 
-        return draft || null
+        const [draft] = await this.db
+            .select({
+                id: drafts.id,
+                docId: drafts.docId,
+                title: drafts.title,
+                content: drafts.content,
+                icon: drafts.icon,
+                coverImageUrl: drafts.coverImageUrl,
+                coverImageConfig: drafts.coverImageConfig,
+                settings: drafts.settings,
+                createdAt: drafts.createdAt,
+                updatedAt: drafts.updatedAt,
+                owner: {
+                    id: owner.id,
+                    firstName: owner.firstName,
+                    lastName: owner.lastName,
+                    avatarUrl: owner.avatarUrl
+                },
+                lastUpdatedBy: {
+                    id: lastUpdatedBy.id,
+                    firstName: lastUpdatedBy.firstName,
+                    lastName: lastUpdatedBy.lastName,
+                    avatarUrl: lastUpdatedBy.avatarUrl
+                }
+            })
+            .from(drafts)
+            .innerJoin(owner, eq(owner.id, drafts.ownerId))
+            .innerJoin(lastUpdatedBy, eq(lastUpdatedBy.id, drafts.lastUpdatedBy))
+            .where(and(eq(drafts.id, id), eq(drafts.docId, docId)))
+            .limit(1)
+
+        return draft ? (draft as DraftDTO) : null
     }
 
     async create(input: CreateDraft): Promise<Draft> {
@@ -140,6 +181,67 @@ export class DraftRepository implements IDraftRepository {
     async createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft> {
         const [draft] = await tx.insert(drafts).values(input).returning()
         return draft
+    }
+
+    async addCoverImage(draftId: string, record: { imageUrl: string }): Promise<void> {
+        await this.db
+            .update(drafts)
+            .set({
+                coverImageUrl: record.imageUrl,
+                coverImageConfig: {
+                    type: 'unsplash',
+                    positionY: 50, // Default to center
+                    focalPoint: { x: 50, y: 50 }
+                }
+            })
+            .where(eq(drafts.id, draftId))
+    }
+
+    async updateCoverImage(
+        draftId: string,
+        record: { imageUrl: string; type: DraftCoverImageType }
+    ): Promise<void> {
+        await this.db
+            .update(drafts)
+            .set({
+                coverImageUrl: record.imageUrl,
+                coverImageConfig: {
+                    type: record.type,
+                    positionY: 50, // Default to center
+                    focalPoint: { x: 50, y: 50 }
+                }
+            })
+            .where(eq(drafts.id, draftId))
+    }
+
+    async updateCoverImagePosition(
+        draftId: string,
+        positionY: number
+    ): Promise<void> {
+        await this.db
+            .update(drafts)
+            .set({
+                coverImageConfig: sql`${drafts.coverImageConfig} || ${JSON.stringify({ positionY })}::jsonb`
+            })
+            .where(eq(drafts.id, draftId))
+    }
+
+    async removeCoverImage(draftId: string): Promise<void> {
+        await this.db
+            .update(drafts)
+            .set({
+                coverImageUrl: null,
+                coverImageConfig: null
+            })
+            .where(eq(drafts.id, draftId))
+    }
+
+    async addOrUpdateIcon(draftId: string, record: { icon: string }): Promise<void> {
+        await this.db.update(drafts).set({ icon: record.icon }).where(eq(drafts.id, draftId))
+    }
+
+    async removeIcon(draftId: string): Promise<void> {
+        await this.db.update(drafts).set({ icon: null }).where(eq(drafts.id, draftId))
     }
 
     async markAsUpdated(draftId: string, userId: string): Promise<void> {

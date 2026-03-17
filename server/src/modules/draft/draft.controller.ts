@@ -4,17 +4,19 @@ import { BaseController, ValidationService } from '@/lib'
 import { IDraftService } from './draft.service'
 import {
     DraftContentBodySchema,
+    DraftEmojiBodySchema,
     DraftListParamsSchema,
     DraftParamsSchema,
     DraftQuerySchema,
+    DraftRepositionBodySchema,
     DraftSettingBodySchema,
-    DraftVisualBodySchema,
+    DraftUpdateCoverImageBodySchema,
     GenerateContentBodySchema
 } from './draft.validator'
 import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
-import { Draft, DraftSidebarDTO } from './draft.types'
-import { UnauthorizedError } from '@/util'
+import { Draft, DraftDTO, DraftSidebarDTO } from './draft.types'
+import { InternalServerError, UnauthorizedError } from '@/util'
 import { IUnsplashService } from '@/config/unsplash/unsplash'
 
 export class DraftController extends BaseController {
@@ -46,14 +48,14 @@ export class DraftController extends BaseController {
     }
 
     findById = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<Draft>> => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<DraftDTO>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) {
                 throw new Error('User not authenticated')
             }
             const params = ValidationService.validateParams(req.params, DraftParamsSchema)
 
-            const draft = await this.service.findById(params.draftId, params.docId)
+            const draft: DraftDTO = await this.service.findById(params.draftId, params.docId)
 
             return this.createResponse({
                 statusCode: 200,
@@ -177,41 +179,184 @@ export class DraftController extends BaseController {
         })
     }
 
-    visual = async (req: Request, res: Response, next: NextFunction) => {
+    addCoverImage = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) throw new UnauthorizedError('User not authenticated')
 
             // Validate request parameters, body, and query
             const params = ValidationService.validateParams(req.params, DraftParamsSchema)
-
             const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
 
-            const body = ValidationService.validateBody(req.body, DraftVisualBodySchema)
+            // Fetch a random photo from Unsplash based on a theme (e.g., nature)
+            const theme: string[] = ['nature', 'technology', 'abstract', 'city', 'space']
+            const randomTheme: string = theme[Math.floor(Math.random() * theme.length)]
 
-            let finalUrl = body.coverImageUrl
-            let finalType = body.type ?? 'unsplash'
-
-            // If user wants a cover but didn't provide a URL, fetch a random one
-            if (!finalUrl && !body.icon) {
-                // TODO: Replace with your actual Unsplash API service call
-                finalUrl =
-                    (await this.unsplash.getRandomPhoto('nature'))?.urls.regular ??
-                    'https://plus.unsplash.com/premium_photo-1673292293042-cafd9c8a3ab3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmF0dXJlfGVufDB8fDB8fHww'
+            const photo = await this.unsplash.getRandomPhoto(randomTheme)
+            if (!photo) {
+                throw new InternalServerError('Failed to fetch cover image from Unsplash')
             }
 
-            await this.service.visual(params.draftId, {
+            const imageUrl =
+                photo.urls.regular ??
+                'https://plus.unsplash.com/premium_photo-1673292293042-cafd9c8a3ab3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmF0dXJlfGVufDB8fDB8fHww'
+
+            // Perform add cover image operation
+            await this.service.addCoverImage(params.draftId, {
                 userId,
                 workspaceId: query.workspaceId,
-                icon: body.icon ?? null,
-                finalUrl: finalUrl ?? null,
-                finalType: finalType,
-                positionY: body.coverImageConfig?.y
+                imageUrl
+            })
+
+            // Return standardized response
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Draft cover image added successfully',
+                data: null
+            })
+        })
+    }
+
+    updateCoverImage = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) throw new UnauthorizedError('User not authenticated')
+
+            // Validate request parameters, body, and query
+            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+            const body = ValidationService.validateBody(req.body, DraftUpdateCoverImageBodySchema)
+
+            // Perform update cover image operation
+            await this.service.updateCoverImage(params.draftId, {
+                userId,
+                workspaceId: query.workspaceId,
+                imageUrl: body.coverImageUrl,
+                type: body.type
+            })
+
+            // Return standardized response
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Draft cover image updated successfully',
+                data: null
+            })
+        })
+    }
+
+    updateCoverImagePosition = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) throw new UnauthorizedError('User not authenticated')
+
+            // Validate request parameters, body, and query
+            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+            const body = ValidationService.validateBody(req.body, DraftRepositionBodySchema)
+
+            // Perform update cover image position operation
+            await this.service.updateCoverImagePosition(params.draftId, {
+                userId,
+                workspaceId: query.workspaceId,
+                positionY: body.positionY
             })
 
             return this.createResponse({
                 statusCode: STATUS_CODE.OK,
-                message: 'Draft visuals updated successfully',
+                message: 'Draft cover image position updated successfully',
+                data: null
+            })
+        })
+    }
+
+    removeCoverImage = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) throw new UnauthorizedError('User not authenticated')
+
+            // Validate request parameters and query
+            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+
+            // Perform remove cover image operation
+            await this.service.removeCoverImage(params.draftId, {
+                userId,
+                workspaceId: query.workspaceId
+            })
+
+            // Return standardized response
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Draft cover image removed successfully',
+                data: null
+            })
+        })
+    }
+
+    addIcon = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) throw new UnauthorizedError('User not authenticated')
+
+            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+
+            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+
+            const body = ValidationService.validateBody(req.body, DraftEmojiBodySchema)
+
+            await this.service.addIcon(params.draftId, {
+                userId,
+                workspaceId: query.workspaceId,
+                icon: body.icon
+            })
+
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Draft icon added successfully',
+                data: null
+            })
+        })
+    }
+
+    updateIcon = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) throw new UnauthorizedError('User not authenticated')
+
+            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+            const body = ValidationService.validateBody(req.body, DraftEmojiBodySchema)
+
+            await this.service.updateIcon(params.draftId, {
+                userId,
+                workspaceId: query.workspaceId,
+                icon: body.icon
+            })
+
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Draft icon updated successfully',
+                data: null
+            })
+        })
+    }
+
+    removeIcon = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
+            const userId: string | undefined = req.user?.id
+            if (!userId) throw new UnauthorizedError('User not authenticated')
+
+            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+
+            await this.service.removeIcon(params.draftId, {
+                userId,
+                workspaceId: query.workspaceId
+            })
+
+            return this.createResponse({
+                statusCode: STATUS_CODE.OK,
+                message: 'Draft icon removed successfully',
                 data: null
             })
         })

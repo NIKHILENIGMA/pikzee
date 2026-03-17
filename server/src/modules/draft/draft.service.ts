@@ -8,6 +8,7 @@ import {
     CreateDraft,
     Draft,
     DraftCoverImageType,
+    DraftDTO,
     DraftSettings,
     DraftSidebarDTO
 } from './draft.types'
@@ -17,7 +18,7 @@ import { IMemberRepository } from '../members/member.repository'
 
 export interface IDraftService {
     findAll(docId: string): Promise<Draft[]>
-    findById(draftId: string, docId: string): Promise<Draft>
+    findById(draftId: string, docId: string): Promise<DraftDTO>
     create(userId: string, workspaceId: string, input: CreateDraft): Promise<Draft>
     update(id: string, data: Partial<CreateDraft>): Promise<Draft>
     delete(
@@ -28,17 +29,31 @@ export interface IDraftService {
             workspaceId: string
         }
     ): Promise<void>
-    visual(
+    addCoverImage(
         draftId: string,
-        record: {
-            userId: string
-            workspaceId: string
-            icon: string | null
-            finalUrl: string | null
-            finalType: DraftCoverImageType
-            positionY?: number
-        }
-    ): Promise<Draft | null>
+        record: { userId: string; workspaceId: string; imageUrl: string }
+    ): Promise<void>
+    updateCoverImage(
+        draftId: string,
+        record: { userId: string; workspaceId: string; imageUrl: string; type: DraftCoverImageType }
+    ): Promise<void>
+    updateCoverImagePosition(
+        draftId: string,
+        record: { userId: string; workspaceId: string; positionY: number }
+    ): Promise<void>
+    removeCoverImage(
+        draftId: string,
+        record: { userId: string; workspaceId: string }
+    ): Promise<void>
+    addIcon(
+        draftId: string,
+        record: { userId: string; workspaceId: string; icon: string }
+    ): Promise<void>
+    updateIcon(
+        draftId: string,
+        record: { userId: string; workspaceId: string; icon: string }
+    ): Promise<void>
+    removeIcon(draftId: string, record: { userId: string; workspaceId: string }): Promise<void>
     content(
         draftId: string,
         record: {
@@ -79,7 +94,7 @@ export class DraftService implements IDraftService {
         return this.repository.findAll(docId)
     }
 
-    async findById(draftId: string, docId: string): Promise<Draft> {
+    async findById(draftId: string, docId: string): Promise<DraftDTO> {
         const draft = await this.repository.findById(draftId, docId)
         if (!draft) {
             throw new BadRequestError('Draft not found')
@@ -119,32 +134,109 @@ export class DraftService implements IDraftService {
         })
     }
 
-    async visual(
+    async addCoverImage(
         draftId: string,
-        record: {
-            userId: string
-            workspaceId: string
-            icon: string | null
-            finalUrl: string | null
-            finalType: DraftCoverImageType
-            positionY?: number
-        }
-    ): Promise<Draft | null> {
-        this.ensurePermission(
+        record: { userId: string; workspaceId: string; imageUrl: string }
+    ): Promise<void> {
+        await this.ensurePermission(
             record.userId,
             record.workspaceId,
             ['EDIT', 'FULL_ACCESS'],
-            'User does not have permission to update draft visuals'
+            'User does not have permission to update draft cover image'
         )
+        // Add cover image by updating the visual with the new cover image URL
+        await this.repository.addCoverImage(draftId, { imageUrl: record.imageUrl })
 
-        const changeVisual = await this.repository.visual(draftId, record)
+        // Mark draft as updated after changing cover image
+        await this.repository.markAsUpdated(draftId, record.userId)
+    }
 
-        // Only mark as updated if the visual was successfully changed
-        if (changeVisual) {
-            await this.repository.markAsUpdated(draftId, record.userId)
-        }
+    async updateCoverImage(
+        draftId: string,
+        record: { userId: string; workspaceId: string; imageUrl: string; type: DraftCoverImageType }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['EDIT', 'FULL_ACCESS'],
+            'User does not have permission to update draft cover image'
+        )
+        await this.repository.updateCoverImage(draftId, {
+            imageUrl: record.imageUrl,
+            type: record.type
+        })
 
-        return changeVisual
+        await this.repository.markAsUpdated(draftId, record.userId)
+    }
+
+    async updateCoverImagePosition(
+        draftId: string,
+        record: { userId: string; workspaceId: string; positionY: number }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['EDIT', 'FULL_ACCESS'],
+            'User does not have permission to update draft cover image position'
+        )
+        await this.repository.updateCoverImagePosition(draftId, record.positionY)
+        await this.repository.markAsUpdated(draftId, record.userId)
+    }
+
+    async removeCoverImage(
+        draftId: string,
+        record: { userId: string; workspaceId: string }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['EDIT', 'FULL_ACCESS'],
+            'User does not have permission to remove draft cover image'
+        )
+        await this.repository.removeCoverImage(draftId)
+        await this.repository.markAsUpdated(draftId, record.userId)
+    }
+
+    async addIcon(
+        draftId: string,
+        record: { userId: string; workspaceId: string; icon: string }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['EDIT', 'FULL_ACCESS'],
+            'User does not have permission to update draft icon'
+        )
+        await this.repository.addOrUpdateIcon(draftId, { icon: record.icon })
+        await this.repository.markAsUpdated(draftId, record.userId)
+    }
+
+    async updateIcon(
+        draftId: string,
+        record: { userId: string; workspaceId: string; icon: string }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['EDIT', 'FULL_ACCESS'],
+            'User does not have permission to update draft icon'
+        )
+        await this.repository.addOrUpdateIcon(draftId, { icon: record.icon })
+        await this.repository.markAsUpdated(draftId, record.userId)
+    }
+
+    async removeIcon(
+        draftId: string,
+        record: { userId: string; workspaceId: string }
+    ): Promise<void> {
+        await this.ensurePermission(
+            record.userId,
+            record.workspaceId,
+            ['EDIT', 'FULL_ACCESS'],
+            'User does not have permission to remove draft icon'
+        )
+        await this.repository.removeIcon(draftId)
+        await this.repository.markAsUpdated(draftId, record.userId)
     }
 
     async setting(

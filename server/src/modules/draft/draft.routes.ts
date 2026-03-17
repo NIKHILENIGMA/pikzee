@@ -18,9 +18,23 @@ router
     .get(clerkMiddleware, draftController.findById)
     .delete(clerkMiddleware, draftController.delete)
 
-router.route('/:draftId/content').patch(clerkMiddleware, draftController.content)
+router
+    .route('/:draftId/cover-image/position')
+    .patch(clerkMiddleware, draftController.updateCoverImagePosition)
 
-router.route('/:draftId/visual').patch(clerkMiddleware, draftController.visual)
+router
+    .route('/:draftId/cover-image')
+    .post(clerkMiddleware, draftController.addCoverImage)
+    .patch(clerkMiddleware, draftController.updateCoverImage)
+    .delete(clerkMiddleware, draftController.removeCoverImage)
+
+router
+    .route('/:draftId/emoji')
+    .post(clerkMiddleware, draftController.addIcon)
+    .patch(clerkMiddleware, draftController.updateIcon)
+    .delete(clerkMiddleware, draftController.removeIcon)
+
+router.route('/:draftId/content').patch(clerkMiddleware, draftController.content)
 
 router.route('/:draftId/settings').patch(clerkMiddleware, draftController.settings)
 
