@@ -7,8 +7,8 @@ import type { MutationConfig } from '@/shared/lib/react-query'
 import { draftKeys } from '@/shared/lib/query-keys'
 
 export const updateDraftSettingsSchema = z.object({
-    fontStyle: z.enum(['inter', 'serif', 'mono']).optional(),
-    fontSize: z.enum(['10px', '16px', '24px']).optional(),
+    fontStyle: z.enum(['sans', 'serif', 'mono']).optional(),
+    fontSize: z.enum(['16px', '25px', '36px']).optional(),
     isFullWidth: z.boolean().optional(),
     showCover: z.boolean().optional(),
     showIcon: z.boolean().optional(),
@@ -18,9 +18,10 @@ export const updateDraftSettingsSchema = z.object({
 
 export type UpdateDraftSettings = z.infer<typeof updateDraftSettingsSchema>
 
+
 export const updateDraftSettings = async (data: { workspaceId: string; docId: string; draftId: string } & UpdateDraftSettings) => {
-    await client.post<null, UpdateDraftSettings>(
-        `${DOCUMENT_API_BASE}/${data.docId}/${DRAFT_API_BASE}/${data.draftId}?workspaceId=${data.workspaceId}`,
+    await client.patch<null, UpdateDraftSettings>(
+        `${DOCUMENT_API_BASE}/${data.docId}${DRAFT_API_BASE}/${data.draftId}/settings?workspaceId=${data.workspaceId}`,
         {
             fontStyle: data.fontStyle,
             fontSize: data.fontSize,
@@ -37,7 +38,7 @@ type UseUpdateDraftSettings = {
     mutationConfig?: MutationConfig<typeof updateDraftSettings>
 }
 
-export const useUpdateDraftSettings = ({ workspaceId, mutationConfig }: UseUpdateDraftSettings & { workspaceId: string }) => {
+export const useUpdateDraftSettings = ({ workspaceId, draftId, mutationConfig }: UseUpdateDraftSettings & { workspaceId: string; draftId: string }) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
@@ -46,7 +47,7 @@ export const useUpdateDraftSettings = ({ workspaceId, mutationConfig }: UseUpdat
         mutationFn: (data) => updateDraftSettings(data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: draftKeys.lists(workspaceId)
+                queryKey: draftKeys.detail(workspaceId, draftId)
             })
         }
     })

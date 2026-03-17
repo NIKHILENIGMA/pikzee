@@ -14,8 +14,8 @@ export const updateDraftContentSchema = z.object({
 export type UpdateDraftContent = z.infer<typeof updateDraftContentSchema>
 
 export const updateDraftContent = async (data: { workspaceId: string; docId: string; draftId: string } & UpdateDraftContent) => {
-    await client.post<null, UpdateDraftContent>(
-        `${DOCUMENT_API_BASE}/${data.docId}/${DRAFT_API_BASE}/${data.draftId}?workspaceId=${data.workspaceId}`,
+    await client.patch<null, UpdateDraftContent>(
+        `${DOCUMENT_API_BASE}/${data.docId}${DRAFT_API_BASE}/${data.draftId}/content?workspaceId=${data.workspaceId}`,
         {
             title: data.title,
             content: data.content
@@ -27,7 +27,7 @@ type UseUpdateDraftContent = {
     mutationConfig?: MutationConfig<typeof updateDraftContent>
 }
 
-export const useUpdateDraftContent = ({ workspaceId, mutationConfig }: UseUpdateDraftContent & { workspaceId: string }) => {
+export const useUpdateDraftContent = ({ workspaceId, draftId, mutationConfig }: UseUpdateDraftContent & { workspaceId: string; draftId: string }) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
@@ -35,9 +35,12 @@ export const useUpdateDraftContent = ({ workspaceId, mutationConfig }: UseUpdate
         ...restConfig,
         mutationFn: (data) => updateDraftContent(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({
+            ;(queryClient.invalidateQueries({
                 queryKey: draftKeys.lists(workspaceId)
-            })
+            }),
+                queryClient.invalidateQueries({
+                    queryKey: draftKeys.detail(workspaceId, draftId)
+                }))
         }
     })
 }
