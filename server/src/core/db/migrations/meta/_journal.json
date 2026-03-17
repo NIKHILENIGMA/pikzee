@@ -43,6 +43,13 @@
       "when": 1772733048627,
       "tag": "0005_updated_docs_and_draft_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773760274751,
+      "tag": "0006_change_type_of_font",
+      "breakpoints": true
     }
   ]
 }

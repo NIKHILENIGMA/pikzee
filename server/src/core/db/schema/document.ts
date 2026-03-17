@@ -4,6 +4,11 @@ import { workspaces } from './workspace.schema'
 import { users } from './users.schema'
 
 export const docPermissionEnum = pgEnum('doc_permission', ['private', 'workspace', 'public'])
+export const fontStyleEnum = pgEnum('font_style', ['sans', 'serif', 'mono'])
+export const fontSizeEnum = pgEnum('font_size', ['16px', '25px', '36px'])
+
+type FontStyle = 'sans' | 'serif' | 'mono'
+type FontSize = '16px' | '25px' | '36px'
 
 export const docs = pgTable('docs', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -43,8 +48,8 @@ export const drafts = pgTable('drafts', {
     // View Settings (Stored as JSON for flexibility)
     settings: jsonb('settings')
         .$type<{
-            fontStyle: string
-            fontSize: string
+            fontStyle: FontStyle
+            fontSize: FontSize
             isFullWidth: boolean
             showCover: boolean
             showIcon: boolean
@@ -52,7 +57,7 @@ export const drafts = pgTable('drafts', {
             showLastModified: boolean
         }>()
         .default({
-            fontStyle: 'inter',
+            fontStyle: 'sans',
             fontSize: '16px',
             isFullWidth: false,
             showCover: true,
