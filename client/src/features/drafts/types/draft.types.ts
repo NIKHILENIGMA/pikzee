@@ -28,17 +28,37 @@ export type DraftSidebarDTO = {
     updatedAt: Date
 }
 
+export type DraftSettings = {
+    fontStyle: FontStyle
+    fontSize: FontSize
+    isFullWidth: boolean
+    showCover: boolean
+    showIcon: boolean
+    showOwner: boolean
+    showLastModified: boolean
+}
+
 export type DraftDTO = {
     id: string
-    ownerId: string
-    title: string | null
     docId: string
-    content: unknown
+    title: string
+    content: string
     icon: string | null
     coverImageUrl: string | null
-    coverImageConfig: DraftCoverImageConfig | null
-    settings: DraftSettingType | null
-    lastUpdatedBy: string
+    coverImageConfig: object | null
+    settings: DraftSettings | null
     createdAt: Date
     updatedAt: Date
+    owner: {
+        id: string
+        firstName: string
+        lastName: string
+        avatarUrl: string | null
+    }
+    lastUpdatedBy: {
+        id: string
+        firstName: string
+        lastName: string
+        avatarUrl: string | null
+    }
 }
