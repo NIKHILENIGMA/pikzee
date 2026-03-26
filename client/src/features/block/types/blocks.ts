@@ -48,6 +48,6 @@ export interface EditorCommandContextType {
 
 export type UseEditorInstanceOptions = {
     content?: string
-    onUpdate?: (json: Record<string, unknown>, html: string) => void
+    onUpdate?: ({ editor }: { editor: Editor }) => void
     placeholder?: string
 }
