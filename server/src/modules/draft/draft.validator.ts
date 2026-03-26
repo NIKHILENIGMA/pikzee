@@ -41,10 +41,19 @@ export const DraftSettingBodySchema = z
     })
     .strict()
 
-export const DraftContentBodySchema = z.object({
-    title: z.string().min(1).max(255).optional(),
-    content: z.string().optional()
-})
+export const DraftContentBodySchema = z
+    .object({
+        title: z.string().min(1).max(255).optional(), // Changed
+        content: z
+            .union([
+                z.record(z.any(), z.any()), // For block-based content
+                z.string()
+            ])
+            .optional()
+    })
+    .refine((data) => data.title !== undefined || data.content !== undefined, {
+        message: "At least one of 'title' or 'content' must be provided"
+    })
 
 export const GenerateContentBodySchema = z.object({
     prompt: z.string().min(3)

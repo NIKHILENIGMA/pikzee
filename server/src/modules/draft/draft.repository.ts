@@ -119,8 +119,10 @@ export class DraftRepository implements IDraftRepository {
         await this.db
             .update(drafts)
             .set({
-                title: record.content.title,
-                content: record.content.content,
+                ...(record.content.title !== undefined && { title: record.content.title }),
+                ...(record.content.content !== undefined && {
+                    content: record.content.content
+                }),
                 lastUpdatedBy: record.content.lastUpdatedBy,
                 updatedAt: record.content.updatedAt
             })
@@ -214,10 +216,7 @@ export class DraftRepository implements IDraftRepository {
             .where(eq(drafts.id, draftId))
     }
 
-    async updateCoverImagePosition(
-        draftId: string,
-        positionY: number
-    ): Promise<void> {
+    async updateCoverImagePosition(draftId: string, positionY: number): Promise<void> {
         await this.db
             .update(drafts)
             .set({

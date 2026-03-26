@@ -180,41 +180,48 @@ export class DraftController extends BaseController {
     }
 
     addCoverImage = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) throw new UnauthorizedError('User not authenticated')
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<{ coverImageUrl: string }>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) throw new UnauthorizedError('User not authenticated')
 
-            // Validate request parameters, body, and query
-            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
-            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
+                // Validate request parameters, body, and query
+                const params = ValidationService.validateParams(req.params, DraftParamsSchema)
+                const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
 
-            // Fetch a random photo from Unsplash based on a theme (e.g., nature)
-            const theme: string[] = ['nature', 'technology', 'abstract', 'city', 'space']
-            const randomTheme: string = theme[Math.floor(Math.random() * theme.length)]
+                // Fetch a random photo from Unsplash based on a theme (e.g., nature)
+                const theme: string[] = ['nature', 'technology', 'abstract', 'city', 'space']
+                const randomTheme: string = theme[Math.floor(Math.random() * theme.length)]
 
-            const photo = await this.unsplash.getRandomPhoto(randomTheme)
-            if (!photo) {
-                throw new InternalServerError('Failed to fetch cover image from Unsplash')
+                const photo = await this.unsplash.getRandomPhoto(randomTheme)
+                if (!photo) {
+                    throw new InternalServerError('Failed to fetch cover image from Unsplash')
+                }
+
+                const imageUrl =
+                    photo.urls.regular ??
+                    'https://plus.unsplash.com/premium_photo-1673292293042-cafd9c8a3ab3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmF0dXJlfGVufDB8fDB8fHww'
+
+                // Perform add cover image operation
+                await this.service.addCoverImage(params.draftId, {
+                    userId,
+                    workspaceId: query.workspaceId,
+                    imageUrl
+                })
+
+                // Return standardized response
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Draft cover image added successfully',
+                    data: {
+                        coverImageUrl: imageUrl
+                    }
+                })
             }
-
-            const imageUrl =
-                photo.urls.regular ??
-                'https://plus.unsplash.com/premium_photo-1673292293042-cafd9c8a3ab3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bmF0dXJlfGVufDB8fDB8fHww'
-
-            // Perform add cover image operation
-            await this.service.addCoverImage(params.draftId, {
-                userId,
-                workspaceId: query.workspaceId,
-                imageUrl
-            })
-
-            // Return standardized response
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Draft cover image added successfully',
-                data: null
-            })
-        })
+        )
     }
 
     updateCoverImage = async (req: Request, res: Response, next: NextFunction) => {
