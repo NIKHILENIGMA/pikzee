@@ -9,16 +9,18 @@ import { useWorkspaceContext } from '@/features'
 
 import { useSidebar } from '../api/get-sidebar-drafts'
 import { useCreateDraft } from '../api/create-draft'
-import { useDraftContext } from '../hooks/use-draft-context'
 import type { DraftSidebarDTO } from '../types/draft.types'
 import { useDeleteDraft } from '../api/delete-draft'
+// import { useDraftStore } from '../store/draft.store'
 
 export default function DraftSidebar() {
     const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
-    const [collapsed, setCollapsed] = useState(false)
     const navigate = useNavigate()
+    
     const { id: workspaceId } = useWorkspaceContext()
-    const { updateDraft } = useDraftContext()
+    
+    const [collapsed, setCollapsed] = useState(false)
+
     const {
         data: pages,
         isLoading: isSidebarLoading,
@@ -40,7 +42,7 @@ export default function DraftSidebar() {
         try {
             const newDraft = await createDraftMutation({ documentId: documentId!, workspaceId: workspaceId })
             toast.success('Draft created successfully')
-            updateDraft(newDraft)
+            // updateDraft(newDraft)
             navigate(`/documents/${documentId}/pages/${newDraft.id}`)
         } catch (error) {
             toast.error(`${createDraftError ? 'Failed to create draft' : 'Draft created successfully'}`)
@@ -66,7 +68,6 @@ export default function DraftSidebar() {
             navigate(`/documents/${documentId}/pages/${pages[0].id}`)
         }
     }, [])
-
 
     if (isSidebarLoading) {
         return <Loader className="animate-spin" />

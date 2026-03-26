@@ -17,6 +17,7 @@ import { useAddEmoji } from '../api/add-emoji'
 import { useDeleteEmoji } from '../api/delete-emoji'
 import { useUpdateCoverImagePosition } from '../api/update-position'
 
+
 interface DraftCoverProps {
     draft: DraftDTO
     settings: DraftSettingType
@@ -34,13 +35,13 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
     const containerRef = useRef<HTMLDivElement>(null)
     const { id: workspaceId } = useWorkspaceContext()
     const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
+
     const { mutateAsync: removeCoverImage } = useRemoveCoverImage({
         workspaceId: workspaceId,
         draftId: pageId!
     })
     const { mutateAsync: addEmoji } = useAddEmoji({
-        workspaceId: workspaceId,
-        draftId: pageId!
+        workspaceId
     })
     const { mutateAsync: deleteEmoji } = useDeleteEmoji({
         workspaceId: workspaceId,
@@ -187,7 +188,7 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
             onMouseEnter={() => hasCover && setCoverOptions(true)}
             onMouseLeave={() => setCoverOptions(false)}
             className={cn('relative w-full transition-all duration-300 group', hasCover ? 'h-60' : 'h-0 min-h-[50px]')}>
-            {hasCover && (
+            {hasCover && draft.coverImageUrl && (
                 <img
                     src={draft.coverImageUrl!}
                     alt="Draft Cover"

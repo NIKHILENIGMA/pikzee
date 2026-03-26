@@ -1,14 +1,18 @@
-import { useEffect, useState, type FC } from 'react'
-import type { DraftDTO, DraftSettingType } from '../types/draft.types'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { formatDate } from 'date-fns'
+import { useEffect, useState, type FC } from 'react'
+
+import type { DraftSettingType } from '../types/draft.types'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+
+import { useDraftStore } from '../store/draft.store'
 
 interface DraftMetaProps {
-    draft: DraftDTO
     settings: DraftSettingType
 }
 
-const DraftMeta: FC<DraftMetaProps> = ({ draft, settings }) => {
+const DraftMeta: FC<DraftMetaProps> = ({ settings }) => {
+    const draft = useDraftStore((s) => s.draft)
+
     const [owner, setOwner] = useState<{
         firstName: string
         lastName: string

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router'
 
@@ -5,7 +6,6 @@ import { cn } from '@/shared/lib/utils'
 import { EditorRoot } from '@/features/block/components/editor-root'
 import { useWorkspaceContext } from '@/features/workspace'
 
-import { useDraftContext } from '../hooks/use-draft-context'
 import { useGetDraft } from '../api/get-draft'
 
 import DraftContainer from './draft-container'
@@ -13,12 +13,12 @@ import { DraftCover } from './draft-cover'
 import { DraftHeaderActions } from './draft-header-actions'
 import DraftMeta from './draft-meta'
 import DraftTitle from './draft-title'
-import type { DraftSettingType } from '../types/draft.types'
+import type { DraftDTO, DraftSettingType } from '../types/draft.types'
 import { DraftSettings } from './draft-settings'
-import { X } from 'lucide-react'
-import { useDebounce } from '@/shared/hooks/useDebounce'
+// import { useDraftStore } from '../store/draft.store'
 import { useUpdateDraftContent } from '../api/update-content'
-// import { mockDrafts } from '../constant'
+import { toast } from 'sonner'
+// import { useDraftStore } from '../store/draft.store'
 
 const DEFAULT_SETTINGS: DraftSettingType = {
     fontStyle: 'sans',
@@ -29,30 +29,35 @@ const DEFAULT_SETTINGS: DraftSettingType = {
     showOwner: true,
     showLastModified: true
 }
+const initialDraft: DraftDTO = {
+    id: '',
+    owner: {
+        id: '',
+        firstName: '',
+        lastName: '',
+        avatarUrl: null
+    },
+    title: null,
+    docId: '',
+    content: null,
+    icon: null,
+    coverImageUrl: null,
+    coverImageConfig: null,
+    settings: null,
+    lastUpdatedBy: {
+        id: '',
+        firstName: '',
+        lastName: '',
+        avatarUrl: null
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+}
 
 export default function DraftContent() {
-    const { id: workspaceId } = useWorkspaceContext()
-    const { draft, updateDraft } = useDraftContext()
-    const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
     const { pageId, documentId } = useParams<{ documentId: string; pageId: string }>()
-    const [error, setError] = useState<string | null>(null)
-    const [editorContent, setEditorContent] = useState<{
-        title: string
-        content: string
-    }>({
-        title: '',
-        content: ''
-    })
-    // Debounce title and content to avoid excessive API calls while typing
-    const debouncedTitle = useDebounce({
-        value: editorContent.title,
-        delay: 1000
-    })
 
-    const debouncedContent = useDebounce({
-        value: editorContent.content,
-        delay: 1500
-    })
+    const { id: workspaceId } = useWorkspaceContext()
 
     const { data: draftData, isLoading: draftLoading } = useGetDraft({
         workspaceId,
@@ -60,51 +65,42 @@ export default function DraftContent() {
         draftId: pageId!
     })
 
-    const { mutateAsync: updateDraftContent, isPending: isUpdatingDraftContent } = useUpdateDraftContent({
-        workspaceId,
-        draftId: pageId!
-    })
+    const [draftDetails, setDraftDetails] = useState<DraftDTO>(initialDraft)
+    const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
+    const [error, setError] = useState<string | null>(null)
+    const { mutateAsync: updateDraftContent } = useUpdateDraftContent({})
+
 
     const handleClearErrorMsg = () => {
         setError(null)
     }
 
-    useEffect(() => {
-        if (draftData && !draftLoading) {
-            const hasIdChanged = draft.id !== draftData.id
-            const hasIconChanged = draft.icon !== draftData.icon
-            const hasCoverChanged = draft.coverImageUrl !== draftData.coverImageUrl
-            const hasSettingsChanged = JSON.stringify(draft.settings) !== JSON.stringify(draftData.settings)
-            const hasCoverConfigChanged = JSON.stringify(draft.coverImageConfig) !== JSON.stringify(draftData.coverImageConfig)
-            if (hasIdChanged) {
-                updateDraft(draftData)
-            } else if (hasIconChanged || hasCoverChanged || hasSettingsChanged || hasCoverConfigChanged) {
-                updateDraft({
-                    icon: draftData.icon,
-                    coverImageUrl: draftData.coverImageUrl,
-                    coverImageConfig: draftData.coverImageConfig,
-                    settings: draftData.settings
-                })
-            }
-        }
-    }, [draft.id, draft.icon, draft.coverImageUrl, draft.settings, draftData, draftLoading, updateDraft])
-
-    useEffect(() => {
-        if (debouncedTitle && debouncedContent) {
-            updateDraftContent({
+    const handleSaveContent = async () => {
+        try {
+            await updateDraftContent({
                 workspaceId,
                 docId: documentId!,
                 draftId: pageId!,
-                title: debouncedTitle,
-                content: debouncedContent
+                title: draftDetails.title ?? '',
+                content: draftDetails.content
             })
+            toast.success('Draft content saved successfully!')
+        } catch (err) {
+            setError('Failed to save draft content.')
+            toast.error('Failed to save draft content.')
         }
-    }, [debouncedTitle, debouncedContent, workspaceId, documentId, pageId])
+    }
+
+    useEffect(() => {
+        if (!draftData) return
+
+        setDraftDetails(draftData)
+    }, [draftData])
 
     // Merge default settings with draft settings
-    const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...(draft.settings || {}) }), [draft.settings])
+    const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...(draftData?.settings || {}) }), [draftData?.settings])
 
-    if (draftLoading) {
+    if (draftLoading || (draftData && draftData.id !== pageId)) {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -121,46 +117,40 @@ export default function DraftContent() {
                 </div>
             )}
             {/* Cover + Icon overlay */}
-            <DraftCover
-                draft={draft}
-                settings={settings}
-            />
+            <DraftCover settings={settings} draft={draftDetails} />
 
             <div
                 className={cn(
                     'transition-[max-width,padding-left,padding-right] ease-in-out',
                     !!settings.isFullWidth ? 'px-8 max-w-full' : 'max-w-4xl mx-auto px-4',
-                    settings.showIcon && draft.icon && 'pt-12'
+                    settings.showIcon && draftData?.icon && 'pt-12'
                 )}
                 style={{
                     transition: 'max-width 0.3s ease, padding-left 0.3s ease, padding-right 0.3s ease'
                 }}>
                 {/* Controls */}
                 <DraftHeaderActions
-                    draft={draft}
+                    draft={draftDetails}
                     settings={settings}
                     onOpenSettings={() => setSettingsOpen(true)}
-                    showError={(msg) => setError(msg)}
-                    isDraftUpdating={isUpdatingDraftContent}
+                    onDraftSave={handleSaveContent}
                 />
 
                 {/* Owner Details */}
-                <DraftMeta
-                    draft={draft}
-                    settings={settings}
-                />
+                <DraftMeta settings={settings} />
 
                 {/* Title */}
                 <DraftTitle
-                    title={editorContent.title}
-                    onTitleChange={(title) => setEditorContent((prev) => ({ ...prev, title }))}
                     settings={settings}
+                    value={draftDetails.title ?? ''}
+                    onChange={(title) => setDraftDetails((prev) => ({ ...prev, title }))}
                 />
 
                 {/* Editor */}
                 <EditorRoot
-                    content={editorContent.content}
-                    onContentChange={(content) => setEditorContent((prev) => ({ ...prev, content }))}
+                    key={draftData?.id}
+                    value={draftDetails.content ?? ''}
+                    onChange={(content) => setDraftDetails((prev) => ({ ...prev, content }))}
                 />
 
                 {/* Settings Panel */}

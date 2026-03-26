@@ -2,19 +2,19 @@ import { useRef, type FC } from 'react'
 import type { DraftSettingType } from '../types/draft.types'
 
 interface DraftTitleProps {
+    value: string
+    onChange: (value: string) => void
     settings: DraftSettingType
-    title: string
-    onTitleChange: (title: string) => void
 }
 
-const DraftTitle: FC<DraftTitleProps> = ({ settings, title, onTitleChange }) => {
+const DraftTitle: FC<DraftTitleProps> = ({ settings, value, onChange }) => {
+    // const draft = useDraftStore((s) => s.draft)
+    // const updateDraft = useDraftStore((s) => s.updateDraft)
     const ref = useRef<HTMLInputElement>(null)
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault()
-            ref.current?.blur()
-        }
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newTitle = e.target.value
+        onChange(newTitle)
     }
 
     return (
@@ -23,9 +23,8 @@ const DraftTitle: FC<DraftTitleProps> = ({ settings, title, onTitleChange }) => 
                 ref={ref}
                 className="w-full text-4xl font-bold outline-none bg-transparent"
                 placeholder="Untitled"
-                value={title}
-                onChange={(e) => onTitleChange(e.target.value)}
-                onKeyDown={handleKeyDown}
+                value={value}
+                onChange={handleTitleChange}
                 style={{ fontFamily: `var(--font-${settings.fontStyle})`, fontSize: settings.fontSize }}
             />
         </div>

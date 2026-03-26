@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import { Separator } from '@/components/ui/separator'
-import { useDraftContext } from '../../hooks/use-draft-context'
 import { toast } from 'sonner'
+import { useDraftStore } from '../../store/draft.store'
 
 
 interface DefaultImage {
@@ -155,7 +155,7 @@ const defaultCoverImages: DefaultCategory[] = [
 ]
 
 const DefaultTab: FC = () => {
-    const { updateDraft } = useDraftContext()
+    const updateDraft = useDraftStore((s) => s.updateDraft)
 
     const handleSelectCover = (url: string) => {
         updateDraft({

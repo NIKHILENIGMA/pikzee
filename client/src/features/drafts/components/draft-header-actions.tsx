@@ -1,142 +1,96 @@
-import { Image, Loader, Settings, SmilePlus } from 'lucide-react'
+import { Image, Loader, Save, Settings, SmilePlus } from 'lucide-react'
 import { useParams } from 'react-router'
-import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import type { DraftDTO, DraftSettingType } from '../types/draft.types'
 import { useWorkspaceContext } from '@/features'
-import { useCreateCoverImage } from '../api/create-cover'
-import { useAddEmoji } from '../api/add-emoji'
-import { AxiosError } from 'axios'
+
+import { useHeaderActions } from '../hooks/use-header-actions'
+// import { useDraftStore } from '../store/draft.store'
 
 interface DraftHeaderActionsProps {
     draft: DraftDTO
     settings: DraftSettingType
     onOpenSettings: () => void
-    isDraftUpdating: boolean
-    showError: (msg: string) => void
+    onDraftSave: () => void
 }
 
-function randomEmoji() {
-    const emojis = ['😀', '🚀', '🎉', '🌟', '🔥', '💡', '📚', '🎨', '🎵', '⚡']
-    return emojis[Math.floor(Math.random() * emojis.length)]
-}
-
-export function DraftHeaderActions({ draft, settings, onOpenSettings, showError, isDraftUpdating }: DraftHeaderActionsProps) {
+export function DraftHeaderActions({ draft, settings, onOpenSettings, onDraftSave }: DraftHeaderActionsProps) {
     const { id: workspaceId } = useWorkspaceContext()
+
     const { pageId, documentId } = useParams<{ pageId: string; documentId: string }>()
 
-    const {
-        mutateAsync: createCoverImage,
-        isPending: createCoverImagePending,
-        isError: createCoverImageError
-    } = useCreateCoverImage({
+    const { addEmojiPending, createCoverImagePending, handleAddCoverImage, handleAddEmojiIcon } = useHeaderActions({
         workspaceId,
-        draftId: pageId!
+        pageId: pageId!,
+        documentId: documentId!
     })
-
-    const {
-        mutateAsync: addEmoji,
-        isPending: addEmojiPending,
-        isError: addEmojiError
-    } = useAddEmoji({
-        workspaceId,
-        draftId: pageId!
-    })
-
-    // Add cover image with random Unsplash photo
-    const handleAddCoverImage = async () => {
-        try {
-            await createCoverImage({
-                documentId: documentId!,
-                draftId: pageId!,
-                workspaceId
-            })
-            toast.success('Cover image added successfully!')
-        } catch (error) {
-            toast.error(`${createCoverImageError ? (error as Error).message : 'Failed to add cover image.'}`)
-        }
-    }
-
-    // Add random emoji icon
-    const handleAddEmojiIcon = async () => {
-        const newIcon = randomEmoji()
-        try {
-            await addEmoji({
-                documentId: documentId!,
-                draftId: pageId!,
-                workspaceId,
-                icon: newIcon
-            })
-            toast.success('Icon added successfully!')
-        } catch (error) {
-            // console.log();
-            showError(((error as AxiosError).response?.data as { message: string }).message)
-            toast.error(`${addEmojiError ? (error as Error).message : 'Failed to add icon.'}`)
-        }
-    }
 
     return (
-        <div className="flex gap-2 mt-5 mb-3 py-4">
+        <div className="flex items-center gap-2 mt-5 mb-3 py-4">
             {settings.showIcon && !draft.icon && (
                 <Button
                     variant="ghost"
                     size="default"
                     onClick={handleAddEmojiIcon}
-                    disabled={isDraftUpdating}>
-                    {' '}
+                    disabled={addEmojiPending}>
                     {addEmojiPending ? (
                         <>
-                            <Loader className="animate-spin" />
+                            <Loader className="h-5 w-5 animate-spin mr-2" />
                             Adding Icon...
                         </>
                     ) : (
                         <>
-                            <SmilePlus
-                                size={'25'}
-                                className="mr-2"
-                            />
+                            <SmilePlus className="h-5 w-5 mr-2" />
                             Add Icon
                         </>
                     )}
                 </Button>
             )}
-
             {settings.showCover && !draft.coverImageUrl && (
                 <Button
                     variant="ghost"
                     size="default"
-                    onClick={handleAddCoverImage}>
+                    onClick={handleAddCoverImage}
+                    disabled={createCoverImagePending}>
                     {createCoverImagePending ? (
                         <>
-                            <Loader className="animate-spin" />
+                            <Loader className="h-5 w-5 animate-spin mr-2" />
                             Adding Cover...
                         </>
                     ) : (
                         <>
-                            <Image
-                                size={'25'}
-                                className="mr-2"
-                            />
+                            <Image className="h-5 w-5 mr-2" />
                             Add Cover
                         </>
                     )}
                 </Button>
             )}
-
             <Button
                 variant="ghost"
                 size="default"
-                onClick={onOpenSettings}>
-                <Settings className="h-4 w-4 mr-2" /> Settings
+                onClick={onOpenSettings}
+                disabled={addEmojiPending || createCoverImagePending}>
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+            </Button>
+            <Button
+                variant="ghost"
+                size="default"
+                onClick={onDraftSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Draft
             </Button>
 
-            {isDraftUpdating && (
-                <div className="flex items-center gap-2 text-sm text-green-500">
-                    <Loader className="animate-spin" />
-                    Saving...
-                </div>
-            )}
+            {/* {isEditing === 'saving' && <span className="text-xs text-muted-foreground italic ml-2">Saving...</span>}
+            {isEditing === 'saved' && <span className="text-xs text-muted-foreground italic ml-2">All changes saved</span>} */}
+            {/* ✅ NEW: visible error state so user knows the save failed */}
+            {/* {isEditing === 'error' && (
+                <span className="text-xs text-red-500 italic ml-2 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Save failed — will retry
+                </span>
+            )} */}
         </div>
     )
 }
