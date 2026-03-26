@@ -12,6 +12,8 @@ export const getDraft = async (data: { workspaceId: string; docId: string; draft
 
     // API returns an array for consistency with other endpoints, but we only need the first item since we're querying by ID
     const response = await client.get<DraftDTO>(`${DOCUMENT_API_BASE}/${docId}${DRAFT_API_BASE}/${draftId}?workspaceId=${workspaceId}`)
+    // console.log(`api return data: ${JSON.stringify(response.data, null, 2)}`);
+    
     return response.data
 }
 

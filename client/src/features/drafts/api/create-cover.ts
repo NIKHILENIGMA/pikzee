@@ -6,10 +6,11 @@ import type { MutationConfig } from '@/shared/lib/react-query'
 import { draftKeys } from '@/shared/lib/query-keys'
 
 export const addCoverImage = async (data: { documentId: string; draftId: string; workspaceId: string }) => {
-    await client.post<null, null>(
+    const response = await client.post<{ coverImageUrl: string }, null>(
         `${DOCUMENT_API_BASE}/${data.documentId}${DRAFT_API_BASE}/${data.draftId}/cover-image?workspaceId=${data.workspaceId}`,
         null
     )
+    return response.data.coverImageUrl
 }
 
 type UseCreateCoverImage = {

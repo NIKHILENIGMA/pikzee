@@ -7,8 +7,7 @@ import type { MutationConfig } from '@/shared/lib/react-query'
 import { draftKeys } from '@/shared/lib/query-keys'
 
 export const EmojiSchema = z.object({
-    icon: z.string(),
-    
+    icon: z.string()
 })
 
 type AddEmojiDTO = z.infer<typeof EmojiSchema>
@@ -26,17 +25,13 @@ type UseAddEmoji = {
     mutationConfig?: MutationConfig<typeof addEmoji>
 }
 
-export const useAddEmoji = ({ workspaceId, draftId, mutationConfig }: UseAddEmoji & { workspaceId: string; draftId: string }) => {
-    const queryClient = useQueryClient()
+export const useAddEmoji = ({ mutationConfig, workspaceId }: UseAddEmoji & { workspaceId: string }) => {
     const { ...restConfig } = mutationConfig || {}
-
+    const queryClient = useQueryClient()
     return useMutation({
         ...restConfig,
         mutationFn: (data) => addEmoji(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: draftKeys.detail(workspaceId, draftId)
-            }),
             queryClient.invalidateQueries({
                 queryKey: draftKeys.lists(workspaceId)
             })
