@@ -1,7 +1,8 @@
 import { Outlet } from 'react-router'
-import DraftSidebar from '../../features/drafts/components/draft-sidebar'
-import { DraftProvider } from '../../features/drafts/context/draft-context'
+
 import { useDefaultWorkspace, WorkspaceProvider } from '@/features'
+
+import DraftSidebar from '../../features/drafts/components/draft-sidebar'
 
 export default function DraftLayout() {
     const workspaceResponse = useDefaultWorkspace({
@@ -21,14 +22,12 @@ export default function DraftLayout() {
 
     return (
         <WorkspaceProvider workspace={workspaceResponse.data?.data ?? null}>
-            <DraftProvider>
-                <div className="flex h-screen w-full">
-                    <DraftSidebar />
-                    <main className="flex-1 overflow-y-auto p-2">
-                        <Outlet />
-                    </main>
-                </div>
-            </DraftProvider>
+            <div className="flex h-screen w-full">
+                <DraftSidebar />
+                <main className="flex-1 overflow-y-auto p-2">
+                    <Outlet />
+                </main>
+            </div>
         </WorkspaceProvider>
     )
 }

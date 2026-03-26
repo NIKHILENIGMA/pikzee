@@ -1,52 +1,28 @@
 // src/tiptap/components/EditorRoot.tsx
 import { DragHandle } from '@tiptap/extension-drag-handle-react'
-import { EditorContent } from '@tiptap/react'
-import { useEffect, type FC } from 'react'
+import { Editor, EditorContent } from '@tiptap/react'
+import { type FC } from 'react'
 
 import { useEditorInstance } from '../hooks/use-editor-instance'
 
 import { BubbleTools } from './bubble-tools'
-// import { Node as ProseMirrorNode } from "prosemirror-model";
+// import { useDraftStore } from '@/features/drafts/store/draft.store'
 
 interface EditorRootProps {
-    content?: string
-    onContentChange: (content: string) => void
+    value: string
+    onChange: (value: string) => void
 }
 
-export const EditorRoot: FC<EditorRootProps> = ({ content, onContentChange }) => {
+export const EditorRoot: FC<EditorRootProps> = ({ value, onChange }) => {
     const { editor, isActive } = useEditorInstance({
         placeholder: 'Write something awesome...',
-        content // initialize editor with content if provided
+        content: value ? (typeof value === 'string' ? JSON.parse(value) : value) : '',
+        onUpdate: ({ editor }: { editor: Editor }) => {
+            onChange(JSON.stringify(editor.getJSON()))
+        }
     })
 
-    // Track content changes and notify parent
-    useEffect(() => {
-        if (!editor) return
-
-        const handler = () => {
-            // Send content as JSON string to parent for better structure (can be parsed back to ProseMirror Node if needed)
-            onContentChange(JSON.stringify(editor.getJSON()))
-        }
-        editor.on('update', handler)
-        return () => {
-            editor.off('update', handler)
-        }
-    }, [editor, onContentChange])
-
-    // If the content prop changes (from parent), update the editor content
-    useEffect(() => {
-        if (!editor) return
-        if (content) {
-            try {
-                const parsed = JSON.parse(content)
-                editor.commands.setContent(parsed)
-            } catch {
-                // fallback: set as HTML if not JSON
-                editor.commands.setContent(content)
-            }
-        }
-    }, [content, editor])
-
+    // Sync editor content with draft content from context when it changes (e.g., on initial load or external updates)
     if (!editor) return null
 
     return (
