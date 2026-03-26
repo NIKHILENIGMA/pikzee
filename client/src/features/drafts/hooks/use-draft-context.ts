@@ -1,10 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { DraftDTO } from '../types/draft.types'
-
-type DraftContextType = {
-    draft: DraftDTO
-    updateDraft: (data: Partial<DraftDTO>) => void
-}
+import type { DraftContextType } from '../types/draft.types'
 
 export const DraftContext = createContext<DraftContextType | null>(null)
 

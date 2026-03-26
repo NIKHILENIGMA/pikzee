@@ -27,7 +27,7 @@ import { defaultExtensions } from '../util/default-extensions'
  * const { editor, isActive, chain } = useEditorInstance({
  *   content: '<p>Hello world</p>',
  *   placeholder: 'Enter your text here...',
- *   onUpdate: (json, html) => console.log('Content updated:', json)
+ *   onUpdate: ({ editor }) => console.log('Content updated:', editor.getJSON())
  * });
  * ```
  */
@@ -36,11 +36,8 @@ export function useEditorInstance(opts?: UseEditorInstanceOptions) {
     const editor = useEditor({
         extensions: defaultExtensions, //[...defaultExtensions, ...aiExtensions]
         content: opts?.content ?? '',
-        // onCreate: ({ editor }) => {
-        //   editor.registerPlugin(blockIdPlugin());
-        // },
         onUpdate: ({ editor }) => {
-            opts?.onUpdate?.(editor.getJSON(), editor.getHTML())
+            opts?.onUpdate?.({ editor })
         },
         editorProps: {
             attributes: {
