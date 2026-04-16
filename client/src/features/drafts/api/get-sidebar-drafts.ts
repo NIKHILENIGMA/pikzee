@@ -14,7 +14,7 @@ export const getSidebarDrafts = async (workspaceId: string, docId: string): Prom
 
 export const getSidebarDraftsQueryOptions = (workspaceId: string, docId: string) => {
     return queryOptions({
-        queryKey: draftKeys.lists(workspaceId),
+        queryKey: draftKeys.list(workspaceId, docId),
         queryFn: () => getSidebarDrafts(workspaceId, docId)
     })
 }
