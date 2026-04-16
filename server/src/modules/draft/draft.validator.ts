@@ -26,7 +26,7 @@ export const DraftRepositionBodySchema = z.object({
 })
 
 export const DraftEmojiBodySchema = z.object({
-    icon: z.string({ message: 'Invalid emoji or icon' })
+    icon: z.string({ message: 'Invalid emoji or icon' }).or(z.null())
 })
 
 export const DraftSettingBodySchema = z

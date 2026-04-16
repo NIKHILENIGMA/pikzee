@@ -10,8 +10,7 @@ import {
     DraftQuerySchema,
     DraftRepositionBodySchema,
     DraftSettingBodySchema,
-    DraftUpdateCoverImageBodySchema,
-    GenerateContentBodySchema
+    DraftUpdateCoverImageBodySchema
 } from './draft.validator'
 import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
@@ -276,94 +275,27 @@ export class DraftController extends BaseController {
         })
     }
 
-    removeCoverImage = async (req: Request, res: Response, next: NextFunction) => {
+    changeIcon = async (req: Request, res: Response, next: NextFunction) => {
         return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
             const userId: string | undefined = req.user?.id
             if (!userId) throw new UnauthorizedError('User not authenticated')
 
-            // Validate request parameters and query
-            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
-            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
-
-            // Perform remove cover image operation
-            await this.service.removeCoverImage(params.draftId, {
-                userId,
-                workspaceId: query.workspaceId
-            })
-
-            // Return standardized response
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Draft cover image removed successfully',
-                data: null
-            })
-        })
-    }
-
-    addIcon = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) throw new UnauthorizedError('User not authenticated')
-
-            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
-
-            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
-
-            const body = ValidationService.validateBody(req.body, DraftEmojiBodySchema)
-
-            await this.service.addIcon(params.draftId, {
-                userId,
-                workspaceId: query.workspaceId,
-                icon: body.icon
-            })
-
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Draft icon added successfully',
-                data: null
-            })
-        })
-    }
-
-    updateIcon = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) throw new UnauthorizedError('User not authenticated')
-
+            // Validate request parameters, body, and query
             const params = ValidationService.validateParams(req.params, DraftParamsSchema)
             const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
             const body = ValidationService.validateBody(req.body, DraftEmojiBodySchema)
 
+            // Perform change icon operation
             await this.service.updateIcon(params.draftId, {
                 userId,
                 workspaceId: query.workspaceId,
                 icon: body.icon
             })
 
+            // Return standardized response
             return this.createResponse({
                 statusCode: STATUS_CODE.OK,
                 message: 'Draft icon updated successfully',
-                data: null
-            })
-        })
-    }
-
-    removeIcon = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) throw new UnauthorizedError('User not authenticated')
-
-            const params = ValidationService.validateParams(req.params, DraftParamsSchema)
-            const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
-
-            await this.service.removeIcon(params.draftId, {
-                userId,
-                workspaceId: query.workspaceId
-            })
-
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Draft icon removed successfully',
                 data: null
             })
         })
@@ -398,30 +330,4 @@ export class DraftController extends BaseController {
         })
     }
 
-    generateContent = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(
-            req,
-            res,
-            next,
-            async (): Promise<SuccessResponse<string | null>> => {
-                const userId: string | undefined = req.user?.id
-                if (!userId) {
-                    throw new Error('User not authenticated')
-                }
-
-                const { prompt } = ValidationService.validateBody(
-                    req.body,
-                    GenerateContentBodySchema
-                )
-
-                const content = await this.service.generateContent(prompt)
-
-                return this.createResponse({
-                    statusCode: STATUS_CODE.OK,
-                    message: 'Content generated successfully',
-                    data: content
-                })
-            }
-        )
-    }
 }

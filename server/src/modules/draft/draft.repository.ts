@@ -39,8 +39,7 @@ export interface IDraftRepository {
     ): Promise<void>
     updateCoverImagePosition(draftId: string, positionY: number): Promise<void>
     removeCoverImage(draftId: string): Promise<void>
-    addOrUpdateIcon(draftId: string, record: { icon: string }): Promise<void>
-    removeIcon(draftId: string): Promise<void>
+    updateIcon(draftId: string, record: { icon: string | null }): Promise<void>
     settings(draftId: string, newSettings: DraftSettings): Promise<DraftSettings | null>
     delete(draftId: string): Promise<Draft | null>
     createDraftTransaction(tx: DatabaseConnection, input: CreateDraft): Promise<Draft>
@@ -235,12 +234,8 @@ export class DraftRepository implements IDraftRepository {
             .where(eq(drafts.id, draftId))
     }
 
-    async addOrUpdateIcon(draftId: string, record: { icon: string }): Promise<void> {
+    async updateIcon(draftId: string, record: { icon: string | null }): Promise<void> {
         await this.db.update(drafts).set({ icon: record.icon }).where(eq(drafts.id, draftId))
-    }
-
-    async removeIcon(draftId: string): Promise<void> {
-        await this.db.update(drafts).set({ icon: null }).where(eq(drafts.id, draftId))
     }
 
     async markAsUpdated(draftId: string, userId: string): Promise<void> {

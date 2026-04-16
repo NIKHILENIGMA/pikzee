@@ -26,13 +26,10 @@ router
     .route('/:draftId/cover-image')
     .post(clerkMiddleware, draftController.addCoverImage)
     .patch(clerkMiddleware, draftController.updateCoverImage)
-    .delete(clerkMiddleware, draftController.removeCoverImage)
 
 router
     .route('/:draftId/emoji')
-    .post(clerkMiddleware, draftController.addIcon)
-    .patch(clerkMiddleware, draftController.updateIcon)
-    .delete(clerkMiddleware, draftController.removeIcon)
+    .patch(clerkMiddleware, draftController.changeIcon)
 
 router.route('/:draftId/content').patch(clerkMiddleware, draftController.content)
 
