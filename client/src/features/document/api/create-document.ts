@@ -34,10 +34,10 @@ export const useCreateDocument = ({ workspaceId, mutationConfig }: UseCreateDocu
         mutationFn: (data) => createDocument(data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: documentKeys.lists(workspaceId)
+                queryKey: documentKeys.list(workspaceId)
             })
             queryClient.invalidateQueries({
-                queryKey: workspaceKeys.default()
+                queryKey: workspaceKeys.list()
             })
         }
     })

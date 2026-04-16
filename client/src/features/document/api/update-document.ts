@@ -31,7 +31,7 @@ export const useUpdateDocument = ({ mutationConfig }: UseUpdateDocument = {}) =>
         mutationFn: (params) => updateDocument(params),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: documentKeys.lists(variables.workspaceId)
+                queryKey: documentKeys.list(variables.workspaceId)
             })
         }
     })

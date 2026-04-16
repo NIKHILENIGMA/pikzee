@@ -27,7 +27,7 @@ export const useDeleteDocument = ({ workspaceId, mutationConfig }: UseDeleteDocu
         mutationFn: (params) => deleteDocument(params),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: documentKeys.lists(workspaceId)
+                queryKey: documentKeys.list(workspaceId)
             })
         }
     })

@@ -14,7 +14,7 @@ export const getDocuments = async (workspaceId: string): Promise<DocumentDTO[]> 
 
 export const getDocumentsQueryOptions = (workspaceId: string) => {
     return queryOptions({
-        queryKey: documentKeys.lists(workspaceId),
+        queryKey: documentKeys.list(workspaceId),
         queryFn: () => getDocuments(workspaceId)
     })
 }

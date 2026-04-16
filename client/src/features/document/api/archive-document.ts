@@ -27,7 +27,7 @@ export const useArchiveDocument = ({ workspaceId, mutationConfig }: UseArchiveDo
         mutationFn: (params) => archiveDocument(params),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: documentKeys.lists(workspaceId)
+                queryKey: documentKeys.list(workspaceId)
             })
         }
     })
