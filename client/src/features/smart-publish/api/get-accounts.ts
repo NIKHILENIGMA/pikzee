@@ -16,7 +16,7 @@ export const getAccounts = async (workspaceId: string): Promise<Account[]> => {
 // Provides the query options for fetching accounts, which can be used with React Query's useQuery hook
 export const getAccountsQueryOptions = (workspaceId: string) => {
     return queryOptions({
-        queryKey: socialAccountKeys.all(workspaceId),
+        queryKey: socialAccountKeys.all(),
         queryFn: () => getAccounts(workspaceId)
     })
 }

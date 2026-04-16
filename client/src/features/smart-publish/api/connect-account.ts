@@ -1,8 +1,9 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
 import { SOCIAL_ACCOUNTS_API_BASE } from '@/shared/constants'
 import client from '@/shared/lib/api-client'
 import { socialAccountKeys } from '@/shared/lib/query-keys'
 import type { MutationConfig } from '@/shared/lib/react-query'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 // API function to create a connection for a social media account. It returns the URL to redirect the user for OAuth authentication.
 export const connectAccount = async (platform: string): Promise<string> => {
@@ -22,7 +23,7 @@ type UseConnectAccount = {
  * @param mutationConfig - Optional configuration for the mutation, such as onSuccess, onError callbacks, etc.
  * @returns A mutation object that can be used to trigger the account connection process.
  */
-export const useConnectAccount = ({ workspaceId, mutationConfig }: UseConnectAccount & { workspaceId: string }) => {
+export const useConnectAccount = ({ mutationConfig }: UseConnectAccount) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
     return useMutation({
@@ -30,7 +31,7 @@ export const useConnectAccount = ({ workspaceId, mutationConfig }: UseConnectAcc
         mutationFn: (platform: string) => connectAccount(platform),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: socialAccountKeys.all(workspaceId)
+                queryKey: socialAccountKeys.all()
             })
         }
     })

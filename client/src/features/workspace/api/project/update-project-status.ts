@@ -39,7 +39,7 @@ export const useUpdateProjectStatus = ({ mutationConfig }: UseUpdateProjectStatu
         mutationFn: (data) => updateProjectStatus(data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: workspaceKeys.default()
+                queryKey: workspaceKeys.all()
             })
         }
     })

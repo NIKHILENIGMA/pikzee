@@ -32,7 +32,7 @@ export const useUpdateProjectDetails = ({ mutationConfig }: UseUpdateProjectDeta
         mutationFn: ({ projectId, data }: { projectId: string; data: UpdateProjectDetailsParams }) => updateProjectDetails({ projectId, data }),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: workspaceKeys.default()
+                queryKey: workspaceKeys.all()
             })
         }
     })

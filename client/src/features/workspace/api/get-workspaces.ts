@@ -15,7 +15,7 @@ export const getWorkspaces = async () => {
 // Provides the query options for fetching workspaces
 export const getWorkspacesQueryOptions = () => {
     return queryOptions({
-        queryKey: [workspaceKeys.all],
+        queryKey: workspaceKeys.all(),
         queryFn: () => {
             return getWorkspaces()
         }

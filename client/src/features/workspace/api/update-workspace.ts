@@ -5,6 +5,7 @@ import client from '@/shared/lib/api-client'
 import type { MutationConfig } from '@/shared/lib/react-query'
 
 import type { WorkspaceDTO } from '../types'
+import { workspaceKeys } from '@/shared/lib/query-keys'
 
 // Schema for updating a workspace
 export const UpdateWorkspaceSchema = z.object({
@@ -51,7 +52,7 @@ export const useUpdateWorkspace = ({ mutationConfig }: UseUpdateWorkspaceOptions
     return useMutation({
         onSuccess: (data, ...args) => {
             queryClient.refetchQueries({
-                queryKey: ['workspaces']
+                queryKey: workspaceKeys.all()
             })
             onSuccess?.(data, ...args)
         },

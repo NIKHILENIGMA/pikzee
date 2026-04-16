@@ -5,7 +5,7 @@ import client from '@/shared/lib/api-client'
 import { memberKeys } from '@/shared/lib/query-keys'
 import type { QueryConfig } from '@/shared/lib/react-query'
 
-import type { MemberDTO } from '../types'
+import type { MemberDTO } from '../../types/member.types'
 
 export const getMembers = async (workspaceId: string) => {
     return await client.get<MemberDTO[]>(`${WORKSPACE_API_BASE}/${workspaceId}/members`)
@@ -13,7 +13,7 @@ export const getMembers = async (workspaceId: string) => {
 
 export const getMembersQueryOptions = (workspaceId: string) => {
     return queryOptions({
-        queryKey: memberKeys.lists(workspaceId),
+        queryKey: memberKeys.list(workspaceId),
         queryFn: () => getMembers(workspaceId)
     })
 }

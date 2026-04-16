@@ -24,7 +24,7 @@ export const useDeleteProject = ({ mutationConfig }: UseDeleteProject = {}) => {
         mutationFn: (id: string) => deleteProject(id),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: workspaceKeys.default()
+                queryKey: workspaceKeys.all()
             })
         }
     })

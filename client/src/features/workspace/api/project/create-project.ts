@@ -40,7 +40,7 @@ export const useCreateProject = ({ mutationConfig }: UseCreateProject = {}) => {
         mutationFn: (data) => createProject(data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: workspaceKeys.default()
+                queryKey: workspaceKeys.all()
             })
         }
     })

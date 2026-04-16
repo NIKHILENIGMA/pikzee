@@ -23,7 +23,7 @@ type UseDisconnectAccount = {
  * @param mutationConfig - Optional configuration for the mutation, such as onSuccess, onError callbacks, etc.
  * @returns A mutation object that can be used to trigger the account disconnection process.
  */
-export const useDisconnectAccount = ({ workspaceId, mutationConfig }: UseDisconnectAccount & { workspaceId: string }) => {
+export const useDisconnectAccount = ({ mutationConfig }: UseDisconnectAccount) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
     return useMutation({
@@ -32,7 +32,7 @@ export const useDisconnectAccount = ({ workspaceId, mutationConfig }: UseDisconn
             disconnectAccount({ accountId: params.accountId, platform: params.platform }),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: socialAccountKeys.all(workspaceId)
+                queryKey: socialAccountKeys.all()
             })
         }
     })

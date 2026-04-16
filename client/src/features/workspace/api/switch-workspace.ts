@@ -31,7 +31,7 @@ export const useSwitchWorkspace = ({ mutationConfig }: UseSwitchWorkspace = {}) 
         onSuccess: () => {
             // Invalidate and refetch
             queryClient.invalidateQueries({
-                queryKey: workspaceKeys.default()
+                queryKey: workspaceKeys.all()
             })
         }
     })
