@@ -35,25 +35,16 @@ export interface IDraftService {
     ): Promise<void>
     updateCoverImage(
         draftId: string,
-        record: { userId: string; workspaceId: string; imageUrl: string; type: DraftCoverImageType }
+        record: { userId: string; workspaceId: string; imageUrl: string | null; type: DraftCoverImageType }
     ): Promise<void>
     updateCoverImagePosition(
         draftId: string,
         record: { userId: string; workspaceId: string; positionY: number }
     ): Promise<void>
-    removeCoverImage(
-        draftId: string,
-        record: { userId: string; workspaceId: string }
-    ): Promise<void>
-    addIcon(
-        draftId: string,
-        record: { userId: string; workspaceId: string; icon: string }
-    ): Promise<void>
     updateIcon(
         draftId: string,
-        record: { userId: string; workspaceId: string; icon: string }
+        record: { userId: string; workspaceId: string; icon: string | null }
     ): Promise<void>
-    removeIcon(draftId: string, record: { userId: string; workspaceId: string }): Promise<void>
     content(
         draftId: string,
         record: {
@@ -197,45 +188,22 @@ export class DraftService implements IDraftService {
         await this.repository.markAsUpdated(draftId, record.userId)
     }
 
-    async addIcon(
-        draftId: string,
-        record: { userId: string; workspaceId: string; icon: string }
-    ): Promise<void> {
-        await this.ensurePermission(
-            record.userId,
-            record.workspaceId,
-            ['EDIT', 'FULL_ACCESS'],
-            'User does not have permission to update draft icon'
-        )
-        await this.repository.addOrUpdateIcon(draftId, { icon: record.icon })
-        await this.repository.markAsUpdated(draftId, record.userId)
-    }
-
     async updateIcon(
         draftId: string,
-        record: { userId: string; workspaceId: string; icon: string }
+        record: { userId: string; workspaceId: string; icon: string | null }
     ): Promise<void> {
+        // Check permissions
         await this.ensurePermission(
             record.userId,
             record.workspaceId,
             ['EDIT', 'FULL_ACCESS'],
             'User does not have permission to update draft icon'
-        )
-        await this.repository.addOrUpdateIcon(draftId, { icon: record.icon })
-        await this.repository.markAsUpdated(draftId, record.userId)
-    }
+        )   
 
-    async removeIcon(
-        draftId: string,
-        record: { userId: string; workspaceId: string }
-    ): Promise<void> {
-        await this.ensurePermission(
-            record.userId,
-            record.workspaceId,
-            ['EDIT', 'FULL_ACCESS'],
-            'User does not have permission to remove draft icon'
-        )
-        await this.repository.removeIcon(draftId)
+        // Update icon (or remove if null)
+        await this.repository.updateIcon(draftId, { icon: record.icon })
+
+        // Mark draft as updated after changing icon
         await this.repository.markAsUpdated(draftId, record.userId)
     }
 
