@@ -11,6 +11,7 @@ import UnsplashTab from './cover-image/unsplash-tab'
 interface ChangeCoverImageProps {
     children: ReactNode
     onRemoveCover: () => void
+    isRemovingCover: boolean
 }
 
 const tabListOptions = [
@@ -20,7 +21,7 @@ const tabListOptions = [
     { value: 'unsplash', label: 'Unsplash' }
 ]
 
-const ChangeCoverImage: FC<ChangeCoverImageProps> = ({ children, onRemoveCover }) => {
+const ChangeCoverImage: FC<ChangeCoverImageProps> = ({ children, onRemoveCover, isRemovingCover }) => {
     return (
         <Popover>
             <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -42,6 +43,7 @@ const ChangeCoverImage: FC<ChangeCoverImageProps> = ({ children, onRemoveCover }
                         </TabsList>
                         <button
                             onClick={onRemoveCover}
+                            disabled={isRemovingCover}
                             className="text-sm text-muted-foreground hover:text-foreground">
                             Remove
                         </button>

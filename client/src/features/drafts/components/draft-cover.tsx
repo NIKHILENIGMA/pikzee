@@ -12,11 +12,9 @@ import { cn } from '@/shared/lib/utils'
 import type { DraftDTO, DraftSettingType } from '../types/draft.types'
 
 import ChangeCoverImage from './change-cover-image'
-import { useRemoveCoverImage } from '../api/delete-cover'
-import { useAddEmoji } from '../api/add-emoji'
-import { useDeleteEmoji } from '../api/delete-emoji'
 import { useUpdateCoverImagePosition } from '../api/update-position'
-
+import { useUpdateEmoji } from '../api/update-emoji'
+import { useUpdateCoverImage } from '../api/update-cover'
 
 interface DraftCoverProps {
     draft: DraftDTO
@@ -35,23 +33,13 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
     const containerRef = useRef<HTMLDivElement>(null)
     const { id: workspaceId } = useWorkspaceContext()
     const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
-
-    const { mutateAsync: removeCoverImage } = useRemoveCoverImage({
-        workspaceId: workspaceId,
-        draftId: pageId!
-    })
-    const { mutateAsync: addEmoji } = useAddEmoji({
-        workspaceId
-    })
-    const { mutateAsync: deleteEmoji } = useDeleteEmoji({
-        workspaceId: workspaceId,
-        draftId: pageId!
-    })
-
-    const { mutateAsync: updateCoverImagePosition } = useUpdateCoverImagePosition({
-        workspaceId: workspaceId,
-        draftId: pageId!
-    })
+    if (!documentId || !pageId) {
+        return null
+    }
+    // API hooks
+    const { mutateAsync: removeCoverImage, isPending: isRemovingCover } = useUpdateCoverImage({})
+    const { mutateAsync: upsertEmoji } = useUpdateEmoji({})
+    const { mutateAsync: updateCoverImagePosition } = useUpdateCoverImagePosition({})
 
     const { theme } = useTheme()
 
@@ -69,8 +57,10 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
         try {
             await removeCoverImage({
                 workspaceId,
-                documentId: documentId!,
-                draftId: pageId!
+                documentId: documentId,
+                draftId: pageId,
+                coverImageUrl: null,
+                type: null
             })
 
             toast.success('Cover image removed successfully!')
@@ -87,10 +77,11 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
     // Handle removing icon
     const handleRemoveIcon = async () => {
         try {
-            await deleteEmoji({
+            await upsertEmoji({
                 workspaceId,
-                documentId: documentId!,
-                pageId: pageId!
+                documentId: documentId,
+                draftId: pageId,
+                icon: null
             })
             setIconPickerOpen(false)
             toast.success('Icon removed successfully!')
@@ -108,7 +99,7 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
                 setIconPickerOpen(false)
                 return
             } else {
-                await addEmoji({
+                await upsertEmoji({
                     documentId: documentId!,
                     workspaceId,
                     draftId: pageId!,
@@ -171,8 +162,8 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
         try {
             await updateCoverImagePosition({
                 workspaceId,
-                documentId: documentId!,
-                draftId: pageId!,
+                documentId: documentId,
+                draftId: pageId,
                 positionY: tempPositionY
             })
             setRepositioning('show')
@@ -214,7 +205,9 @@ export function DraftCover({ draft, settings, isIconLoading }: DraftCoverProps) 
                         aria-label="Reposition cover image">
                         Reposition
                     </Button>
-                    <ChangeCoverImage onRemoveCover={handleRemoveCover}>
+                    <ChangeCoverImage
+                        onRemoveCover={handleRemoveCover}
+                        isRemovingCover={isRemovingCover}>
                         <Button
                             size="sm"
                             variant="outline"

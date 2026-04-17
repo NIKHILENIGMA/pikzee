@@ -17,7 +17,7 @@ type UseCreateCoverImage = {
     mutationConfig?: MutationConfig<typeof addCoverImage>
 }
 
-export const useCreateCoverImage = ({ workspaceId, draftId, mutationConfig }: UseCreateCoverImage & { workspaceId: string; draftId: string }) => {
+export const useCreateCoverImage = ({ mutationConfig }: UseCreateCoverImage) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
@@ -26,7 +26,7 @@ export const useCreateCoverImage = ({ workspaceId, draftId, mutationConfig }: Us
         mutationFn: (data) => addCoverImage(data),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: draftKeys.detail(workspaceId, draftId)
+                queryKey: draftKeys.all()
             })
         }
     })
