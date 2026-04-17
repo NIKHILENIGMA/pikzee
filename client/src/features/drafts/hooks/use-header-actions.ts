@@ -1,9 +1,9 @@
-import { useCreateCoverImage } from '../api/create-cover'
-import { useAddEmoji } from '../api/add-emoji'
 import { AxiosError } from 'axios'
 import { toast } from 'sonner'
-// import { useDraftContext } from './use-draft-context'
-import { useDraftStore } from '../store/draft.store'
+
+import { useCreateCoverImage } from '../api/create-cover'
+import { useUpdateEmoji } from '../api/update-emoji'
+import { generateRandomEmoji } from '../util/emoji'
 
 interface UseHeaderActionsProps {
     workspaceId: string
@@ -11,21 +11,18 @@ interface UseHeaderActionsProps {
     documentId: string
 }
 
-function randomEmoji() {
-    const emojis = ['😀', '🚀', '🎉', '🌟', '🔥', '💡', '📚', '🎨', '🎵', '⚡']
-    return emojis[Math.floor(Math.random() * emojis.length)]
-}
-
 export const useHeaderActions = ({ workspaceId, pageId, documentId }: UseHeaderActionsProps) => {
-    const updateCoverImage = useDraftStore((s) => s.updateCoverImage)
-    const updateEmoji = useDraftStore((s) => s.updateEmoji)
+    // Mutation hook for adding a cover image to the draft
     const { mutateAsync: createCoverImage, isPending: createCoverImagePending } = useCreateCoverImage({
         workspaceId,
         draftId: pageId!
     })
 
-    const { mutateAsync: addEmoji, isPending: addEmojiPending } = useAddEmoji({
-        workspaceId
+    // Mutation hook for updating the emoji icon of the draft
+    const { mutateAsync: addEmoji, isPending: addEmojiPending } = useUpdateEmoji({
+        workspaceId,
+        documentId,
+        draftId: pageId!
     })
 
     // Add cover image with random Unsplash photo
@@ -37,9 +34,11 @@ export const useHeaderActions = ({ workspaceId, pageId, documentId }: UseHeaderA
                 workspaceId
             })
 
+            console.log(coverImageUrl)
+
             // Update the draft context with the new cover image URL and a default config
-            updateCoverImage(coverImageUrl) // Update cover image with random Unsplash photo
-            
+            // updateCoverImage(coverImageUrl) // Update cover image with random Unsplash photo
+
             toast.success('Cover image added successfully!')
         } catch (error) {
             const errorMessage = ((error as AxiosError).response?.data as { message: string }).message || 'Failed to add cover image.'
@@ -49,7 +48,8 @@ export const useHeaderActions = ({ workspaceId, pageId, documentId }: UseHeaderA
 
     // Add random emoji icon
     const handleAddEmojiIcon = async () => {
-        const newIcon = randomEmoji()
+        const newIcon = generateRandomEmoji()
+
         try {
             await addEmoji({
                 documentId: documentId!,
@@ -57,11 +57,8 @@ export const useHeaderActions = ({ workspaceId, pageId, documentId }: UseHeaderA
                 workspaceId,
                 icon: newIcon
             })
-            updateEmoji(newIcon) // Update the draft context with the new emoji icon
-            toast.success('Icon added successfully!')
         } catch (error) {
-            const errorMessage = ((error as AxiosError).response?.data as { message: string }).message || 'Failed to add icon.'
-            toast.error(`${errorMessage}`)
+            throw error
         }
     }
 
