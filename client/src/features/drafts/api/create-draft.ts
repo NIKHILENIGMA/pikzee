@@ -8,9 +8,9 @@ import { draftKeys } from '@/shared/lib/query-keys'
 import type { DraftDTO } from '../types/draft.types'
 
 export const createDraft = async (data: { documentId: string; workspaceId: string }) => {
-    const newDocument = await client.post<DraftDTO, null>(`${DOCUMENT_API_BASE}/${data.documentId}/drafts?workspaceId=${data.workspaceId}`, null)
+    const response = await client.post<DraftDTO, null>(`${DOCUMENT_API_BASE}/${data.documentId}/drafts?workspaceId=${data.workspaceId}`, null)
 
-    return newDocument.data
+    return response.data
 }
 
 
@@ -18,17 +18,40 @@ type UseCreateDraft = {
     mutationConfig?: MutationConfig<typeof createDraft>
 }
 
-export const useCreateDraft = ({ workspaceId, mutationConfig }: UseCreateDraft & { workspaceId: string }) => {
+export const useCreateDraft = ({ mutationConfig }: UseCreateDraft) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
     return useMutation({
-        ...restConfig,
         mutationFn: (data) => createDraft(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: draftKeys.lists(workspaceId)
+        onMutate: async (data) => {
+            const key = draftKeys.list(data.workspaceId, data.documentId)
+            
+            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+            await queryClient.cancelQueries({ queryKey: key })
+            
+            // Snapshot the previous value
+            const previousDrafts = queryClient.getQueryData(key)
+            
+            // Optimistically update to the new value
+            queryClient.setQueryData(key, (old: any) => {
+                if (!old) return old
+                
+                return [...old, data]
             })
-        }
+            
+            return { previousDrafts }
+        },
+        onError: (_, variables, context: any) => {
+            const key = draftKeys.list(variables.workspaceId, variables.documentId)
+            if (context?.previousDrafts) {
+                queryClient.setQueryData(key, context.previousDrafts)
+            }
+        },
+        onSuccess: (_, variables) => {
+            const key = draftKeys.list(variables.workspaceId, variables.documentId)
+            queryClient.invalidateQueries({ queryKey: key })
+        },
+        ...restConfig,
     })
 }

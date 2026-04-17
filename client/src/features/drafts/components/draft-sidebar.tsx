@@ -1,5 +1,5 @@
 import { Plus, PanelLeft, Loader, FileText, Trash } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 
@@ -11,15 +11,19 @@ import { useSidebar } from '../api/get-sidebar-drafts'
 import { useCreateDraft } from '../api/create-draft'
 import type { DraftSidebarDTO } from '../types/draft.types'
 import { useDeleteDraft } from '../api/delete-draft'
-// import { useDraftStore } from '../store/draft.store'
+import { useStore } from '@/shared/store'
 
 export default function DraftSidebar() {
-    const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
-    const navigate = useNavigate()
-    
     const { id: workspaceId } = useWorkspaceContext()
+    const navigate = useNavigate()
+    const isEditorSidebarOpen = useStore((state) => state.isEditorSidebarOpen)
+    const toggleEditorSidebar = useStore((state) => state.toggleEditorSidebar)
+    const optimisticMeta = useStore((state) => state.optimisticMeta)
     
-    const [collapsed, setCollapsed] = useState(false)
+    const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
+    if (!documentId || !pageId) {
+        return null
+    }
 
     const {
         data: pages,
@@ -30,17 +34,13 @@ export default function DraftSidebar() {
         docId: documentId!
     })
 
-    const { mutateAsync: createDraftMutation, isError: createDraftError } = useCreateDraft({
-        workspaceId: workspaceId
-    })
+    const { mutateAsync: createDraftMutation, isError: createDraftError } = useCreateDraft({})
 
-    const { mutateAsync: deleteDraftMutation } = useDeleteDraft({
-        workspaceId: workspaceId
-    })
+    const { mutateAsync: deleteDraftMutation } = useDeleteDraft({})
 
     const handleNewDraft = async () => {
         try {
-            const newDraft = await createDraftMutation({ documentId: documentId!, workspaceId: workspaceId })
+            const newDraft = await createDraftMutation({ documentId: documentId, workspaceId: workspaceId })
             toast.success('Draft created successfully')
             // updateDraft(newDraft)
             navigate(`/documents/${documentId}/pages/${newDraft.id}`)
@@ -74,16 +74,16 @@ export default function DraftSidebar() {
     }
 
     return (
-        <aside className={`border-r transition-all ${collapsed ? 'w-14' : 'w-64'}`}>
+        <aside className={`border-r transition-all ${!isEditorSidebarOpen ? 'w-64' : 'w-12'}`}>
             <div className="flex items-center justify-between p-2">
                 <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => setCollapsed(!collapsed)}>
+                    onClick={() => toggleEditorSidebar()}>
                     <PanelLeft size={18} />
                 </Button>
 
-                {!collapsed && (
+                {!isEditorSidebarOpen && (
                     <div className="w-full flex items-center justify-between gap-2">
                         <button
                             type="button"
@@ -102,22 +102,26 @@ export default function DraftSidebar() {
             </div>
 
             <ScrollArea className="h-[calc(100vh-40px)]">
-                <div className="space-y-1 p-2">
+                <div className="space-y-2 p-2 flex flex-col justify-center">
                     {!sidebarError && pages ? (
                         pages.map((page: DraftSidebarDTO) => (
                             <NavLink
                                 key={page.id}
                                 to={`/documents/${documentId}/pages/${page.id}`}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-2 justify-between rounded px-1 ${isActive ? 'bg-secondary/90 text-primary-foreground' : 'hover:bg-muted'}`
+                                    `w-full flex items-center gap-2 justify-between rounded p-1 ${isActive ? 'bg-secondary/90 text-primary-foreground' : 'hover:bg-muted'}`
                                 }>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-md">{page.icon ?? <FileText className="text-foreground" />}</span>
-                                    {!collapsed && (
-                                        <span className="truncate italic text-foreground/70">{page.title == null ? 'Untitled' : page.title}</span>
+                                <div className="flex flex-1 items-center gap-2 min-w-0">
+                                    <span className="text-md flex-shrink-0">{page.icon ?? <FileText className="text-foreground" />}</span>
+                                    {!isEditorSidebarOpen && (
+                                        <span className="block flex-1 min-w-0 truncate italic text-foreground/70 ">
+                                            {page.id === pageId && optimisticMeta?.title
+                                                ? optimisticMeta.title.slice(0, 20)
+                                                : page.title?.slice(0, 20) || 'Untitled'}
+                                        </span>
                                     )}
                                 </div>
-                                {!collapsed && (
+                                {!isEditorSidebarOpen && (
                                     <Button
                                         variant="link"
                                         size="icon"
