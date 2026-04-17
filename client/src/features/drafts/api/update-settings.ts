@@ -18,7 +18,6 @@ export const updateDraftSettingsSchema = z.object({
 
 export type UpdateDraftSettings = z.infer<typeof updateDraftSettingsSchema>
 
-
 export const updateDraftSettings = async (data: { workspaceId: string; docId: string; draftId: string } & UpdateDraftSettings) => {
     await client.patch<null, UpdateDraftSettings>(
         `${DOCUMENT_API_BASE}/${data.docId}${DRAFT_API_BASE}/${data.draftId}/settings?workspaceId=${data.workspaceId}`,
@@ -38,17 +37,51 @@ type UseUpdateDraftSettings = {
     mutationConfig?: MutationConfig<typeof updateDraftSettings>
 }
 
-export const useUpdateDraftSettings = ({ workspaceId, draftId, mutationConfig }: UseUpdateDraftSettings & { workspaceId: string; draftId: string }) => {
+export const useUpdateDraftSettings = ({ mutationConfig }: UseUpdateDraftSettings) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
     return useMutation({
-        ...restConfig,
         mutationFn: (data) => updateDraftSettings(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: draftKeys.detail(workspaceId, draftId)
-            })
-        }
+        onMutate: async (data) => {
+            const key = draftKeys.detail(data.workspaceId, data.docId, data.draftId)
+
+            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+            await queryClient.cancelQueries({ queryKey: key })
+
+            // Snapshot the previous value
+            const previousDraft = queryClient.getQueryData(key)
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(
+                key,
+                (old: {
+                    fontStyle: string
+                    fontSize: string
+                    isFullWidth: boolean
+                    showCover: boolean
+                    showIcon: boolean
+                    showOwner: boolean
+                    showLastModified: boolean
+                }) => {
+                    if (!old) return old
+
+                    return {
+                        ...old,
+                        ...data
+                    }
+                }
+            )
+
+            // Return a context object with the snapshotted value
+            return { previousDraft }
+        },
+        onError: (_, variables, context: any) => {
+            const key = draftKeys.detail(variables.workspaceId, variables.docId, variables.draftId)
+            if (context?.previousDraft) {
+                queryClient.setQueryData(key, context.previousDraft)
+            }
+        },
+        ...restConfig
     })
 }
