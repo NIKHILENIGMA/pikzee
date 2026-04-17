@@ -24,20 +24,25 @@ export function DraftSettings({ settings }: SettingsProps) {
     const isOpen = useStore((state) => state.isEditorSettingsOpen)
     const toggleEditorSettings = useStore((state) => state.toggleEditorSettings)
 
-    const { mutateAsync: updateDraftSettings } = useUpdateDraftSettings({
-        workspaceId: workspaceId,
-        draftId: pageId!
-    })
+    const { mutateAsync: updateDraftSettings } = useUpdateDraftSettings({})
 
+    if (!documentId || !pageId) {
+        return null
+    }
+
+    /**
+     * Handle update with optimistic UI update
+     * 
+     * @param values Partial settings to update
+     */
     const handleUpdate = async (values: Partial<DraftSettingType>) => {
         try {
             await updateDraftSettings({
                 workspaceId,
-                docId: documentId!,
-                draftId: pageId!,
+                docId: documentId,
+                draftId: pageId,
                 ...values
             })
-            toast.success('Settings updated')
         } catch (error) {
             toast.error('Failed to update settings')
         }

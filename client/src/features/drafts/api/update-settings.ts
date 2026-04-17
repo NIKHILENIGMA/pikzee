@@ -5,6 +5,7 @@ import client from '@/shared/lib/api-client'
 import { DOCUMENT_API_BASE, DRAFT_API_BASE } from '@/shared/constants'
 import type { MutationConfig } from '@/shared/lib/react-query'
 import { draftKeys } from '@/shared/lib/query-keys'
+import type { DraftDTO } from '../types/draft.types'
 
 export const updateDraftSettingsSchema = z.object({
     fontStyle: z.enum(['sans', 'serif', 'mono']).optional(),
@@ -55,20 +56,21 @@ export const useUpdateDraftSettings = ({ mutationConfig }: UseUpdateDraftSetting
             // Optimistically update to the new value
             queryClient.setQueryData(
                 key,
-                (old: {
-                    fontStyle: string
-                    fontSize: string
-                    isFullWidth: boolean
-                    showCover: boolean
-                    showIcon: boolean
-                    showOwner: boolean
-                    showLastModified: boolean
-                }) => {
+                (old: DraftDTO | undefined) => {
                     if (!old) return old
 
                     return {
                         ...old,
-                        ...data
+                        settings: {
+                            ...(old.settings || {}),
+                            fontStyle: data.fontStyle ?? old.settings?.fontStyle,
+                            fontSize: data.fontSize ?? old.settings?.fontSize,
+                            isFullWidth: data.isFullWidth ?? old.settings?.isFullWidth,
+                            showCover: data.showCover ?? old.settings?.showCover,
+                            showIcon: data.showIcon ?? old.settings?.showIcon,
+                            showOwner: data.showOwner ?? old.settings?.showOwner,
+                            showLastModified: data.showLastModified ?? old.settings?.showLastModified
+                        }
                     }
                 }
             )

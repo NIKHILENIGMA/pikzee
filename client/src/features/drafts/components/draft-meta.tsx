@@ -1,37 +1,20 @@
 import { formatDate } from 'date-fns'
-import { useEffect, useState, type FC } from 'react'
+import { type FC } from 'react'
 
-import type { DraftSettingType } from '../types/draft.types'
+import type { DraftDTO, DraftSettingType } from '../types/draft.types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-import { useDraftStore } from '../store/draft.store'
+// import { useDraftStore } from '../store/draft.store'
 
 interface DraftMetaProps {
+    draft: DraftDTO
     settings: DraftSettingType
 }
 
-const DraftMeta: FC<DraftMetaProps> = ({ settings }) => {
-    const draft = useDraftStore((s) => s.draft)
-
-    const [owner, setOwner] = useState<{
-        firstName: string
-        lastName: string
-        avatarUrl: string | null
-    } | null>(draft.owner)
-    const [lastUpdatedBy, setLastUpdatedBy] = useState<{
-        firstName: string
-        lastName: string
-        avatarUrl: string | null
-    } | null>(draft.lastUpdatedBy)
-
-    if (!settings.showOwner || !settings.showLastModified) {
+const DraftMeta: FC<DraftMetaProps> = ({ draft, settings }) => {
+    if (!settings.showOwner && !settings.showLastModified) {
         return null
     }
-
-    useEffect(() => {
-        setOwner(draft.owner)
-        setLastUpdatedBy(draft.lastUpdatedBy)
-    }, [draft.owner, draft.lastUpdatedBy])
 
     return (
         <div className="flex items-center gap-3 mb-8 text-sm">
@@ -48,14 +31,14 @@ const DraftMeta: FC<DraftMetaProps> = ({ settings }) => {
                                 </AvatarFallback>
                             </Avatar>
                             <span>
-                                {owner?.firstName} {owner?.lastName}
+                                {draft.owner.firstName} {draft.owner.lastName}
                             </span>
                         </div>
                     ) : (
                         <Avatar className="h-6 w-6">
                             <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                                {owner?.firstName.charAt(0)}
-                                {owner?.lastName.charAt(0)}
+                                {draft.owner.firstName.charAt(0)}
+                                {draft.owner.lastName.charAt(0)}
                             </AvatarFallback>
                         </Avatar>
                     )}
@@ -77,7 +60,7 @@ const DraftMeta: FC<DraftMetaProps> = ({ settings }) => {
                                 <span> at {formatDate(draft.updatedAt, 'HH:mm')}</span>
                             </Avatar>
                             <span className="ml-2">
-                                {lastUpdatedBy?.firstName} {lastUpdatedBy?.lastName} at {formatDate(draft.updatedAt, 'HH:mm')}
+                                {draft.lastUpdatedBy.firstName} {draft.lastUpdatedBy.lastName} at {formatDate(draft.updatedAt, 'HH:mm')}
                             </span>
                         </div>
                     ) : (
