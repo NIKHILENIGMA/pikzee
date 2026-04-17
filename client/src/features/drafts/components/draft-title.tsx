@@ -1,20 +1,29 @@
-import { useRef, type FC } from 'react'
+import { useRef, useState, type ChangeEvent, type FC } from 'react'
 import type { DraftSettingType } from '../types/draft.types'
+import { useStore } from '@/shared/store'
 
 interface DraftTitleProps {
-    value: string
-    onChange: (value: string) => void
     settings: DraftSettingType
 }
 
-const DraftTitle: FC<DraftTitleProps> = ({ settings, value, onChange }) => {
-    // const draft = useDraftStore((s) => s.draft)
-    // const updateDraft = useDraftStore((s) => s.updateDraft)
+const DraftTitle: FC<DraftTitleProps> = ({ settings }) => {
+    const [localTitle, setLocalTitle] = useState<string>('')
+    const optimisticMeta = useStore((state) => state.optimisticMeta)
+    const optimisticTitleChange = useStore((state) => state.setOptimisticMeta)
     const ref = useRef<HTMLInputElement>(null)
 
-    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newTitle = e.target.value
-        onChange(newTitle)
+    // Handle title change with optimistic UI update
+    const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const newTitle: string = e.target.value
+
+        // Call the onChange prop to update the title in the parent component
+        setLocalTitle(newTitle)
+
+        // Update optimistic meta in the store to reflect the title change immediately in the UI
+        optimisticTitleChange({
+            title: newTitle,
+            icon: optimisticMeta?.icon || null
+        })
     }
 
     return (
@@ -23,7 +32,7 @@ const DraftTitle: FC<DraftTitleProps> = ({ settings, value, onChange }) => {
                 ref={ref}
                 className="w-full text-4xl font-bold outline-none bg-transparent"
                 placeholder="Untitled"
-                value={value}
+                value={localTitle}
                 onChange={handleTitleChange}
                 style={{ fontFamily: `var(--font-${settings.fontStyle})`, fontSize: settings.fontSize }}
             />
