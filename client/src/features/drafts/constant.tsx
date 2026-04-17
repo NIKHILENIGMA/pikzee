@@ -17,6 +17,16 @@ export const pages: DraftSidebarDTO[] = [
     }
 ]
 
+export const DEFAULT_SETTINGS: DraftSettingType = {
+    fontStyle: 'sans',
+    fontSize: '25px',
+    isFullWidth: false,
+    showCover: true,
+    showIcon: true,
+    showOwner: true,
+    showLastModified: true
+}
+
 // export const mockDrafts: DraftDTO[] = [
 //     {
 //         id: '550e8400-e29b-41d4-a716-446655440000',
