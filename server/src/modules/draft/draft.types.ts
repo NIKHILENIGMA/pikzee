@@ -7,7 +7,7 @@ import z from 'zod'
 export type Draft = InferSelectModel<typeof drafts>
 export type CreateDraft = InferInsertModel<typeof drafts>
 
-export type DraftCoverImageType = 'S3' | 'URL' | 'unsplash'
+export type DraftCoverImageType = 'S3' | 'URL' | 'unsplash' | null
 
 export const UpdateSettingsSchema = DraftSettingBodySchema.partial().strict()
 

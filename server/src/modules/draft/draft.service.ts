@@ -41,6 +41,10 @@ export interface IDraftService {
         draftId: string,
         record: { userId: string; workspaceId: string; positionY: number }
     ): Promise<void>
+    removeCoverImage(
+        draftId: string,
+        record: { userId: string; workspaceId: string }
+    ): Promise<void>
     updateIcon(
         draftId: string,
         record: { userId: string; workspaceId: string; icon: string | null }
@@ -184,7 +188,11 @@ export class DraftService implements IDraftService {
             ['EDIT', 'FULL_ACCESS'],
             'User does not have permission to remove draft cover image'
         )
+
+        // Remove cover image by setting the cover image URL and config to null
         await this.repository.removeCoverImage(draftId)
+
+        // Mark draft as updated after removing cover image
         await this.repository.markAsUpdated(draftId, record.userId)
     }
 

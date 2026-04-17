@@ -233,6 +233,20 @@ export class DraftController extends BaseController {
             const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
             const body = ValidationService.validateBody(req.body, DraftUpdateCoverImageBodySchema)
 
+            // Check if client is removing cover image
+            if (body.coverImageUrl === null && body.type === null) {
+                await this.service.removeCoverImage(params.draftId, {
+                    userId,
+                    workspaceId: query.workspaceId
+                })
+
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Draft cover image removed successfully',
+                    data: null
+                })
+            }
+
             // Perform update cover image operation
             await this.service.updateCoverImage(params.draftId, {
                 userId,

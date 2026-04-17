@@ -17,8 +17,8 @@ export const DraftQuerySchema = z.object({
 
 // Body schema
 export const DraftUpdateCoverImageBodySchema = z.object({
-    coverImageUrl: z.url({ message: 'Invalid cover image URL' }),
-    type: z.enum(['S3', 'URL', 'unsplash'])
+    coverImageUrl: z.union([z.url({ message: 'Invalid cover image URL' }), z.null()]),
+    type: z.union([z.enum(['S3', 'URL', 'unsplash']), z.null()])
 })
 
 export const DraftRepositionBodySchema = z.object({
