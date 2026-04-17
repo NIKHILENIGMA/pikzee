@@ -12,17 +12,18 @@ import { fontSizeOptions, fontStyleOptions, pageWidthOptions, visibilityOptions 
 import type { DraftSettingType, FontSize, FontStyle, PageWidth } from '../types/draft.types'
 
 import SegmentGroup from './segment-group'
+import { useStore } from '@/shared/store'
 
 interface SettingsProps {
-    isOpen: boolean
-    onClose: () => void
     settings: DraftSettingType
 }
 
-export function DraftSettings({ isOpen, onClose, settings }: SettingsProps) {
+export function DraftSettings({ settings }: SettingsProps) {
     const { id: workspaceId } = useWorkspaceContext()
     const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
-    
+    const isOpen = useStore((state) => state.isEditorSettingsOpen)
+    const toggleEditorSettings = useStore((state) => state.toggleEditorSettings)
+
     const { mutateAsync: updateDraftSettings } = useUpdateDraftSettings({
         workspaceId: workspaceId,
         draftId: pageId!
@@ -45,7 +46,7 @@ export function DraftSettings({ isOpen, onClose, settings }: SettingsProps) {
     return (
         <Sheet
             open={isOpen}
-            onOpenChange={onClose}>
+            onOpenChange={toggleEditorSettings}>
             <SheetContent className="w-[350px]">
                 <SheetHeader>
                     <SheetTitle>Page Settings</SheetTitle>
