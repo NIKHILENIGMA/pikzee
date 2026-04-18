@@ -7,7 +7,7 @@ import projectRouter from '@/modules/projects/project.routes'
 import uploaderRouter from '@/modules/uploader/uploader.routes'
 import smartPublishRouter from '@/modules/smart-publish/smart-publish.routes'
 import documentRouter from '@/modules/document/document.routes'
-
+import aiRouter from '@/modules/openai/ai.routes'
 
 const router = Router()
 
@@ -18,5 +18,6 @@ router.use('/projects', projectRouter)
 router.use('/uploads', uploaderRouter)
 router.use('/social', smartPublishRouter)
 router.use('/documents', documentRouter)
+router.use('/ai', aiRouter)
 
 export default router
