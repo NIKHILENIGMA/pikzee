@@ -3,7 +3,7 @@ import { BaseController, ValidationService } from '@/lib'
 
 import { IDraftService } from './draft.service'
 import {
-    DraftContentBodySchema,
+    UpdateDraftContentSchema,
     DraftEmojiBodySchema,
     DraftListParamsSchema,
     DraftParamsSchema,
@@ -153,7 +153,7 @@ export class DraftController extends BaseController {
             // Validate request parameters, body, and query
             const params = ValidationService.validateParams(req.params, DraftParamsSchema)
 
-            const body = ValidationService.validateBody(req.body, DraftContentBodySchema)
+            const body = ValidationService.validateBody(req.body, UpdateDraftContentSchema)
 
             const query = ValidationService.validateQuery(req.query, DraftQuerySchema)
 
