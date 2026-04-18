@@ -1,16 +1,21 @@
 import { NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react'
-import { Check, Ellipsis, Loader2, Send, WandSparkles, X } from 'lucide-react'
+import { Check, Send, Sparkles, WandSparkles, X } from 'lucide-react'
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import showdown from 'showdown'
+
+import { useWorkspaceContext } from '@/features/workspace'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 
-import { mockOpenAIStream } from '../util/mock-openai-stream'
+import { streamAIContent } from '../api/ai-content'
+import type { EventPayload, StreamEvent } from '../api/ai-content'
 
 type PhaseState = 'input' | 'loading' | 'success' | 'error'
 
 const AIChatbar: FC<ReactNodeViewProps> = ({ editor, deleteNode, node }) => {
+    const { id: workspaceId } = useWorkspaceContext()
+    const abortRef = useRef<AbortController | null>(null)
     const [prompt, setPrompt] = useState<string>('')
     const [response, setResponse] = useState<string>('')
     const textAreaChatRef = useRef<HTMLTextAreaElement | null>(null)
@@ -23,24 +28,40 @@ const AIChatbar: FC<ReactNodeViewProps> = ({ editor, deleteNode, node }) => {
 
     const handleSend = async () => {
         if (!prompt.trim()) return
+        if (!workspaceId) return
+
+        abortRef.current?.abort()
+        abortRef.current = new AbortController()
 
         setPhase('loading')
-        setResponse('') // Clear previous response
+        setResponse('')
+
         try {
-            const stream = await mockOpenAIStream(prompt)
+            await streamAIContent({
+                workspaceId,
+                prompt,
+                signal: abortRef.current.signal,
+                onEvent: (event: StreamEvent, data: EventPayload) => {
+                    if (event === 'chunk' && data.token) {
+                        setResponse((prev) => prev + data.token)
+                    }
 
-            for await (const chunk of stream) {
-                setResponse((prevResponse) => prevResponse + chunk)
+                    if (event === 'done') {
+                        setPhase('success')
+                    }
 
-                // Add a small delay between chunks for visual effect
-                await new Promise((resolve) => setTimeout(resolve, 110))
-            }
-            setPhase('success')
+                    if (event === 'error') {
+                        setPhase('error')
+                    }
+                }
+            })
         } catch (error) {
-            // console.error('Error sending prompt:', error)
-            setPhase(`error: ${error instanceof Error ? error.message : String(error)}` as PhaseState)
+            if ((error as Error).name !== 'AbortError') {
+                setPhase('error')
+            }
         } finally {
-            setPrompt('') // Clear the prompt after sending
+            setPrompt('')
+            abortRef.current = null
         }
     }
 
@@ -53,9 +74,17 @@ const AIChatbar: FC<ReactNodeViewProps> = ({ editor, deleteNode, node }) => {
     }
 
     const rejectResponse = () => {
-        setPhase('input') // Reset to input phase
+        abortRef.current?.abort() // Abort any ongoing stream
+        abortRef.current = null
+        setPhase('input')
         setPrompt('')
-        setResponse('') // Clear the response
+        setResponse('')
+    }
+
+    const handleCancelStream = () => {
+        abortRef.current?.abort()
+        abortRef.current = null
+        setPhase(response.trim() ? 'success' : 'input')
     }
 
     const handleKeyDown = useCallback(
@@ -80,6 +109,7 @@ const AIChatbar: FC<ReactNodeViewProps> = ({ editor, deleteNode, node }) => {
 
         return () => {
             document.removeEventListener('keydown', handleKeyDown)
+            abortRef.current?.abort() // Clean up any ongoing stream on unmount
         }
     }, [handleKeyDown])
 
@@ -124,11 +154,21 @@ const AIChatbar: FC<ReactNodeViewProps> = ({ editor, deleteNode, node }) => {
                 <div className="flex items-center w-full mt-1 space-x-2 rounded-md min-h-20 bg-background">
                     {phase === 'loading' ? (
                         // Loading State
-                        <div className="flex items-center justify-center w-full space-x-2 shadow-md rounded-md border-primary border-[0.1rem] p-5">
-                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                            <p className="flex items-end space-x-2 font-medium text-secondary-">
-                                <span>AI is thinking</span> <Ellipsis className="animate animate-ping" />
-                            </p>
+                        <div className="flex items-center justify-between w-full space-x-2 shadow-md rounded-md border-primary border-[0.1rem] p-5">
+                            <div className="flex items-center space-x-2">
+                                <Sparkles className="w-4 h-4 animate-caret-blink text-primary" />
+                                <p className="flex items-end space-x-2 font-medium text-secondary-">
+                                    <span>Elis is thinking</span>
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCancelStream}
+                                className="shrink-0">
+                                <X className="w-4 h-4 mr-1" />
+                                Cancel
+                            </Button>
                         </div>
                     ) : phase === 'success' ? (
                         // Normal State with Textarea and Button
