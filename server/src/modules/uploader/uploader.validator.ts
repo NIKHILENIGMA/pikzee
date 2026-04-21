@@ -18,3 +18,9 @@ export const PlanUploadsRequestSchema = z.object({
     workspaceId: z.string().min(1, 'Workspace ID is required'),
     projectId: z.string().optional()
 })
+
+export const UploadVideoBodySchema = z.object({
+    contentType: z.string().min(1, 'Content type is required'),
+    key: z.string().min(1, 'S3 key is required'),
+    fileName: z.string().min(1, 'File name is required'),
+})

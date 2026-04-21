@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
-import { BaseController } from '@/lib'
+import { BaseController, ValidationService } from '@/lib'
 import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 import { UnauthorizedError } from '@/util'
+import Uploader from './uploader.service'
+import { UploadVideoBodySchema } from './uploader.validator'
 
 export class UploaderController extends BaseController {
     constructor() {
@@ -25,19 +27,34 @@ export class UploaderController extends BaseController {
         })
     }
     generateUploadUrl = async (req: Request, res: Response, next: NextFunction) => {
-        return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<null>> => {
-            const userId: string | undefined = req.user?.id
-            if (!userId) {
-                throw new UnauthorizedError('User not authenticated')
-            }
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<{ uploadUrl: string }>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
 
-            await new Promise((resolve) => setTimeout(resolve, 100)) // Simulate async operation
-            return this.createResponse({
-                statusCode: STATUS_CODE.OK,
-                message: 'Upload URL generated successfully',
-                data: null
-            })
-        })
+                const body = ValidationService.validateBody(req.body, UploadVideoBodySchema)
+
+                const key = `${body.key}-${body.fileName}`
+
+                const { uploadUrl } = await Uploader('S3').getPresignedUrl({
+                    bucket: 'private',
+                    key,
+                    contentType: body.contentType,
+                    expiresIn: 900
+                })
+
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Upload URL generated successfully',
+                    data: { uploadUrl }
+                })
+            }
+        )
     }
 
     finalizeUpload = async (req: Request, res: Response, next: NextFunction) => {
