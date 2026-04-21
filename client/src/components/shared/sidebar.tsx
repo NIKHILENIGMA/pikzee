@@ -28,7 +28,7 @@ const NAV_LINKS: NavItem[] = [
         label: 'Projects'
     },
     {
-        to: '/magic-editor',
+        to: '/image-editor',
         icon: Sparkles,
         label: 'Magic Editor'
     },

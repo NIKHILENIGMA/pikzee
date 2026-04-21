@@ -39,8 +39,8 @@ const router = createBrowserRouter([
                 ]
             },
             {
-                path: 'magic-editor',
-                lazy: () => import('./routes/magic-editor/magic-editor').then((module) => ({ Component: module.default }))
+                path: 'image-editor',
+                lazy: () => import('./routes/magic-editor/image-editor').then((module) => ({ Component: module.default }))
             },
             {
                 path: 'media-manager',
