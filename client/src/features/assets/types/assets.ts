@@ -20,25 +20,44 @@ export type AcceptedFileType = z.infer<typeof acceptedFileTypeEnum>
 export const uploadStatusEnum = z.enum(['UPLOADING', 'PROCESSING', 'COMPLETED', 'FAILED'])
 export type UploadStatus = z.infer<typeof uploadStatusEnum>
 
-export type AssetContextType = {
+export interface Folders {
     id: string
-    assetName: string
-    workspaceId: string
+    projectId: string
+    parentId: string | null
+    name: string
     createdAt: Date
     updatedAt: Date
-    projectId: string
-    parentAssetId: string | null
-    type: 'FILE' | 'FOLDER'
-    path: string
-    depth: number
-    mimeType: AcceptedMimeType | null
-    s3Key: string | null
-    imagekitPath: string | null
-    fileSizeBytes: number | null
-    fileType: AcceptedFileType | null
-    thumbnailPath: string | null
-    videoDurationSeconds: number | null
-    uploadStatus: UploadStatus | null
-    createdBy: string
 }
 
+export interface Files {
+    id: string
+    name: string
+    status: 'PENDING' | 'READY' | 'FAILED'
+    projectId: string
+    folderId: string | null
+    s3Key: string
+    assetUrl?: string
+    mimeType:
+        | 'image/jpeg'
+        | 'image/png'
+        | 'image/webp'
+        | 'video/mp4'
+        | 'video/quicktime'
+        | 'video/webm'
+        | 'application/pdf'
+        | 'text/plain'
+        | 'audio/mpeg'
+        | 'audio/webm'
+    sizeBytes: number
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface GetContentsResponse {
+    subfolders: Folders[]
+    assets: Files[]
+    breadcrumbs: {
+        id: string
+        name: string
+    }[]
+}
