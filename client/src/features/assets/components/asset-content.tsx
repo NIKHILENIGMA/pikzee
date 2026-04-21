@@ -1,41 +1,59 @@
-import { useState, type FC } from 'react'
+import { type FC } from 'react'
+import { useSearchParams } from 'react-router'
 
-// import AssetActionbar from './asset-actionbar'
+import { useContent } from '../api/get-content'
 import AssetBreadcrumb from './asset-breadcrumb'
-import AssetFilters from './asset-filters'
 import AssetGrid from './asset-grid'
-import type { AssetContextType } from '../types/assets'
 import AssetSidebar from './asset-sidebar'
 
 interface AssetContentProps {
-    sidebarOpen: boolean
-    onSidebarToggle: () => void
-    assets: AssetContextType[]
+    projectId: string
 }
 
-const AssetContent: FC<AssetContentProps> = ({ sidebarOpen, onSidebarToggle, assets }) => {
-    const [activeFilter, setActiveFilter] = useState('All')
-    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+const AssetContent: FC<AssetContentProps> = ({ projectId }) => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const currentFolderId = searchParams.get('folderId')
+    const { data: folderContent, isPending } = useContent({
+        projectId,
+        folderId: currentFolderId || null
+    })
+
+    const navigateToFolder = (folderId: string | null) => {
+        if (folderId) {
+            setSearchParams({ folderId })
+        } else {
+            setSearchParams({}) // Navigate to Root
+        }
+    }
+
+    if (isPending) {
+        return (
+            <div className="w-full  h-screen flex items-center justify-center">
+                <p className="text-foreground/90">Loading assets...</p>
+            </div>
+        )
+    }
 
     return (
         <main className="flex-1 flex flex-col">
             <AssetBreadcrumb
-                sidebarOpen={sidebarOpen}
-                onSidebarToggle={onSidebarToggle}
-                items={assets}
+                breadcrumb={folderContent?.breadcrumbs || []}
+                navigateToFolder={navigateToFolder}
             />
 
-            <AssetFilters
+            {/* <AssetFilters
                 activeFilter={activeFilter}
                 setActiveFilter={setActiveFilter}
-            />
+            /> */}
             <div className="flex flex-1 overflow-hidden">
-                <AssetSidebar sidebarOpen={sidebarOpen} />
+                <AssetSidebar />
 
                 <AssetGrid
-                    selectedItems={selectedItems}
-                    setSelectedItems={setSelectedItems}
-                    assets={assets}
+                    projectId={projectId}
+                    folderId={currentFolderId}
+                    subfolders={folderContent?.subfolders || []}
+                    assets={folderContent?.assets || []}
+                    navigateToFolder={navigateToFolder}
                 />
             </div>
 
