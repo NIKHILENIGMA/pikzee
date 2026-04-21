@@ -3,8 +3,11 @@ import { assetController } from './asset.module'
 
 const router = Router({ mergeParams: true })
 
+router.route('/').get(assetController.getFolderContents)
 router.route('/presigned-url').post(assetController.generatePresignedUrl)
-router.route('/confirm').get(assetController.confirmAssetUpload)
+router.route('/confirm').post(assetController.confirmAssetUpload)
+router.route('/folders').post(assetController.makeFolder)
+
 
 // router.route('/').post(assetController.create).get(assetController.listAssetsByParentId)
 

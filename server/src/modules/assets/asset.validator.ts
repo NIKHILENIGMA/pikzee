@@ -3,7 +3,7 @@ import { ProjectIdParamSchema } from '../projects/project.validator'
 
 export const CreateAssetSchema = z.object({
     projectId: z.uuid({ message: 'Project ID must be a valid UUID' }),
-    folderId: z.uuid({ message: 'Folder ID must be a valid UUID' }).or(z.undefined()).or(z.literal('null').transform(() => null)),
+    folderId: z.uuid({ message: 'Folder ID must be a valid UUID' }).or(z.undefined()),
     filename: z.string().min(1, { message: 'Filename is required' }),
     mimeType: z.enum(
         [
@@ -51,4 +51,8 @@ export const ListAssetsQuerySchema = z.object({
 
 export const AssetIdParamSchema = ProjectIdParamSchema.extend({
     assetId: z.uuid({ message: 'Asset ID must be a valid UUID' })
+})
+
+export const GetFolderContentsQuerySchema = z.object({
+    folderId: z.uuid({ message: 'Folder ID must be a valid UUID' }).or(z.undefined()).or(z.literal('null').transform(() => null))
 })

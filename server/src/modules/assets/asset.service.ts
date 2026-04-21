@@ -8,6 +8,43 @@ import { IAssetRepository } from './asset.repository'
 
 import Uploader from '../uploader/uploader.service'
 
+export interface GetContentsResponse {
+    subfolders: {
+        id: string
+        projectId: string
+        parentId: string | null
+        name: string
+        createdAt: Date
+        updatedAt: Date
+    }[]
+    assets: {
+        id: string
+        name: string
+        status: 'PENDING' | 'READY' | 'FAILED'
+        projectId: string
+        folderId: string | null
+        s3Key: string
+        mimeType:
+            | 'image/jpeg'
+            | 'image/png'
+            | 'image/webp'
+            | 'video/mp4'
+            | 'video/quicktime'
+            | 'video/webm'
+            | 'application/pdf'
+            | 'text/plain'
+            | 'audio/mpeg'
+            | 'audio/webm'
+        sizeBytes: number
+        createdAt: Date
+        updatedAt: Date
+    }[]
+    breadcrumbs: {
+        id: string
+        name: string
+    }[]
+}
+
 export interface IAssetService {
     createAsset(
         userId: string,
@@ -22,7 +59,16 @@ export interface IAssetService {
         assetId: string
         uploadUrl: string
     }>
+    createFolder(
+        userId: string,
+        data: { projectId: string; parentId: string | null; name: string }
+    ): Promise<{ id: string }>
     confirmAssetUpload(assetId: string): Promise<void>
+    getFolderContents(data: {
+        userId: string
+        projectId: string
+        folderId: string | null
+    }): Promise<GetContentsResponse>
 }
 
 export class AssetService implements IAssetService {
@@ -97,6 +143,75 @@ export class AssetService implements IAssetService {
         await this.assetRepository.update(assetId, {
             status: 'READY',
             updatedAt: new Date()
+        })
+    }
+
+    async getFolderContents(data: {
+        userId: string
+        projectId: string
+        folderId: string | null
+    }): Promise<GetContentsResponse> {
+        // FAIL FAST: Check the project and permissions user has
+        const project = await this.projectService.getById(data.projectId)
+        if (!project) throw new NotFoundError('Project does not exist')
+
+        // Permission Check: We check if the user has permissions to view assets in this project
+        const memberExist = await this.memberService.getMemberByUserId(
+            project.workspaceId,
+            data.userId
+        )
+        this.validatePermissions(memberExist)
+
+        // Fetch Subfolders
+        const subfolders = await this.assetRepository.getSubFolders(data.projectId, data.folderId)
+
+        // Fetch Assets
+        const assetRecords = await this.assetRepository.getAssetsInFolder(data.projectId, data.folderId)
+
+        // Generate Presigned URLs for each asset
+        const assets = await Promise.all(
+            assetRecords.map(async (asset) => {
+                const assetUrl = await Uploader('S3').getPresignedGetUrl({
+                    bucket: 'private',
+                    key: asset.s3Key,
+                    expiresIn: 3600 // 1 hour
+                })
+                return {
+                    ...asset,
+                    assetUrl
+                }
+            })
+        )
+
+        // 3. Fetch Breadcrumbs (Recursive CTE)
+        let breadcrumbs: Array<{ id: string; name: string }> = []
+
+        if (data.folderId) {
+            // This query walks UP the tree from the current folder to the root
+            breadcrumbs = await this.assetRepository.getBreadcrumbs(data.folderId)
+        }
+
+        return {
+            subfolders,
+            assets,
+            breadcrumbs
+        }
+    }
+
+    async createFolder(
+        userId: string,
+        data: { projectId: string; parentId: string | null; name: string }
+    ): Promise<{ id: string }> {
+        const project = await this.projectService.getById(data.projectId)
+        if (!project) throw new NotFoundError('Project does not exist')
+
+        const memberExist = await this.memberService.getMemberByUserId(project.workspaceId, userId)
+        this.validatePermissions(memberExist)
+
+        return await this.assetRepository.createFolder({
+            projectId: data.projectId,
+            parentId: data.parentId,
+            name: data.name
         })
     }
 

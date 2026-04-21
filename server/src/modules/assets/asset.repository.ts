@@ -1,6 +1,6 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 
-import { assets } from '@/core/db/schema/asset.schema'
+import { assets, folders } from '@/core/db/schema/asset.schema'
 import { DatabaseConnection } from '@/core/db/service/database.service'
 
 import { AssetRecord, CreateAssetRecord } from './asset.types'
@@ -13,13 +13,35 @@ export interface IAssetRepository {
     getByIdAndProjectId(id: string, projectId: string): Promise<AssetRecord | null>
     transaction<T>(callback: (tx: DatabaseConnection) => Promise<T>): Promise<T>
     createWithTransaction(tx: DatabaseConnection, data: CreateAssetRecord): Promise<AssetRecord>
-    bulkCreateWithTransaction(tx: DatabaseConnection, data: CreateAssetRecord[]): Promise<AssetRecord[]>
+    bulkCreateWithTransaction(
+        tx: DatabaseConnection,
+        data: CreateAssetRecord[]
+    ): Promise<AssetRecord[]>
     updateWithTransaction(
         tx: DatabaseConnection,
         assetId: string,
         data: Partial<AssetRecord>
     ): Promise<AssetRecord>
-
+    getSubFolders(
+        projectId: string,
+        folderId: string | null
+    ): Promise<
+        {
+            id: string
+            projectId: string
+            parentId: string | null
+            name: string
+            createdAt: Date
+            updatedAt: Date
+        }[]
+    >
+    getAssetsInFolder(projectId: string, folderId: string | null): Promise<AssetRecord[]>
+    getBreadcrumbs(folderId: string): Promise<{ id: string; name: string }[]>
+    createFolder(data: {
+        projectId: string
+        parentId: string | null
+        name: string
+    }): Promise<{ id: string }>
 }
 
 export class AssetRepository implements IAssetRepository {
@@ -53,6 +75,62 @@ export class AssetRepository implements IAssetRepository {
         return asset || null
     }
 
+    async getSubFolders(
+        projectId: string,
+        folderId: string | null
+    ): Promise<
+        {
+            id: string
+            projectId: string
+            parentId: string | null
+            name: string
+            createdAt: Date
+            updatedAt: Date
+        }[]
+    > {
+        const folderQuery = folderId
+            ? and(eq(folders.projectId, projectId), eq(folders.parentId, folderId))
+            : and(eq(folders.projectId, projectId), isNull(folders.parentId))
+
+        const subfolders = await this.db.select().from(folders).where(folderQuery)
+
+        return subfolders
+    }
+
+    async createFolder(data: { projectId: string; parentId: string | null; name: string }): Promise<{ id: string }> {
+        const [newFolder] = await this.db.insert(folders).values(data).returning()
+
+        return newFolder
+    }
+
+    async getAssetsInFolder(projectId: string, folderId: string | null): Promise<AssetRecord[]> {
+        const assetQuery = folderId
+            ? and(eq(assets.projectId, projectId), eq(assets.folderId, folderId))
+            : and(eq(assets.projectId, projectId), isNull(assets.folderId))
+
+        const folderAssets = await this.db.select().from(assets).where(assetQuery)
+
+        return folderAssets
+    }
+
+    async getBreadcrumbs(folderId: string): Promise<{ id: string; name: string }[]> {
+        const breadcrumbResult = await this.db.execute(sql`
+            WITH RECURSIVE folder_tree AS (
+                SELECT id, name, parent_id
+                FROM folders
+                WHERE id = ${folderId}
+                UNION ALL
+                SELECT f.id, f.name, f.parent_id
+                FROM folders f
+                INNER JOIN folder_tree ft ON ft.parent_id = f.id
+            )
+            SELECT id, name FROM folder_tree;
+            `)
+        const result = breadcrumbResult.rows.reverse() as { id: string; name: string }[]
+
+        return result
+    }
+
     async getByIdAndProjectId(id: string, projectId: string): Promise<AssetRecord | null> {
         const [asset] = await this.db
             .select()
@@ -62,7 +140,6 @@ export class AssetRepository implements IAssetRepository {
 
         return asset || null
     }
-
 
     async transaction<T>(callback: (tx: DatabaseConnection) => Promise<T>): Promise<T> {
         return this.db.transaction(callback)
@@ -108,6 +185,4 @@ export class AssetRepository implements IAssetRepository {
 
         return updatedAsset
     }
-
-
 }

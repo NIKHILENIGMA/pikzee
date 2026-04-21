@@ -6,8 +6,12 @@ import { STATUS_CODE, SuccessResponse } from '@/types/api/success.types'
 
 import { ProjectIdParamSchema } from '../projects/project.validator'
 
-import { IAssetService } from './asset.service'
-import { CreateAssetSchema, ConfirmAssetUploadSchema } from './asset.validator'
+import { GetContentsResponse, IAssetService } from './asset.service'
+import {
+    CreateAssetSchema,
+    ConfirmAssetUploadSchema,
+    GetFolderContentsQuerySchema
+} from './asset.validator'
 
 export class AssetController extends BaseController {
     constructor(private readonly assetService: IAssetService) {
@@ -68,6 +72,71 @@ export class AssetController extends BaseController {
                 data: null
             })
         })
+    }
+
+    getFolderContents = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<GetContentsResponse>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+
+                const params = ValidationService.validateParams(req.params, ProjectIdParamSchema)
+                const query = ValidationService.validateQuery(
+                    req.query,
+                    GetFolderContentsQuerySchema
+                )
+
+                const folderContents = await this.assetService.getFolderContents({
+                    userId,
+                    projectId: params.projectId,
+                    folderId: query.folderId || null
+                })
+
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Get folder contents - To be implemented',
+                    data: folderContents
+                })
+            }
+        )
+    }
+
+    makeFolder = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<{ id: string }>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
+                // Validate request params and body
+                const params = ValidationService.validateParams(req.params, ProjectIdParamSchema)
+                const body = req.body as { name: string; parentId?: string | null }
+                if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+                    throw new Error('Folder name is required')
+                }
+
+                // Call service to create folder
+                const folder = await this.assetService.createFolder(userId, {
+                    projectId: params.projectId,
+                    parentId: body.parentId ?? null,
+                    name: body.name.trim()
+                })
+
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'Folder created successfully',
+                    data: { id: folder.id }
+                })
+            }
+        )
     }
 
     // Create new Asset
