@@ -1,9 +1,7 @@
 import type { FC } from 'react'
+import { toast } from 'sonner'
 
 import { Separator } from '@/components/ui/separator'
-import { toast } from 'sonner'
-import { useDraftStore } from '../../store/draft.store'
-
 
 interface DefaultImage {
     id: number
@@ -155,12 +153,12 @@ const defaultCoverImages: DefaultCategory[] = [
 ]
 
 const DefaultTab: FC = () => {
-    const updateDraft = useDraftStore((s) => s.updateDraft)
-
     const handleSelectCover = (url: string) => {
-        updateDraft({
-            coverImageUrl: url
-        })
+        // updateDraft({
+        //     coverImageUrl: url
+        // })
+        console.log(url)
+
         // Todo: Do api call to update cover image in db and handle loading state and errors
         toast.success('Cover image updated successfully!')
     }

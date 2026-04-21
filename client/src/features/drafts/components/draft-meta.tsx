@@ -17,7 +17,7 @@ const DraftMeta: FC<DraftMetaProps> = ({ draft, settings }) => {
     }
 
     return (
-        <div className="flex items-center gap-3 mb-8 text-sm">
+        <div className="flex items-center gap-3 mb-8 text-sm px-5">
             {settings.showOwner && draft.owner && (
                 <>
                     {draft.owner.avatarUrl !== null ? (
