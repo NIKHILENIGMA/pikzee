@@ -1,24 +1,34 @@
-// src/tiptap/components/EditorRoot.tsx
+import { type FC } from 'react'
+import { useParams } from 'react-router'
 import { DragHandle } from '@tiptap/extension-drag-handle-react'
 import { Editor, EditorContent } from '@tiptap/react'
-import { type FC } from 'react'
 
-import { useEditorInstance } from '../hooks/use-editor-instance'
+import { useAutoSave } from '@/features/drafts/hooks/use-auto-save'
+import { useWorkspaceContext } from '@/features/workspace'
 
 import { BubbleTools } from './bubble-tools'
-// import { useDraftStore } from '@/features/drafts/store/draft.store'
+import { useEditorInstance } from '../hooks/use-editor-instance'
 
 interface EditorRootProps {
     value: string
-    onChange: (value: string) => void
 }
 
-export const EditorRoot: FC<EditorRootProps> = ({ value, onChange }) => {
+export const EditorRoot: FC<EditorRootProps> = ({ value }) => {
+    const { id: workspaceId } = useWorkspaceContext()
+    const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
+    const { debouncedSave } = useAutoSave(
+        workspaceId,
+        documentId ?? '',
+        pageId ?? '',
+        1800 // Auto-save every 1.8 seconds
+    )
     const { editor, isActive } = useEditorInstance({
         placeholder: 'Write something awesome...',
         content: value ? (typeof value === 'string' ? JSON.parse(value) : value) : '',
         onUpdate: ({ editor }: { editor: Editor }) => {
-            onChange(JSON.stringify(editor.getJSON()))
+            const jsonContent = editor.getJSON()
+            const stringContent = JSON.stringify(jsonContent)
+            debouncedSave({ content: stringContent })
         }
     })
 
@@ -26,7 +36,7 @@ export const EditorRoot: FC<EditorRootProps> = ({ value, onChange }) => {
     if (!editor) return null
 
     return (
-        <div className="bg-background w-full rounded-2xl">
+        <div className="bg-background w-full">
             {/* <Toolbar editor={editor} /> */}
             <div className="min-h-[70vh] p-6 border-none rounded-md shadow-none">
                 {/* Drag handle */}
