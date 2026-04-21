@@ -1,47 +1,48 @@
-import { ChevronLeft, PanelRight } from 'lucide-react'
+import { ChevronLeft, PanelRight, Loader2 } from 'lucide-react'
 import { type FC } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 
-import { assets } from '@/shared/constants'
+import { useContent } from '@/features/assets/api/get-content'
 
 const AssetPreview: FC = () => {
-    const params = useParams<{ assetId: string }>()
-    const { assetId } = params
+    const { projectId, assetId } = useParams<{ projectId: string; assetId: string }>()
+    const [searchParams] = useSearchParams()
+    const folderId = searchParams.get('folderId')
     const navigate = useNavigate()
-    const asset = assets.find((a) => a.id === assetId)
-    
 
-    function fileType(assetName: string | undefined) {
-        if (!assetName) return 'unknown'
-        const extension = assetName.split('.').pop()?.toLowerCase()
-        switch (extension) {
-            case 'mp4':
-            case 'mov':
-            case 'avi':
-                return 'video'
-            case 'jpg':
-            case 'jpeg':
-            case 'png':
-            case 'gif':
-                return 'image'
-            case 'mp3':
-            case 'wav':
-                return 'audio'
-            default:
-                return 'unknown'
-        }
+    const { data: folderContent, isPending } = useContent({
+        projectId: projectId || '',
+        folderId: folderId || null
+    })
+
+    const asset = folderContent?.assets.find((a) => a.id === assetId)
+
+    function fileType(mimeType: string | undefined) {
+        if (!mimeType) return 'unknown'
+        if (mimeType.startsWith('video/')) return 'video'
+        if (mimeType.startsWith('image/')) return 'image'
+        if (mimeType.startsWith('audio/')) return 'audio'
+        return 'unknown'
+    }
+
+    if (isPending) {
+        return (
+            <div className="w-full h-screen flex items-center justify-center bg-background">
+                <Loader2 className="animate-spin w-8 h-8 text-primary" />
+            </div>
+        )
     }
 
     return (
-        <div className="w-full h-screen flex flex-col">
+        <div className="w-full h-screen flex flex-col bg-background text-foreground">
             <header className="w-full p-6 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <ChevronLeft className="cursor-pointer" onClick={() => navigate(-1)}/>
-                    <h1 className="text-md font-semibold text-foreground">{asset?.name}</h1>
+                    <h1 className="text-md font-semibold text-foreground truncate max-w-xs">{asset?.name}</h1>
                 </div>
                 <button
                     onClick={() => {}}
-                    className="p-1.5 hover: rounded transition-colors"
+                    className="p-1.5 hover:bg-secondary rounded transition-colors"
                     aria-label="Toggle Comment Sidebar">
                     <PanelRight
                         size={16}
@@ -50,25 +51,47 @@ const AssetPreview: FC = () => {
                 </button>
             </header>
             <main className="flex-1 p-6 flex items-center justify-center overflow-hidden">
-                <div className="w-full h-full bg-secondary rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-full h-full bg-secondary/30 rounded-lg flex items-center justify-center overflow-hidden border border-border">
                     {asset ? (
-                        fileType(asset?.name) === 'video' ? (
+                        fileType(asset.mimeType) === 'video' ? (
                             <video
-                                src={asset?.assetUrl}
+                                src={asset.assetUrl}
                                 controls
                                 className="max-w-full max-h-full object-contain"
                             />
-                        ) : fileType(asset?.name) === 'image' ? (
+                        ) : fileType(asset.mimeType) === 'image' ? (
                             <img
-                                src={asset?.assetUrl}
+                                src={asset.assetUrl}
                                 alt={asset.name}
-                                className="max-w-full max-h-full object-contain"
+                                className="max-w-full max-h-full object-contain shadow-lg"
                             />
+                        ) : fileType(asset.mimeType) === 'audio' ? (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center">
+                                    <span className="text-4xl">🎵</span>
+                                </div>
+                                <audio src={asset.assetUrl} controls className="w-80" />
+                                <p className="text-sm font-medium">{asset.name}</p>
+                            </div>
                         ) : (
-                            <p className="text-foreground">Asset not found.</p>
+                            <div className="text-center">
+                                <p className="text-foreground font-medium mb-2">Preview not available for this file type.</p>
+                                <p className="text-muted-foreground text-sm">{asset.mimeType}</p>
+                                <a 
+                                    href={asset.assetUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-block mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
+                                >
+                                    Download File
+                                </a>
+                            </div>
                         )
                     ) : (
-                        <p className="text-foreground">Unsupported asset type.</p>
+                        <div className="text-center">
+                            <p className="text-destructive font-semibold">Asset not found.</p>
+                            <p className="text-muted-foreground text-sm">We couldn't locate the file you're looking for.</p>
+                        </div>
                     )}
                 </div>
             </main>
