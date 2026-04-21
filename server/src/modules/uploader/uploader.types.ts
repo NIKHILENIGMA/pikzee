@@ -6,6 +6,7 @@ export interface IUploader {
 // S3 specific contract
 export interface IS3Uploader extends IUploader {
     getPresignedUrl(params: PresignedUrlParams): Promise<PresignedUrlResult>
+    getPresignedGetUrl(params: PresignedGetUrlParams): Promise<string>
     generateMultipartUpload(params: MultipartParams): Promise<MultipartResult>
     s3Stream(key: string): Promise<NodeJS.ReadableStream>
 }
@@ -24,6 +25,12 @@ export interface PresignedUrlParams {
     key: string // file path inside bucket
     contentType: string // e.g. image/jpeg, application/pdf
     expiresIn?: number // seconds, default 900 (15 mins)
+}
+
+export interface PresignedGetUrlParams {
+    bucket: 'public' | 'private'
+    key: string
+    expiresIn?: number
 }
 
 export interface PresignedUrlResult {

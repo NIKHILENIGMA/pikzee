@@ -59,6 +59,22 @@ export class S3Uploader implements IS3Uploader {
         return { uploadUrl, fileUrl, expiresIn }
     }
 
+    async getPresignedGetUrl(params: {
+        bucket: 'public' | 'private'
+        key: string
+        expiresIn?: number
+    }): Promise<string> {
+        const { bucket, key, expiresIn = 900 } = params
+        const bucketName = this.resolveBucket(bucket)
+
+        const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: key
+        })
+
+        return await getSignedUrl(this.client, command, { expiresIn })
+    }
+
     // For large files — splits into multipart upload
     async generateMultipartUpload(params: MultipartParams): Promise<MultipartResult> {
         const { bucket, key, contentType } = params
