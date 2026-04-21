@@ -2,8 +2,29 @@ import z from 'zod'
 import { ProjectIdParamSchema } from '../projects/project.validator'
 
 export const CreateAssetSchema = z.object({
-    assetName: z.string().min(1, { message: 'Asset name is required' }),
-    type: z.enum(['FILE', 'FOLDER'])
+    projectId: z.uuid({ message: 'Project ID must be a valid UUID' }),
+    folderId: z.uuid({ message: 'Folder ID must be a valid UUID' }).or(z.undefined()).or(z.literal('null').transform(() => null)),
+    filename: z.string().min(1, { message: 'Filename is required' }),
+    mimeType: z.enum(
+        [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'video/mp4',
+            'video/quicktime',
+            'video/webm',
+            'application/pdf',
+            'text/plain',
+            'audio/mpeg',
+            'audio/webm'
+        ],
+        { message: 'Invalid MIME type' }
+    ),
+    sizeBytes: z.number().min(0, { message: 'Size in bytes must be a positive number' })
+})
+
+export const ConfirmAssetUploadSchema = z.object({
+    assetId: z.uuid({ message: 'Asset ID must be a valid UUID' })
 })
 
 export const CreateAssetQuerySchema = z.object({

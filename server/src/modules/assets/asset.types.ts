@@ -28,24 +28,15 @@ export type CreateAssetRecord = InferInsertModel<typeof assets>
 
 export interface AssetDTO {
     id: string
-    assetName: string
-    workspaceId: string
+    projectId: string
+    folderId: string
+    name: string
+    mimeType: AcceptedMimeType
+    sizeBytes: number
+    s3Key: string
+    status: 'PENDING' | 'READY' | 'FAILED'
     createdAt: Date
     updatedAt: Date
-    projectId: string
-    parentAssetId: string | null
-    type: 'FILE' | 'FOLDER'
-    path: string
-    depth: number
-    mimeType: AcceptedMimeType | null
-    s3Key: string | null
-    imagekitPath: string | null
-    fileSizeBytes: number | null
-    fileType: AcceptedFileType | null
-    thumbnailPath: string | null
-    videoDurationSeconds: number | null
-    uploadStatus: UploadStatus | null
-    createdBy: string
 }
 
 export type CreateAssetDTO = z.infer<typeof CreateAssetSchema>
