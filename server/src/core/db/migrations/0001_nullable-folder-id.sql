@@ -1,0 +1,1 @@
+ALTER TABLE "assets" ALTER COLUMN "folder_id" DROP NOT NULL;
