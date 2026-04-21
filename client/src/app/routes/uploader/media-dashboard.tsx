@@ -73,7 +73,7 @@ export default function MediaDashboard() {
 
             <main className="mx-auto max-w-6xl px-6 py-12">
                 {/* Connected Accounts Section */}
-                <AccountSection accounts={accounts} workspaceId={workspaceId!} />
+                <AccountSection accounts={accounts} />
                 {/* Content History Section */}
                 <ContentHistory historyItems={historyItems} />
             </main>
