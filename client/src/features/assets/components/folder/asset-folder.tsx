@@ -3,24 +3,25 @@ import { type FC, type FocusEvent } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 
 import AssetContextOptions from '../asset-context-options'
-import type { AssetContextType } from '../../types/assets'
-import { useNavigate, useParams } from 'react-router'
+
+import type { Folders } from '../../types/assets'
 
 interface AssetFolderProps {
     selected?: boolean
-    item: AssetContextType
+    item: Folders
+    navigateToFolder?: (folderId: string | null) => void
 }
 
-const AssetFolder: FC<AssetFolderProps> = ({ selected, item }) => {
-    const navigate = useNavigate()
-    const { projectId } = useParams<{ projectId: string }>()
+const AssetFolder: FC<AssetFolderProps> = ({ selected, item, navigateToFolder }) => {
     const handleBlur = (e: FocusEvent<HTMLParagraphElement, Element>) => {
         // Here you can handle the updated name, e.g., send it to a server or update state
         console.log('Updated folder name:', e.target.innerText)
     }
 
     const handleDoubleClick = (id: string) => {
-        navigate(`/projects/${projectId}/${id}`)
+        if (typeof navigateToFolder === 'function') {
+            navigateToFolder(id)
+        } 
     }
 
     return (
@@ -68,12 +69,8 @@ const AssetFolder: FC<AssetFolderProps> = ({ selected, item }) => {
                             contentEditable
                             suppressContentEditableWarning={true}
                             onBlur={handleBlur}>
-                            {item.assetName}
+                            {item.name}
                         </p>
-                        {/* <div className="flex justify-between items-center text-sm text-foreground/60">
-                            <span>{item.} Items</span>
-                            <span>⋮</span>
-                        </div> */}
                     </div>
                 </div>
             </div>
