@@ -1,65 +1,38 @@
-import { useEffect, useRef } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
+
+import { useStore } from '@/shared/store'
 
 import { useUpdateDraftContent } from '../api/update-content'
-import { useDraftStore } from '../store/draft.store'
 
-export const useAutoSave = ({ workspaceId, documentId, draftId }: { workspaceId: string; documentId: string; draftId: string }) => {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-    const lastProcessedId = useRef<string>(draftId)
 
-    const draft = useDraftStore((s) => s.draft)
-    const lastSavedDraft = useDraftStore((s) => s.lastSavedDraft)
-    const setLastSavedDraft = useDraftStore((s) => s.setLastSavedDraft)
-    const isHydrating = useDraftStore((s) => s.isHydrating)
-    const handleEditingState = useDraftStore((s) => s.handleEditingState)
+export const useAutoSave = (workspaceId: string, documentId: string, draftId: string, debounceMs: number = 1500) => {
+    const setSyncStatus = useStore((state) => state.setSyncStatus)
 
-    // Get the mutation function to update draft content
-    const { mutate: updateDraftContent } = useUpdateDraftContent({})
+    const { mutate } = useUpdateDraftContent({})
 
-    useEffect(() => {
-        if (isHydrating || !draft.id || draft.id !== draftId) return
-        const isTitleDirty = draft.title !== lastSavedDraft.title
-        const isContentDirty = JSON.stringify(draft.content) !== JSON.stringify(lastSavedDraft.content)
-
-        if (!isTitleDirty && !isContentDirty) return
-
-        if (lastProcessedId.current !== draftId) {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current)
-            lastProcessedId.current = draftId
-            return // Stop here; wait for next cycle where references match
-        }
-
-        handleEditingState('idle')
-
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-
-        timeoutRef.current = setTimeout(() => {
-            handleEditingState('saving')
-
-            updateDraftContent(
-                {
-                    workspaceId,
-                    docId: documentId,
-                    draftId,
-                    title: draft.title || undefined,
-                    content: draft.content || ''
-                },
+    const debouncedSave = useDebouncedCallback(
+        (data: { title?: string; content?: any }) => {
+            setSyncStatus('saving')
+            mutate(
+                { workspaceId, docId: documentId, draftId, ...data },
                 {
                     onSuccess: () => {
-                        if (lastProcessedId.current !== draftId) return
-                        setLastSavedDraft(draft)
-                        handleEditingState('saved')
+                        setSyncStatus('saved')
+                        setTimeout(() => setSyncStatus('idle'), 2000) // Reset to idle after showing "Saved" status for 2 seconds
                     },
                     onError: () => {
-                        if (lastProcessedId.current !== draftId) return
-                        handleEditingState('error')
+                        setSyncStatus('error')
+                        setTimeout(() => setSyncStatus('idle'), 2000) // Reset to idle after showing "Error" status for 2 seconds
                     }
                 }
             )
-        }, 1000)
-
-        return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        },
+        debounceMs,
+        {
+            leading: false,
+            trailing: true
         }
-    }, [draft.title, draft.content, draft.id, draftId, isHydrating])
+    )
+
+    return { debouncedSave }
 }
