@@ -1,77 +1,36 @@
-import { ChevronRight, Search, PanelLeft } from 'lucide-react'
-import { useState, type FC } from 'react'
-
-import { Input } from '@/components/ui/input'
-import type { AssetContextType } from '../types/assets'
-import { useParams } from 'react-router'
+import { ChevronRightIcon, Folder } from 'lucide-react'
+import { Fragment, type FC } from 'react'
 
 interface AssetBreadcrumbProps {
-    sidebarOpen: boolean
-    onSidebarToggle: () => void
-    items: AssetContextType[]
+    breadcrumb: {
+        id: string
+        name: string
+    }[]
+    navigateToFolder: (folderId: string | null) => void
 }
 
-const AssetBreadcrumb: FC<AssetBreadcrumbProps> = ({ sidebarOpen, onSidebarToggle, items }) => {
-    // const { assetId } = useParams<{ projectId: string; assetId: string }>()
-    const [breadCrumbItems, setBreadcrumbItems] = useState<string[]>([])
-
-    const buildBreadcrumbs = (assetId: string | undefined) => {
-        if (!assetId) {
-            setBreadcrumbItems(['Home'])
-            return
-        }
-
-        const path: string[] = []
-        let currentAsset = items.find((item) => item.id === assetId)
-
-        while (currentAsset) {
-            path.unshift(currentAsset.assetName)
-            if (currentAsset.parentAssetId) {
-                currentAsset = items.find((item) => item.id === currentAsset?.parentAssetId)
-            } else {
-                currentAsset = undefined
-            }
-        }
-
-        setBreadcrumbItems(['Home', ...path])
-    }
-
+const AssetBreadcrumb: FC<AssetBreadcrumbProps> = ({ breadcrumb, navigateToFolder }) => {
     return (
         <header className=" border-b border-secondary px-6 py-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-foreground/85">
-                    {breadCrumbItems.map((item, index) => (
-                        <span
-                            key={index}
-                            className="flex items-center gap-2">
-                            <span>{item}</span>
-                            {index < breadCrumbItems.length - 1 && <ChevronRight size={12} />}
-                        </span>
-                    ))}
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <Input
-                            type="text"
-                            placeholder="Search"
-                            className=" w-48"
-                        />
-                        <Search
-                            size={16}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-foreground/70"
-                        />
-                    </div>
-                    <button
-                        onClick={() => onSidebarToggle()}
-                        className="p-1.5 hover: rounded transition-colors"
-                        title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}>
-                        <PanelLeft
-                            size={16}
-                            className="cursor-pointer"
-                        />
-                    </button>
-                </div>
-            </div>
+            <h3 className="pb-4">Assets</h3>
+            <nav className="flex items-center space-x-2 text-sm text-foreground/85 mb-2">
+                <button
+                    onClick={() => navigateToFolder(null)}
+                    className="text-black dark:text-white font-medium transition-colors">
+                    <Folder />
+                </button>
+
+                {breadcrumb.map((crumb) => (
+                    <Fragment key={crumb.id}>
+                        <ChevronRightIcon className="w-4 h-4 text-foreground/85" />
+                        <button
+                            onClick={() => navigateToFolder(crumb.id)}
+                            className="hover:text-primary font-medium transition-colors">
+                            {crumb.name}
+                        </button>
+                    </Fragment>
+                ))}
+            </nav>
         </header>
     )
 }
