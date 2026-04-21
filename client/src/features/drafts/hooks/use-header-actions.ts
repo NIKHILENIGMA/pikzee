@@ -13,17 +13,10 @@ interface UseHeaderActionsProps {
 
 export const useHeaderActions = ({ workspaceId, pageId, documentId }: UseHeaderActionsProps) => {
     // Mutation hook for adding a cover image to the draft
-    const { mutateAsync: createCoverImage, isPending: createCoverImagePending } = useCreateCoverImage({
-        workspaceId,
-        draftId: pageId!
-    })
+    const { mutateAsync: createCoverImage, isPending: createCoverImagePending } = useCreateCoverImage({})
 
     // Mutation hook for updating the emoji icon of the draft
-    const { mutateAsync: addEmoji, isPending: addEmojiPending } = useUpdateEmoji({
-        workspaceId,
-        documentId,
-        draftId: pageId!
-    })
+    const { mutateAsync: addEmoji, isPending: addEmojiPending } = useUpdateEmoji({})
 
     // Add cover image with random Unsplash photo
     const handleAddCoverImage = async () => {
