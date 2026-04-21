@@ -1,30 +1,22 @@
-import { useState } from 'react'
+import { useParams } from 'react-router'
 
 import AssetContent from '@/features/assets/components/asset-content'
 
-import data from '@/shared/dummy/asset.json'
-import type { AssetContextType } from '@/features/assets/types/assets'
-import { useParams } from 'react-router'
-
 export default function AssetManagement() {
-    const { assetId } = useParams<{ projectId: string; assetId: string }>()
-    const [sidebarOpen, setSidebarOpen] = useState<boolean>(true)
-    // Dummy data conversion
-    const dataList = (data as any[]).map((item) => ({
-        ...item,
-        createdAt: new Date(item.createdAt),
-        updatedAt: new Date(item.updatedAt)
-    })) as AssetContextType[]
+    const { projectId } = useParams<{ projectId: string }>()
 
-    const filteredData = assetId !== undefined ? dataList.filter((item) => item.parentAssetId === assetId) : dataList
+    if (!projectId) {
+        return (
+            <div className="w-full  h-screen flex items-center justify-center">
+                <p className="text-foreground/90">Project ID is missing in the URL.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="flex h-screen bg-background text-foreground">
             <AssetContent
-                sidebarOpen={sidebarOpen}
-                onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
-                assets={filteredData}
-                // breadCrumbItems={[]}
+                projectId={projectId}
             />
         </div>
     )
