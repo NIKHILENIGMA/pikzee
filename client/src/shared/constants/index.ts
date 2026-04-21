@@ -7,6 +7,7 @@ export const SOCIAL_ACCOUNTS_API_BASE = '/social'
 export const DOCUMENT_API_BASE = '/documents'
 export const DRAFT_API_BASE = '/drafts'
 export const AI_API_BASE = '/ai'
+export const ASSETS_API_BASE = '/assets'
 
 export interface SidebarItem {
     id: string
