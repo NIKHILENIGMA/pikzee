@@ -13,10 +13,9 @@ import { useDisconnectAccount } from '../api/disconnect-account'
 
 interface AccountSectionProps {
     accounts: Account[]
-    workspaceId: string
 }
 
-const AccountSection: FC<AccountSectionProps> = ({ accounts, workspaceId }) => {
+const AccountSection: FC<AccountSectionProps> = ({ accounts }) => {
     const navigate = useNavigate()
     const displayAccounts = SUPPORTED_PLATFORMS.map((platform) => {
         const connectedAccount = accounts?.find((acc) => acc.platform.toUpperCase() === platform)
@@ -38,14 +37,7 @@ const AccountSection: FC<AccountSectionProps> = ({ accounts, workspaceId }) => {
     })
 
     // Handle connect account
-    const { mutateAsync: connectAccount } = useConnectAccount({
-        workspaceId,
-        mutationConfig: {
-            onSuccess: () => {
-                toast.success('Account connected successfully!')
-            }
-        }
-    })
+    const { mutateAsync: connectAccount } = useConnectAccount({})
 
     // Open the OAuth URL in a new tab for the user to connect their account
     const handleConnectAccount = async (platform: string) => {
@@ -59,14 +51,7 @@ const AccountSection: FC<AccountSectionProps> = ({ accounts, workspaceId }) => {
     }
 
     // Handle disconnect account
-    const { mutateAsync: disconnectAccount } = useDisconnectAccount({
-        workspaceId,    
-        mutationConfig: {
-            onSuccess: () => {
-                toast.success('Account disconnected successfully!')
-            }
-        }
-    })
+    const { mutateAsync: disconnectAccount } = useDisconnectAccount({})
 
     // Call the disconnect account API and handle errors
     const handleDisconnectAccount = async (accountId: string, platform: string) => {
