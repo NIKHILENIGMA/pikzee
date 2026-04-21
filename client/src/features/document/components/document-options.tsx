@@ -21,7 +21,7 @@ const DocumentOptions: FC<DocumentOptionsProps> = ({ workspaceId, documentId, ti
     const [nextTitle, setNextTitle] = useState(title)
 
     const updateDocumentMutation = useUpdateDocument()
-    const deleteDocumentMutation = useDeleteDocument()
+    const deleteDocumentMutation = useDeleteDocument({})
 
     const handleUpdate = async () => {
         const normalizedTitle = nextTitle.trim()

@@ -18,16 +18,16 @@ type UseDeleteDocument = {
     mutationConfig?: MutationConfig<typeof deleteDocument>
 }
 
-export const useDeleteDocument = ({ workspaceId, mutationConfig }: UseDeleteDocument & { workspaceId: string }) => {
+export const useDeleteDocument = ({ mutationConfig }: UseDeleteDocument) => {
     const queryClient = useQueryClient()
     const { ...restConfig } = mutationConfig || {}
 
     return useMutation({
         ...restConfig,
         mutationFn: (params) => deleteDocument(params),
-        onSuccess: () => {
+        onSuccess: (_, variable) => {
             queryClient.invalidateQueries({
-                queryKey: documentKeys.list(workspaceId)
+                queryKey: documentKeys.list(variable.workspaceId)
             })
         }
     })

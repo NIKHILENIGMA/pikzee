@@ -43,7 +43,10 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
     }
 
     return (
-        <div className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer">
+        <div 
+            className="group relative overflow-hidden rounded-md bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-accent/10 hover:scale-102 cursor-pointer"
+            onClick={onDocumentClick}
+        >
             {/* Image Container - 75% of space */}
             <div className="relative h-0 pb-[120%] overflow-hidden bg-primary/5">
                 {document.docImgUrl ? (
@@ -79,7 +82,7 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
             {/* Content Container - 25% of space */}
             <div
                 className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card via-card/95 to-transparent px-4 py-3"
-                onClick={onDocumentClick}>
+            >
                 {/* Title */}
                 <h3 className="truncate text-sm font-semibold text-foreground line-clamp-2">{document.title}</h3>
 
@@ -91,16 +94,18 @@ export default function DocumentCard({ document, workspaceId, onDocumentClick }:
             </div>
 
             {/* Menu Button */}
-            <DocumentMenu
-                onArchive={handleArchiveDocument}
-                isArchive={isPending}>
-                <Button
-                    variant={'ghost'}
-                    size={'icon'}
-                    className="absolute right-3 top-3">
-                    <EllipsisVertical className="text-muted-foreground " />
-                </Button>
-            </DocumentMenu>
+            <div onClick={(e) => e.stopPropagation()}>
+                <DocumentMenu
+                    onArchive={handleArchiveDocument}
+                    isArchive={isPending}>
+                    <Button
+                        variant={'ghost'}
+                        size={'icon'}
+                        className="absolute right-3 top-3">
+                        <EllipsisVertical className="text-muted-foreground " />
+                    </Button>
+                </DocumentMenu>
+            </div>
         </div>
     )
 }

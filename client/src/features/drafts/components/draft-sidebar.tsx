@@ -21,7 +21,7 @@ export default function DraftSidebar() {
     const optimisticMeta = useStore((state) => state.optimisticMeta)
     
     const { documentId, pageId } = useParams<{ documentId: string; pageId: string }>()
-    if (!documentId || !pageId) {
+    if (!documentId) {
         return null
     }
 
@@ -64,10 +64,10 @@ export default function DraftSidebar() {
     }
 
     useEffect(() => {
-        if (pages && pageId === undefined) {
-            navigate(`/documents/${documentId}/pages/${pages[0].id}`)
+        if (pages && pages.length > 0 && !pageId) {
+            navigate(`/documents/${documentId}/pages/${pages[0].id}`, { replace: true })
         }
-    }, [])
+    }, [pages, pageId, documentId, navigate])
 
     if (isSidebarLoading) {
         return <Loader className="animate-spin" />
