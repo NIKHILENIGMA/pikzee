@@ -39,7 +39,7 @@ export class UploaderController extends BaseController {
 
                 const body = ValidationService.validateBody(req.body, UploadVideoBodySchema)
 
-                const key = `${body.key}-${body.fileName}`
+                const key = `${body.key}/${body.fileName}`
 
                 const { uploadUrl } = await Uploader('S3').getPresignedUrl({
                     bucket: 'private',
