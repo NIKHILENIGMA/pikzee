@@ -53,6 +53,16 @@ export interface Files {
     updatedAt: Date
 }
 
+export type AssetContextType = (Folders | Files) & {
+    assetName: string
+    workspaceId?: string
+    parentAssetId: string | null
+    type: 'FILE' | 'FOLDER'
+    rename: (newName: string) => Promise<void>
+    move: (targetParentId: string | null) => Promise<void>
+    delete: () => Promise<void>
+}
+
 export interface GetContentsResponse {
     subfolders: Folders[]
     assets: Files[]

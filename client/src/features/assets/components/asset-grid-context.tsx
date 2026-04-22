@@ -1,5 +1,4 @@
-
-import { useRef, useState, type FC, type ReactNode } from 'react'
+import { createContext, useContext, useRef, useState, type FC, type ReactNode } from 'react'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -7,13 +6,26 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { File, FolderPlus } from 'lucide-react'
 
+interface AssetGridContextType {
+    handleCreateFolder: () => void
+    handleUploadFile: () => void
+}
+
+const GridContext = createContext<AssetGridContextType | null>(null)
+
+export const useAssetGridContext = () => {
+    const context = useContext(GridContext)
+    if (!context) {
+        throw new Error('useAssetGridContext must be used within an AssetGridContext provider')
+    }
+    return context
+}
 
 interface AssetGridContextProps {
     children: ReactNode
     onCreateFolder?: (folderName: string) => Promise<void> | void
     onUploadFile?: () => void
 }
-
 
 const AssetGridContext: FC<AssetGridContextProps> = ({ children, onCreateFolder, onUploadFile }) => {
     const [open, setOpen] = useState(false)
@@ -38,7 +50,7 @@ const AssetGridContext: FC<AssetGridContextProps> = ({ children, onCreateFolder,
     }
 
     return (
-        <>
+        <GridContext.Provider value={{ handleCreateFolder, handleUploadFile }}>
             <ContextMenu>
                 <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
                 <ContextMenuContent className="w-40 p-2.5 space-y-1">
@@ -71,7 +83,7 @@ const AssetGridContext: FC<AssetGridContextProps> = ({ children, onCreateFolder,
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </>
+        </GridContext.Provider>
     )
 }
 
