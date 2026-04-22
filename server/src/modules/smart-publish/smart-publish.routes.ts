@@ -21,7 +21,7 @@ router.post(
     clerkMiddleware,
     smartPublishController.initiateVideoUploadProcess
 )
-// router.get('/uploaded', clerkMiddleware, smartPublishController.listUploadedPosts)
+router.get('/uploaded', clerkMiddleware, smartPublishController.listUploadedPosts)
 
 router.post('/publish', clerkMiddleware, smartPublishController.publishToSocialMedia)
 

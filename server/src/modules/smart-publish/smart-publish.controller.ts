@@ -10,11 +10,17 @@ import {
     DisconnectSocialAccountParamsSchema,
     SocialAccountParamsSchema,
     UploadVideoBodySchema,
-    ConfirmUploadBodySchema
+    ConfirmUploadBodySchema,
+    ListUploadedPostsQuerySchema
 } from './smart-publish.validator'
 
 import { IPublishService } from './smart-publish.service'
-import { ListSocialAccountsBody, SocialAccountDTO } from './smart-publish.types'
+import {
+    ListSocialAccountsBody,
+    ListUploadedPostsQuery,
+    SocialAccountDTO,
+    SocialPostRecord
+} from './smart-publish.types'
 // import { logger } from '@/config'
 
 export class SmartPublishController extends BaseController {
@@ -207,25 +213,30 @@ export class SmartPublishController extends BaseController {
         )
     }
 
-    // listUploadedPosts = async (req: Request, res: Response, next: NextFunction) => {
-    //     return this.handleRequest(req, res, next, async (): Promise<SuccessResponse<any>> => {
-    //         const userId: string | undefined = req.user?.id
-    //         if (!userId) {
-    //             throw new UnauthorizedError('User not authenticated')
-    //         }
+    listUploadedPosts = async (req: Request, res: Response, next: NextFunction) => {
+        return this.handleRequest(
+            req,
+            res,
+            next,
+            async (): Promise<SuccessResponse<SocialPostRecord[]>> => {
+                const userId: string | undefined = req.user?.id
+                if (!userId) {
+                    throw new UnauthorizedError('User not authenticated')
+                }
 
-    //         const query: ListUploadedPostsQuery = ValidationService.validateQuery(
-    //             req.query,
-    //             ListUploadedPostsQuerySchema
-    //         )
+                const query: ListUploadedPostsQuery = ValidationService.validateQuery(
+                    req.query,
+                    ListUploadedPostsQuerySchema
+                )
 
-    //         const posts = await this.service.listUploadedPosts(userId, query)
+                const posts = await this.service.listUploadedPosts(query.workspaceId)
 
-    //         return this.createResponse({
-    //             statusCode: STATUS_CODE.OK,
-    //             message: 'List of uploaded posts',
-    //             data: posts
-    //         })
-    //     })
-    // }
+                return this.createResponse({
+                    statusCode: STATUS_CODE.OK,
+                    message: 'List of uploaded posts',
+                    data: posts
+                })
+            }
+        )
+    }
 }

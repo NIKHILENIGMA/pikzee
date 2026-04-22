@@ -21,6 +21,7 @@ export interface IPublishRepository {
         postId: string
         updates: Partial<SocialPostRecord>
     }): Promise<SocialPostRecord>
+    listUploadedPosts(workspaceId: string): Promise<SocialPostRecord[]>
 }
 
 export class SmartPublishRepository implements IPublishRepository {
@@ -93,5 +94,13 @@ export class SmartPublishRepository implements IPublishRepository {
             .where(eq(socialPosts.id, params.postId))
             .returning()
         return result[0]
+    }
+
+    async listUploadedPosts(workspaceId: string): Promise<SocialPostRecord[]> {
+        return await this.db
+            .select()
+            .from(socialPosts)
+            .where(eq(socialPosts.workspaceId, workspaceId))
+            .orderBy(desc(socialPosts.createdAt))
     }
 }

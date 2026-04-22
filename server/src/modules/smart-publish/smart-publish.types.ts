@@ -2,7 +2,11 @@ import z from 'zod'
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 
 import { socialAccounts, socialPosts } from '@/core/db/schema'
-import { ListSocialAccountsQuerySchema, UploadVideoBodySchema } from './smart-publish.validator'
+import {
+    ListSocialAccountsQuerySchema,
+    ListUploadedPostsQuerySchema,
+    UploadVideoBodySchema
+} from './smart-publish.validator'
 
 export type CreateSocialAccountRecord = InferInsertModel<typeof socialAccounts>
 export type SocialAccountRecord = InferSelectModel<typeof socialAccounts>
@@ -25,3 +29,6 @@ export type SocialAccountDTO = {
 export type ListSocialAccountsBody = z.infer<typeof ListSocialAccountsQuerySchema>
 
 export type UploadVideoBody = z.infer<typeof UploadVideoBodySchema>
+
+export type ListUploadedPostsQuery = z.infer<typeof ListUploadedPostsQuerySchema>
+

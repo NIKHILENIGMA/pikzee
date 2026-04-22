@@ -24,6 +24,7 @@ export interface IPublishService {
     ): Promise<{ url: string; postId: string }>
     publishVideoS3ToSocialMedia(postId: string, platform: Platforms): Promise<void>
     processVideoPublish(videoPostId: string, platform: Platforms): Promise<void>
+    listUploadedPosts(workspaceId: string): Promise<SocialPostRecord[]>
 }
 
 /**
@@ -81,6 +82,13 @@ export class SmartPublishService implements IPublishService {
             accountName: account.accountName,
             createdAt: account.createdAt
         }))
+    }
+
+    /**
+     * Lists all uploaded posts for a workspace.
+     */
+    public async listUploadedPosts(workspaceId: string): Promise<SocialPostRecord[]> {
+        return await this.smartPublishRepository.listUploadedPosts(workspaceId)
     }
 
     /**
