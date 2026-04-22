@@ -15,6 +15,13 @@
       "when": 1776769242536,
       "tag": "0001_nullable-folder-id",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776864562559,
+      "tag": "0002_deleted-field",
+      "breakpoints": true
     }
   ]
 }
