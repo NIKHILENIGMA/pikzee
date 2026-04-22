@@ -47,7 +47,8 @@ export const assets = pgTable('assets', {
     status: assetStatusEnum('status').default('PENDING').notNull(),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull()
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at')
 })
 
 export const folders = pgTable(
@@ -64,7 +65,8 @@ export const folders = pgTable(
         name: varchar('name', { length: 255 }).notNull(),
 
         createdAt: timestamp('created_at').defaultNow().notNull(),
-        updatedAt: timestamp('updated_at').defaultNow().notNull()
+        updatedAt: timestamp('updated_at').defaultNow().notNull(),
+        deletedAt: timestamp('deleted_at')
     },
     (table) => [
         uniqueIndex('unq_folder_name_parent').on(table.projectId, table.parentId, table.name)

@@ -34,23 +34,27 @@ export const CreateAssetQuerySchema = z.object({
         .or(z.literal('null').transform(() => null))
 })
 
-export const RenameAssetSchema = z.object({
-    newAssetName: z.string().min(1, { message: 'New asset name is required' })
+export const UpdateItemSchema = z.object({
+    name: z.string().min(1).max(255).optional(), // For Rename
+    folderId: z.uuid().nullable().optional(), // For Move Asset (null = move to root)
+    parentId: z.uuid().nullable().optional(), // For Move Folder (null = move to root)
+    isDeleted: z.boolean().optional() // For Soft Delete / Restore
 })
 
-export const AssetBatchOperationSchema = z.object({
-    assetIds: z
-        .array(z.string().min(1, 'Asset ID is required'))
-        .min(1, 'At least one Asset ID is required'),
-    targetParentId: z.string().nullable()
+export const RenameItemSchema = z.object({
+    name: z.string().min(1).max(255)
 })
 
-export const ListAssetsQuerySchema = z.object({
-    parentAssetId: z.uuid({ message: 'Parent Asset ID must be a valid UUID' }).optional()
+export const MoveItemSchema = z.object({
+    targetParentId: z.uuid().nullable()
 })
 
 export const AssetIdParamSchema = ProjectIdParamSchema.extend({
     assetId: z.uuid({ message: 'Asset ID must be a valid UUID' })
+})
+
+export const FolderIdParamSchema = ProjectIdParamSchema.extend({
+    folderId: z.uuid({ message: 'Folder ID must be a valid UUID' })
 })
 
 export const GetFolderContentsQuerySchema = z.object({

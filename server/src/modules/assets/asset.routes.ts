@@ -8,21 +8,15 @@ router.route('/presigned-url').post(assetController.generatePresignedUrl)
 router.route('/confirm').post(assetController.confirmAssetUpload)
 router.route('/folders').post(assetController.makeFolder)
 
+router
+    .route('/:assetId')
+    .patch(assetController.updateAsset)
+    .delete(assetController.deleteAsset)
 
-// router.route('/').post(assetController.create).get(assetController.listAssetsByParentId)
-
-// router.route('/confirm').get(assetController.confirmAssetUpload)
-// router
-//     .route('/:assetId')
-//     .get(assetController.getAssetDetails)
-//     .patch(assetController.renameAsset)
-//     .delete(assetController.deleteAsset)
-
-// router.route('/batch/move').post(assetController.moveAssets)
-
-// router.route('/batch/copy').post(assetController.copyAssets)
-
-// router.route('/batch/delete')
-// .post(assetController.deleteAssets) // To be implemented
+router
+    .route('/folders/:folderId')
+    .patch(assetController.updateFolder)
+    .delete(assetController.deleteFolder)
 
 export default router
+
