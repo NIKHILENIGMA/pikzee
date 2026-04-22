@@ -1,5 +1,3 @@
-// apps/client/src/components/image-editor/panels/TextOverlayPanel.tsx
-
 import type { TextOverlayParams } from '../../types/image-editor'
 
 const IK_FONTS = ['Montserrat', 'Roboto', 'Lato', 'Open Sans', 'Ubuntu', 'Lora', 'Arvo', 'Chivo', 'Kanit', 'Crimson Text']
