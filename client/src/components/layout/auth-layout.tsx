@@ -8,7 +8,7 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-screen bg-[#111] text-foreground">
+        <div className="flex min-h-screen bg-background text-foreground">
             {/* Left Section */}
             <div className="flex w-full lg:w-1/2 flex-col items-center justify-center px-6 lg:px-20">
                 <AuthLogo />
