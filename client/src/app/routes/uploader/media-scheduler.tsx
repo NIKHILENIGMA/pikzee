@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Controller, useForm } from 'react-hook-form'
 import { toast, Toaster } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,7 @@ import { useInitiateVideoUpload, usePublishVideo } from '@/features/smart-publis
 import { useDefaultWorkspace } from '@/features/workspace/api/get-default-workspace'
 import { VideoIcon, UploadIcon, LibraryIcon } from '@/shared/assets/icons'
 import { useNavigate } from 'react-router'
+import { AssetPickerDialog } from '@/features/smart-publish/components/asset-picker-dialog'
 
 const platformLimits = {
     YOUTUBE: { title: 100, description: 5000 }
@@ -33,10 +35,13 @@ export default function MediaScheduler() {
     const [error, setError] = useState<string | null>(null)
     const [uploadProgress, setUploadProgress] = useState(0)
     const [isUploading, setIsUploading] = useState(false)
+    const [isDownloading, setIsDownloading] = useState(false)
     const [platform] = useState<'YOUTUBE'>('YOUTUBE')
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false)
 
-    const { data: workspaceData } = useDefaultWorkspace({})
-    const workspaceId = workspaceData?.data?.id
+    const { data: workspaceResponse } = useDefaultWorkspace({})
+    const workspaceData = workspaceResponse?.data
+    const workspaceId = workspaceData?.id
     const navigate = useNavigate()
 
     const { data: accounts } = useAccounts({
@@ -86,14 +91,39 @@ export default function MediaScheduler() {
         setFile(uploadedFile)
     }, [])
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         maxFiles: 1,
         onDrop,
         accept: {
             'video/*': ['.mp4', '.mov', '.avi', '.webm']
         },
-        multiple: false
+        multiple: false,
+        noClick: !!file
     })
+
+    const handleLibrarySelect = async (asset: { url: string; name: string }) => {
+        try {
+            setIsLibraryOpen(false)
+            setIsDownloading(true)
+            setError(null)
+            
+            const response = await fetch(asset.url)
+            if (!response.ok) throw new Error('Failed to download video')
+            
+            const blob = await response.blob()
+            const fileName = asset.name || 'video.mp4'
+            const file = new File([blob], fileName, { type: blob.type })
+            
+            setFile(file)
+            toast.success('Video selected from library')
+        } catch (err) {
+            console.error('Failed to select video from library', err)
+            setError('Failed to download video from library')
+            toast.error('Failed to download video from library')
+        } finally {
+            setIsDownloading(false)
+        }
+    }
 
     const onSubmit = async (values: FormValues) => {
         try {
@@ -144,7 +174,7 @@ export default function MediaScheduler() {
             toast.success('✅ Video upload initiated! It will be published shortly.')
             setFile(null)
             setUploadProgress(0)
-            navigate('media-manager')
+            navigate('/media-manager')
         } catch (err: any) {
             setError(err?.response?.data?.message || err.message || 'Upload failed.')
             toast.error(err.message || 'Upload failed.')
@@ -177,16 +207,48 @@ export default function MediaScheduler() {
 
                     <div
                         {...getRootProps()}
-                        className={`flex-1 rounded-lg border-2 border-dashed p-8 flex flex-col items-center justify-center min-h-[500px] transition-colors cursor-pointer ${
+                        className={`flex-1 rounded-lg border-2 border-dashed p-8 flex flex-col items-center justify-center min-h-[500px] transition-colors cursor-pointer relative overflow-hidden ${
                             isDragActive ? 'border-primary bg-muted/60' : 'border-border bg-muted'
                         }`}>
                         <input {...getInputProps()} />
                         {file ? (
-                            <video
-                                src={previewUrl ?? undefined}
-                                controls
-                                className="max-w-full max-h-full rounded-lg shadow-md"
-                            />
+                            <div className="relative group w-full h-full flex items-center justify-center">
+                                <video
+                                    src={previewUrl ?? undefined}
+                                    controls
+                                    className="max-w-full max-h-full rounded-lg shadow-md"
+                                />
+                                <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            open()
+                                        }}
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setFile(null)
+                                            setPreviewUrl(null)
+                                        }}
+                                    >
+                                        Remove
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : isDownloading ? (
+                            <div className="text-center">
+                                <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                                <h3 className="text-xl font-semibold text-foreground/80 mb-2">
+                                    Downloading from library...
+                                </h3>
+                            </div>
                         ) : (
                             <div className="text-center">
                                 <div className="w-32 h-32 bg-accent rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -318,7 +380,7 @@ export default function MediaScheduler() {
                         <div className="p-6 border-t border-muted-foreground bg-sidebar-accent flex flex-col gap-3">
                             <Button
                                 type="submit"
-                                disabled={isUploading || !workspaceId}
+                                disabled={isUploading || isDownloading || !workspaceId}
                                 className="w-full">
                                 {isUploading ? 'Uploading...' : 'Upload Video'}
                             </Button>
@@ -326,7 +388,10 @@ export default function MediaScheduler() {
                             <Button
                                 variant="outline"
                                 type="button"
-                                className="w-full">
+                                className="w-full"
+                                onClick={() => setIsLibraryOpen(true)}
+                                disabled={isUploading || isDownloading}
+                            >
                                 <LibraryIcon />
                                 Select from App Library
                             </Button>
@@ -334,6 +399,14 @@ export default function MediaScheduler() {
                     </form>
                 </div>
             </div>
+            
+            <AssetPickerDialog
+                open={isLibraryOpen}
+                onOpenChange={setIsLibraryOpen}
+                projects={workspaceData?.projects || []}
+                onSelect={handleLibrarySelect}
+            />
+
             <Toaster />
         </div>
     )

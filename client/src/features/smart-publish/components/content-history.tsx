@@ -1,22 +1,59 @@
-import { ChevronRight, Search } from 'lucide-react'
+import { ChevronRight, Search, UploadCloud } from 'lucide-react'
 import { useState, type FC } from 'react'
+import { Link } from 'react-router'
 
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-
-import type { HistoryItem } from '../types/content'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 
-interface ContentHistoryProps {
-    historyItems: HistoryItem[]
-}
+import { useWorkspaceContext } from '@/features/workspace/hooks/use-workspace-context'
+import { useUploadHistory } from '../api/get-upload-history'
+import Loader from '@/components/loader/loader'
 
-const ContentHistory: FC<ContentHistoryProps> = ({ historyItems }) => {
+const ContentHistory: FC = () => {
+    const { id: workspaceId } = useWorkspaceContext()
     const [searchQuery, setSearchQuery] = useState('')
-    const filteredHistory = historyItems.filter(
-        (item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const [platformFilter, setPlatformFilter] = useState('all')
+
+    const { data: historyItemsResponse, isLoading } = useUploadHistory({ workspaceId })
+    const historyItems = historyItemsResponse?.data || []
+
+    const filteredHistory = historyItems.filter((item) => {
+        const matchesSearch =
+            item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+        const matchesPlatform = platformFilter === 'all' || item.platform.toLowerCase() === platformFilter.toLowerCase()
+        return matchesSearch && matchesPlatform
+    })
+
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader />
+            </div>
+        )
+    }
+
+    if (historyItems.length === 0) {
+        return (
+            <section className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 py-20 text-center">
+                <div className="mb-4 rounded-full bg-primary/10 p-4">
+                    <UploadCloud className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold text-foreground">No content published yet</h2>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                    Upload your first video to see your history and track your performance across platforms.
+                </p>
+                <Button
+                    asChild
+                    className="mt-8">
+                    <Link to="/media-manager/upload">Upload Content</Link>
+                </Button>
+            </section>
+        )
+    }
 
     return (
         <section>
@@ -36,20 +73,19 @@ const ContentHistory: FC<ContentHistoryProps> = ({ historyItems }) => {
                         className="pl-10"
                     />
                 </div>
-                <Select>
+                <Select
+                    value={platformFilter}
+                    onValueChange={setPlatformFilter}>
                     <SelectTrigger className="w-full max-w-48">
                         <SelectValue placeholder="All Platforms" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
-                            <SelectLabel>
-                                Select Platform
-                            </SelectLabel>
-                            <SelectItem value="all">All</SelectItem>
+                            <SelectLabel>Select Platform</SelectLabel>
+                            <SelectItem value="all">All Platforms</SelectItem>
                             <SelectItem value="youtube">YouTube</SelectItem>
                             <SelectItem value="linkedin">LinkedIn</SelectItem>
                             <SelectItem value="twitter">Twitter</SelectItem>
-                            {/* <SelectItem value="tiktok">TikTok</SelectItem> */}
                         </SelectGroup>
                     </SelectContent>
                 </Select>
@@ -62,34 +98,38 @@ const ContentHistory: FC<ContentHistoryProps> = ({ historyItems }) => {
                         key={item.id}
                         className="group overflow-hidden transition-all hover:shadow-md hover:border-primary/50">
                         <div className="flex gap-6 p-6">
-                            {/* Thumbnail */}
+                            {/* Thumbnail Placeholder */}
                             <div className="relative h-28 w-40 flex-shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20">
-                                {item.thumbnail ? (
-                                    <img
-                                        src={item.thumbnail}
-                                        alt={item.title}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="h-full w-full flex items-center justify-center">
-                                        <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-primary to-secondary opacity-30" />
-                                    </div>
-                                )}
+                                <div className="h-full w-full flex items-center justify-center">
+                                    <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-primary to-secondary opacity-30" />
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary/40">{item.platform}</span>
+                                </div>
                             </div>
 
                             {/* Content Details */}
                             <div className="flex flex-1 flex-col justify-between">
                                 <div>
-                                    <h3 className="mb-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                                        {item.title}
-                                    </h3>
+                                    <div className="mb-1 flex items-center gap-2">
+                                        <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                                            {item.title}
+                                        </h3>
+                                        <Badge
+                                            variant="secondary"
+                                            className="text-[10px] uppercase">
+                                            {item.status}
+                                        </Badge>
+                                    </div>
                                     <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                                 </div>
                                 <div className="flex items-center justify-between pt-2">
-                                    <p className="text-xs text-muted-foreground">Published {new Date(item.publishDate).toLocaleDateString()}</p>
-                                    <Badge className={''}>
-                                        <span className={''}>{item.platform}</span>
-                                    </Badge>
+                                    <p className="text-xs text-muted-foreground">
+                                        {item.status === 'PUBLISHED'
+                                            ? `Published ${new Date(item.publishedAt || item.createdAt).toLocaleDateString()}`
+                                            : `Created ${new Date(item.createdAt).toLocaleDateString()}`}
+                                    </p>
+                                    <Badge variant="outline">{item.platform}</Badge>
                                 </div>
                             </div>
 
@@ -104,7 +144,7 @@ const ContentHistory: FC<ContentHistoryProps> = ({ historyItems }) => {
 
             {filteredHistory.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border bg-muted/30 py-12 text-center">
-                    <p className="text-muted-foreground">No content found matching your search</p>
+                    <p className="text-muted-foreground">No content found matching your search and filter</p>
                 </div>
             )}
         </section>

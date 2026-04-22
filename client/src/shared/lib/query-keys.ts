@@ -81,3 +81,15 @@ export const socialAccountKeys = {
       accountId,
     ] as const,
 }
+
+// --------------------------------------------
+// SOCIAL POSTS (workspace scoped)
+// --------------------------------------------
+export const socialPostKeys = {
+    all: () => ['workspaces', 'social-posts'] as const,
+
+    list: (workspaceId: string) => [...socialPostKeys.all(), workspaceId] as const,
+
+    detail: (workspaceId: string, postId: string) =>
+        [...socialPostKeys.all(), 'detail', workspaceId, postId] as const
+}
