@@ -1,5 +1,5 @@
 import { Building } from 'lucide-react'
-import { type FC, type ReactNode } from 'react'
+import { type FC, type ReactNode, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -7,28 +7,32 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useWorkspaces } from '../api/get-workspaces'
 import { useSwitchWorkspace } from '../api/switch-workspace'
 import { useWorkspaceContext } from '../hooks/use-workspace-context'
+import { type WorkspaceDTO } from '../types'
 
 const Switcher: FC<{ children: ReactNode }> = ({ children }) => {
     const { id } = useWorkspaceContext()
+    const [open, setOpen] = useState(false)
     const workspacesQuery = useWorkspaces()
     const workspaces = workspacesQuery.data?.data || []
 
-    const switchWorkspaceMutation = useSwitchWorkspace({
-        mutationConfig: {
-            onSuccess: () => {
-                toast.success('Switched workspace successfully!')
-            }
-        }
-    })
+    const switchWorkspaceMutation = useSwitchWorkspace()
 
-    const handleWorkspaceSwitch = (id: string) => {
-        alert('Switching to workspace ID: ' + id)
-        switchWorkspaceMutation.mutate(id)
+    const handleWorkspaceSwitch = (workspace: WorkspaceDTO) => {
+        setOpen(false)
+        if (workspace.id === id) return
+
+        toast.promise(switchWorkspaceMutation.mutateAsync(workspace.id), {
+            loading: `Switching to ${workspace.name}...`,
+            success: `Switched to ${workspace.name} successfully!`,
+            error: (err) => `Failed to switch to ${workspace.name}: ${err.message || 'Unknown error'}`
+        })
     }
 
     return (
         <div className="text-md text-muted-foreground pt-1.5">
-            <Popover>
+            <Popover
+                open={open}
+                onOpenChange={setOpen}>
                 <PopoverTrigger asChild>{children}</PopoverTrigger>
                 <PopoverContent
                     side="bottom"
@@ -41,7 +45,7 @@ const Switcher: FC<{ children: ReactNode }> = ({ children }) => {
                                 className="flex justify-start space-x-1.5 p-2 items-center hover:bg-accent rounded-md cursor-pointer">
                                 <button
                                     className="w-full flex justify-start space-x-1.5"
-                                    onClick={() => handleWorkspaceSwitch(workspace.id)}>
+                                    onClick={() => handleWorkspaceSwitch(workspace)}>
                                     {workspace.logoUrl !== null ? (
                                         <img
                                             src={workspace.logoUrl}

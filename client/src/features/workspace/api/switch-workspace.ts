@@ -23,16 +23,17 @@ export type UseSwitchWorkspace = {
  */
 export const useSwitchWorkspace = ({ mutationConfig }: UseSwitchWorkspace = {}) => {
     const queryClient = useQueryClient()
-    const { ...restConfig } = mutationConfig || {}
+    const { onSuccess, ...restConfig } = mutationConfig || {}
 
     return useMutation({
         ...restConfig,
         mutationFn: (id: string) => switchWorkspace(id),
-        onSuccess: () => {
+        onSuccess: (...args) => {
             // Invalidate and refetch
             queryClient.invalidateQueries({
                 queryKey: workspaceKeys.all()
             })
+            onSuccess?.(...args)
         }
     })
 }
