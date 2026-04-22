@@ -42,11 +42,6 @@ export class AIService implements IAIService {
 
         try {
             for await (const event of stream) {
-                logger.info(
-                    `Received OpenAI stream event for workspace ${record.workspaceId}: ${JSON.stringify(
-                        event
-                    )}`
-                )
                 if (event.type === 'response.output_text.delta') {
                     yield event.delta
                 }
